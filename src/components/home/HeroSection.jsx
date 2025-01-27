@@ -34,26 +34,26 @@ const HeroSection = () => {
           animate="visible"
           variants={textVariant}
         >
-          <h1 className="text-[#043D12] lg:text-[45px] text-[32px] w-fit h-fit max-sm:py-8 font-medium max-sm:bg-[url('/carbon-growth.svg')] bg-cover bg-center object-center">
+          <h1 className="text-[#043D12] lg:text-[50px] text-[32px] w-fit h-fit  lg:mt-8 max-sm:py-8 font-medium max-sm:bg-[url('/carbon-growth.svg')] bg-cover bg-center object-center">
             Elevate Your Business. <br className="max-sm:hidden" />
             Connect. Showcase.
             <br className="max-sm:hidden" />
             Grow.
           </h1>
-          <p className="lg:text-[24px] text-[16px]">
+          <p className="lg:text-[28px] text-[16px]">
             Create a powerful online presence. Share your story, showcase your
             products, and let your customers find you.
           </p>
           <div className="btns flex md:gap-8 gap-6 max-sm:justify-center">
             <Link
               to="/create-account"
-              className="bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[10px] md:px-8 px-4 py-2"
+              className="bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[10px] md:px-8 px-4 py-2 md:py-4"
             >
               Create my Profile
             </Link>
             <Link
               to="/subscribe"
-              className="bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[10px] md:px-8 px-4 py-2"
+              className="bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[10px] md:px-8 px-4 py-2 md:py-4"
             >
               Explore Businesses
             </Link>
@@ -67,7 +67,7 @@ const HeroSection = () => {
           animate="visible"
           variants={imageVariant}
         >
-          <div className="w-full md:h-[78vh]">
+          <div className="w-full h-[80vh]">
             <img src={HeroImg} alt="Hero-Page-img" className="h-full" />
           </div>
         </motion.div>
