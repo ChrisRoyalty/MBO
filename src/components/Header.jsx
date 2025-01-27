@@ -23,7 +23,7 @@ const Header = () => {
           </Link>
         </div>
         <div
-          className={`text-white md:static absolute top-[22vh] md:bg-transparent bg-[#FFFDF2] max-md:py-4 max-md:w-full left-0 flex max-md:flex-col gap-4 md:gap-16 items-center max-md:${toggleNav}`}
+          className={`text-white md:static absolute top-[15vh] md:bg-transparent bg-[#FFFDF2] max-md:py-4 max-md:w-full left-0 flex max-md:flex-col gap-4 md:gap-16 items-center max-md:${toggleNav}`}
         >
           <nav className="flex max-md:flex-col max-md:w-[90%] max-md:m-auto md:gap-8 gap-4">
             <Link
