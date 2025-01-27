@@ -51,7 +51,7 @@ const Join = () => {
 
   return (
     <section className="w-full flex justify-center items-center bg-[#FAFEF4] py-18">
-      <div className="w-[90%] flex flex-col gap-10 text-center">
+      <div className="w-[85%] flex flex-col gap-10 text-center">
         {/* Title Section */}
         <h1 className="lg:text-[40px] text-[32px] text-[#043D1266] font-semibold">
           Join our growing network

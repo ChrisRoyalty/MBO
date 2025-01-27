@@ -62,7 +62,7 @@ const Benefits = () => {
 
   return (
     <div className="w-full flex justify-center items-center py-18 lg:bg-[#FFFFFF] bg-[#FAFEF4]">
-      <div className="w-[90%] flex flex-col gap-14 text-[#043D12]">
+      <div className="w-[85%] flex flex-col gap-14 text-[#043D12]">
         <h1 className="lg:text-[40px] text-[32px] font-medium text-center">
           What’s in it for You?
         </h1>

@@ -29,7 +29,7 @@ const Signup = () => {
 
       {/* Right Section */}
       <div className="max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
-        <div className="lg:w-[90%] w-[80%] h-fit max-lg:mt-16">
+        <div className="w-[80%] h-fit max-lg:mt-16">
           <h1 className="lg:text-[50px] text-[32px] font-bold text-[#363636]">
             MBO
           </h1>

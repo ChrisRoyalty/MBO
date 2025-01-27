@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import MindPowerLogo from "../assets/mbo-logo.png";
 import MenuIcon from "../assets/menu.svg";
 
@@ -11,8 +11,8 @@ const Header = () => {
   };
 
   return (
-    <div className="w-full h-fit pt-[7vh] pb-[5vh] flex justify-center items-center fixed z-50 bg-[#FFFDF2]">
-      <div className="w-[90%] h-[10vh] bg-[#043D12] px-[50px] flex justify-between items-center rounded-[48px] shadow-lg">
+    <div className="w-full h-fit flex justify-center items-center bg-[#FFFDF2] py-[5vh]">
+      <div className="w-[85%] h-[10vh] bg-[#043D12] px-[50px] flex justify-between items-center rounded-[48px] shadow-lg">
         <div className="logo">
           <Link to="/" className="">
             <img
@@ -45,7 +45,7 @@ const Header = () => {
             <Link
               to="/login"
               onClick={handleNav}
-              className="text-[20px] border-[1px] border-white rounded-[39px] lg:w-fit h-fit px-8 py-2 hover:text-[21px] bg-[#043D12] w-full"
+              className="text-[20px] border-[1px] border-white rounded-[39px] lg:w-fit h-fit px-8 py-1 hover:text-[21px] bg-[#043D12] w-full"
             >
               Log In
             </Link>

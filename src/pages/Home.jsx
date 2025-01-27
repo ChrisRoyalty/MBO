@@ -6,7 +6,7 @@ import Faq from "../components/home/Faq";
 
 const Home = () => {
   return (
-    <div className="w-full pt-[22vh]  bg-[#FFFDF2]">
+    <div className="w-full bg-[#FFFDF2]">
       <HeroSection />
       <Join />
       <Benefits />

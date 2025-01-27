@@ -84,11 +84,15 @@ const Faq = () => {
       { threshold: 0.5 }
     );
 
-    faqRefs.current.forEach((el) => observer.observe(el));
+    faqRefs.current.forEach((el) => {
+      if (el) observer.observe(el); // Ensure `el` is not null
+    });
     if (imageRef.current) observer.observe(imageRef.current);
 
     return () => {
-      faqRefs.current.forEach((el) => observer.unobserve(el));
+      faqRefs.current.forEach((el) => {
+        if (el) observer.unobserve(el); // Only unobserve valid elements
+      });
       if (imageRef.current) observer.unobserve(imageRef.current);
     };
   }, []);
@@ -105,18 +109,20 @@ const Faq = () => {
           </p>
         </div>
         <div className="w-full flex flex-col lg:gap-4 gap-16">
-          <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-12">
             {/* FAQ Questions */}
             <div className="lg:order-2">
               {faqItems.map((item, index) => (
                 <figure
                   key={index}
-                  className="rounded-[26px] mb-4 faq-item"
+                  className="rounded-[26px] my-6 faq-item"
                   ref={(el) => (faqRefs.current[index] = el)}
                 >
                   <div
                     className={`faq-question-container ${
-                      activeIndex === index ? "bg-[#B5BBB4]" : "bg-transparent"
+                      activeIndex === index
+                        ? "bg-[#B5BBB4] rounded-t-[26px]"
+                        : "bg-transparent"
                     }`}
                   >
                     <button
@@ -137,7 +143,9 @@ const Faq = () => {
                   </div>
                   <figcaption
                     className={`p-6 ${
-                      activeIndex === index ? "block" : "hidden"
+                      activeIndex === index
+                        ? "block bg-[#B5BBB4] mt-4 rounded-b-[26px]"
+                        : "hidden"
                     }`}
                   >
                     {Array.isArray(item.answer) ? (
@@ -169,21 +177,23 @@ const Faq = () => {
           </div>
         </div>
       </div>
-      <style jsx>{`
-        /* CSS for fade-in effect */
-        .faq-item,
-        .faq-question-container,
-        .fade-in {
-          opacity: 8;
-          transform: translateY(30px);
-          transition: opacity 0.6s ease, transform 0.6s ease;
-        }
+      <style>
+        {`
+    /* CSS for fade-in effect */
+    .faq-item,
+    .faq-question-container,
+    .fade-in {
+      opacity: 4;
+      transform: translateY(30px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
 
-        .fade-in {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      `}</style>
+    .fade-in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  `}
+      </style>
     </div>
   );
 };
