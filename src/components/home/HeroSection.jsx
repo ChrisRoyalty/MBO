@@ -29,7 +29,7 @@ const HeroSection = () => {
       <div className="w-[93%] h-full text-[#043D12] grid grid-cols-1 md:grid-cols-2">
         {/* Animated Text Section */}
         <motion.div
-          className="details flex flex-col gap-4 max-sm:text-center py-8 md:py-16"
+          className="details flex flex-col gap-4 max-sm:text-center md:py-16"
           initial="hidden"
           animate="visible"
           variants={textVariant}
@@ -67,8 +67,12 @@ const HeroSection = () => {
           animate="visible"
           variants={imageVariant}
         >
-          <div className="w-full h-[80vh]">
-            <img src={HeroImg} alt="Hero-Page-img" className="h-full" />
+          <div className="w-full md:h-[80vh] h-fit py-0">
+            <img
+              src={HeroImg}
+              alt="Hero-Page-img"
+              className="w-full h-full max-sm:pt-8"
+            />
           </div>
         </motion.div>
       </div>
