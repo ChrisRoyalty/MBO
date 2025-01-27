@@ -1,10 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router";
 import { FaRegEnvelope } from "react-icons/fa";
 import { CiLock } from "react-icons/ci";
 import { BsPerson } from "react-icons/bs";
+import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+import Hand from "../components/svgs/Hand";
 
 const Signup = () => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   return (
     <div className="w-full h-screen flex justify-center lg:grid grid-cols-2">
       {/* Left Section with Background Image */}
@@ -12,24 +17,24 @@ const Signup = () => {
         <div className="w-full h-[90%] flex flex-col items-center">
           <div className="w-[90%] text-[#FFFDF2] mt-12">
             <h1 className="lg:text-[50px] text-[32px] font-medium">
-              Welcome to <br /> MBO{" "}
+              Welcome to <br /> MBO
             </h1>
             <p className="text-[18px]">
               Step into a community that puts your business in the spotlight.
-              Showcase your brand, find new customers, and grow together.{" "}
+              Showcase your brand, find new customers, and grow together.
             </p>
           </div>
         </div>
       </div>
 
       {/* Right Section */}
-      <div className="max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center ">
+      <div className="max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
         <div className="lg:w-[90%] w-[80%] h-fit max-lg:mt-16">
           <h1 className="lg:text-[50px] text-[32px] font-bold text-[#363636]">
             MBO
           </h1>
-          <h4 className="lg:text-[32px] text-[20px] font-medium text-[#043D12]">
-            Register
+          <h4 className="lg:text-[32px] text-[20px] font-medium text-[#043D12] flex items-center gap-2">
+            Register <Hand />
           </h4>
 
           <form className="max-lg:w-full flex flex-col gap-4 mt-8 max-lg:items-center">
@@ -61,18 +66,36 @@ const Signup = () => {
             <div className="max-lg:w-full password border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
               <CiLock className="text-[#6A7368]" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
               />
+              <button
+                type="button"
+                className="text-[#6A7368]"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
+              </button>
             </div>
             <div className="max-lg:w-full password border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
               <CiLock className="text-[#6A7368]" />
               <input
-                type="password"
+                type={showConfirmPassword ? "text" : "password"}
                 placeholder="Confirm Password"
                 className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
               />
+              <button
+                type="button"
+                className="text-[#6A7368]"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? (
+                  <AiOutlineEyeInvisible />
+                ) : (
+                  <AiOutlineEye />
+                )}
+              </button>
             </div>
             <div className="max-lg:w-full remember flex items-center justify-between">
               <div className="checkbox flex gap-2 items-center">

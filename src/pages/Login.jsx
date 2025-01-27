@@ -1,8 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router";
 import { FaRegEnvelope } from "react-icons/fa";
 import { CiLock } from "react-icons/ci";
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
+import Hand from "../components/svgs/Hand";
 const Login = () => {
+  const [showPassword, setShowPassword] = useState(false);
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
+
   return (
     <div className="w-full h-screen flex justify-center lg:grid grid-cols-2">
       {/* Left Section with Background Image */}
@@ -10,24 +18,24 @@ const Login = () => {
         <div className="w-full h-[90%] flex flex-col items-center">
           <div className="w-[90%] text-[#FFFDF2] mt-12">
             <h1 className="lg:text-[50px] text-[32px] font-medium">
-              Welcome to <br /> MBO{" "}
+              Welcome to <br /> MBO
             </h1>
             <p className="text-[18px]">
               Step into a community that puts your business in the spotlight.
-              Showcase your brand, find new customers, and grow together.{" "}
+              Showcase your brand, find new customers, and grow together.
             </p>
           </div>
         </div>
       </div>
 
       {/* Right Section */}
-      <div className="max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center ">
+      <div className="max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
         <div className="lg:w-[90%] w-[80%] h-fit max-lg:mt-16">
           <h1 className="lg:text-[50px] text-[32px] font-bold text-[#363636]">
             MBO
           </h1>
-          <h4 className="lg:text-[32px] text-[20px] font-medium text-[#043D12]">
-            Log In
+          <h4 className="lg:text-[32px] text-[20px] font-medium text-[#043D12] flex items-center gap-2">
+            Log In <Hand />
           </h4>
 
           <form className="max-lg:w-full flex flex-col gap-8 mt-8 max-lg:items-center">
@@ -42,10 +50,17 @@ const Login = () => {
             <div className="max-lg:w-full password border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[64px] h-[51px]">
               <CiLock className="text-[#6A7368]" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
               />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="text-[#6A7368] ml-4 focus:outline-none"
+              >
+                {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
+              </button>
             </div>
             <div className="max-lg:w-full remember flex items-center justify-between">
               <div className="checkbox flex gap-2 items-center">

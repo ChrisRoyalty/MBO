@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import FaqIcon from "../../assets/faqIcon.svg";
 import { RiArrowDropDownLine, RiArrowDropUpLine } from "react-icons/ri";
 
 const Faq = () => {
   const [activeIndex, setActiveIndex] = useState(null);
+  const faqRefs = useRef([]);
+  const imageRef = useRef(null);
 
   const handleToggle = (index) => {
     setActiveIndex(activeIndex === index ? null : index);
@@ -68,43 +70,71 @@ const Faq = () => {
     },
   ];
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("fade-in");
+          } else {
+            entry.target.classList.remove("fade-in");
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    faqRefs.current.forEach((el) => observer.observe(el));
+    if (imageRef.current) observer.observe(imageRef.current);
+
+    return () => {
+      faqRefs.current.forEach((el) => observer.unobserve(el));
+      if (imageRef.current) observer.unobserve(imageRef.current);
+    };
+  }, []);
+
   return (
     <div className="w-full flex justify-center items-center bg-[#FAFEF4] py-18">
       <div className="w-[90%] flex flex-col gap-10">
         <div className="intro text-center">
           <h1 className="lg:text-[40px] text-[32px] text-[#043D1266]">
-            Frequently Asked Questions{" "}
+            Frequently Asked Questions
           </h1>
           <p className="md:text-[20px] text-[18px]">
-            Common questions you might want to ask{" "}
+            Common questions you might want to ask
           </p>
         </div>
         <div className="w-full flex flex-col lg:gap-4 gap-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-4">
-            {/* FAQ Buttons */}
+            {/* FAQ Questions */}
             <div className="lg:order-2">
               {faqItems.map((item, index) => (
                 <figure
                   key={index}
-                  className={`rounded-[26px] mb-4 ${
-                    activeIndex === index ? "bg-[#B5BBB4]" : "bg-transparent"
-                  }`}
+                  className="rounded-[26px] mb-4 faq-item"
+                  ref={(el) => (faqRefs.current[index] = el)}
                 >
-                  <button
-                    className={`flex justify-between items-center ${
-                      activeIndex === index
-                        ? "bg-[#043D12] text-white"
-                        : "bg-[#B5BBB4] text-[#043D12]"
-                    } rounded-[26px] px-6 py-4 gap-4 w-full`}
-                    onClick={() => handleToggle(index)}
+                  <div
+                    className={`faq-question-container ${
+                      activeIndex === index ? "bg-[#B5BBB4]" : "bg-transparent"
+                    }`}
                   >
-                    {item.question}
-                    {activeIndex === index ? (
-                      <RiArrowDropUpLine className="text-[30px]" />
-                    ) : (
-                      <RiArrowDropDownLine className="text-[30px]" />
-                    )}
-                  </button>
+                    <button
+                      className={`flex justify-between items-center ${
+                        activeIndex === index
+                          ? "bg-[#043D12] text-white"
+                          : "bg-[#B5BBB4] text-[#043D12]"
+                      } rounded-[26px] px-6 py-4 gap-4 w-full`}
+                      onClick={() => handleToggle(index)}
+                    >
+                      {item.question}
+                      {activeIndex === index ? (
+                        <RiArrowDropUpLine className="text-[30px]" />
+                      ) : (
+                        <RiArrowDropDownLine className="text-[30px]" />
+                      )}
+                    </button>
+                  </div>
                   <figcaption
                     className={`p-6 ${
                       activeIndex === index ? "block" : "hidden"
@@ -126,16 +156,34 @@ const Faq = () => {
               ))}
             </div>
             {/* FAQ Image */}
-            <div className="lg:order-1 self-start lg:self-center">
+            <div
+              className="lg:order-1 self-start lg:self-center max-lg:flex justify-center"
+              ref={imageRef}
+            >
               <img
                 src={FaqIcon}
                 alt="FAQ_Img"
-                className="w-full max-w-[400px]"
+                className="w-full max-w-[400px] fade-in"
               />
             </div>
           </div>
         </div>
       </div>
+      <style jsx>{`
+        /* CSS for fade-in effect */
+        .faq-item,
+        .faq-question-container,
+        .fade-in {
+          opacity: 8;
+          transform: translateY(30px);
+          transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      `}</style>
     </div>
   );
 };
