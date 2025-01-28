@@ -47,7 +47,7 @@ const HeroSection = () => {
           <div className="btns flex md:gap-8 gap-6 max-sm:justify-center">
             <Link
               to="/create-account"
-              className="bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[10px] md:px-8 px-4 py-2 md:py-4"
+              className="bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[14px] md:px-8 px-4 py-3 md:py-4"
             >
               Create my Profile
             </Link>
