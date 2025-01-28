@@ -29,24 +29,24 @@ const HeroSection = () => {
       <div className="w-[93%] h-full text-[#043D12] grid grid-cols-1 md:grid-cols-2">
         {/* Animated Text Section */}
         <motion.div
-          className="details flex flex-col gap-4 max-sm:text-center md:py-16"
+          className="details flex flex-col gap-4 max-sm:text-center md:py-12"
           initial="hidden"
           animate="visible"
           variants={textVariant}
         >
-          <h1 className="text-[#043D12] lg:text-[50px] text-[32px] w-fit h-fit  lg:mt-8 max-sm:py-8 font-medium max-sm:bg-[url('/carbon-growth.svg')] bg-cover bg-center object-center">
+          <h1 className="text-[#043D12] lg:text-[55px] leading-[65px] text-[32px] w-fit h-fit  lg:mt-8 max-sm:py-8 font-medium max-sm:bg-[url('/carbon-growth.svg')] bg-cover bg-center object-center">
             Elevate Your Business. <br className="max-sm:hidden" />
             Connect. Showcase.
             <br className="max-sm:hidden" />
             Grow.
           </h1>
-          <p className="lg:text-[28px] text-[16px]">
+          <p className="lg:text-[28px] text-[14px] w-[80%]">
             Create a powerful online presence. Share your story, showcase your
             products, and let your customers find you.
           </p>
-          <div className="btns flex md:gap-8 gap-6 max-sm:justify-center">
+          <div className="btns flex md:gap-8 gap-6 max-sm:justify-center mt-4">
             <Link
-              to="/create-account"
+              to="/business-profile"
               className="bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[14px] md:px-8 px-4 py-3 md:py-4"
             >
               Create my Profile

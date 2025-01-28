@@ -6,6 +6,7 @@ import Community from "./pages/Community";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Subscribe from "./pages/Subscribe";
+import BusinessProfile from "./pages/BusinessProfile";
 function App() {
   return (
     <>
@@ -17,6 +18,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/create-account" element={<Signup />} />
         <Route path="/subscribe" element={<Subscribe />} />
+        <Route path="/business-profile" element={<BusinessProfile />} />
       </Routes>
     </>
   );
