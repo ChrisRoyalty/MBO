@@ -53,7 +53,7 @@ const HeroSection = () => {
             </Link>
             <Link
               to="/subscribe"
-              className="bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[10px] md:px-8 px-4 py-2 md:py-4"
+              className="bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[14px] md:px-8 px-4 py-3 md:py-4"
             >
               Explore Businesses
             </Link>
