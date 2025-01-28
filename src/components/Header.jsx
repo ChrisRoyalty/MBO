@@ -12,7 +12,7 @@ const Header = () => {
 
   return (
     <div className="w-full h-fit flex justify-center items-center bg-[#FFFDF2] py-[5vh]">
-      <div className="w-[85%] h-[10vh] bg-[#043D12] px-[50px] flex justify-between items-center rounded-[48px] shadow-lg">
+      <div className="w-[85%] h-[8vh] md:h-[10vh] bg-[#043D12] px-[20px] md:px-[50px] flex justify-between items-center rounded-[48px] shadow-lg">
         <div className="logo">
           <Link to="/" className="">
             <img
@@ -55,7 +55,7 @@ const Header = () => {
           <img
             src={MenuIcon}
             alt="Hamburger_Icon"
-            className="max-md:px-4 max-md:rounded-[52px] max-md:bg-[#043D12]"
+            className="max-md:rounded-[52px]"
           />
         </button>
       </div>
