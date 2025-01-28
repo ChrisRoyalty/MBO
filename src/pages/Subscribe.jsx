@@ -4,7 +4,7 @@ import { TbCurrencyNaira } from "react-icons/tb";
 
 const Subscribe = () => {
   return (
-    <div className="bg-[#043D12] w-full h-[95vh] max-lg:py-16 lg:h-screen flex flex-col justify-center items-center">
+    <div className="bg-[#043D12] w-full h-[94vh] max-lg:py-16 lg:h-screen flex flex-col justify-center items-center">
       <div className="w-[90%] md:w-[70%] h-fit text-center flex flex-col gap-8">
         <h1 className="text-[#B4B3B3] lg:text-[30px] text-[20px] w-[90%] md:w-[60%] mx-auto">
           Stay Connected, Stay Promoted: <br className="max-lg:hidden" /> Your
@@ -66,7 +66,7 @@ const Subscribe = () => {
                   Enhanced Credibility{" "}
                 </li>
               </ul>
-              <div className="shadow-lg mt-8 register px-6 md:px-14 md:py-4 py-2 bg-[#043D12] rounded-[9px] text-[#FFFDF2] flex flex-col gap-2">
+              <div className="shadow-lg mt-8 register px-6 md:px-14 md:py-4 py-3 bg-[#043D12] rounded-[9px] text-[#FFFDF2] flex flex-col gap-2">
                 <h4 className="md:text-[22px] text-[16px] font-medium">
                   REGISTER
                 </h4>
