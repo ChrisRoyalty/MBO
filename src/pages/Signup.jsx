@@ -1,14 +1,65 @@
 import React, { useState } from "react";
-import { Link } from "react-router";
+import axios from "axios";
+import { Link } from "react-router-dom";
 import { FaRegEnvelope } from "react-icons/fa";
 import { CiLock } from "react-icons/ci";
 import { BsPerson } from "react-icons/bs";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import Hand from "../components/svgs/Hand";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match!");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        "https://mbo.bookbank.com.ng/member/sign-up",
+        formData
+      );
+      toast.success(
+        response.data.message || "Signup successful! Welcome to MBO."
+      );
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
+    } catch (error) {
+      const errorResponse = error.response?.data || {};
+      toast.error(
+        errorResponse.message ||
+          "An error occurred during signup. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="w-full h-screen flex justify-center lg:grid grid-cols-2">
@@ -29,6 +80,7 @@ const Signup = () => {
 
       {/* Right Section */}
       <div className="max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
+        <ToastContainer />
         <div className="w-[80%] h-fit max-lg:mt-16">
           <Link
             to="/"
@@ -40,37 +92,62 @@ const Signup = () => {
             Register <Hand />
           </h4>
 
-          <form className="max-lg:w-full flex flex-col gap-8 mt-8 max-lg:items-center">
+          <form
+            className="max-lg:w-full flex flex-col gap-8 mt-8 max-lg:items-center"
+            onSubmit={handleSubmit}
+          >
+            {/* First Name */}
             <div className="max-lg:w-full email border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
               <BsPerson className="text-[#6A7368]" />
               <input
                 type="text"
+                name="firstName"
                 placeholder="First Name"
-                className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
-              />
-            </div>
-            <div className="max-lg:w-full email border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
-              <BsPerson className="text-[#6A7368]" />
-              <input
-                type="text"
-                placeholder="Last Name"
+                value={formData.firstName}
+                onChange={handleChange}
+                required
                 className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
               />
             </div>
 
+            {/* Last Name */}
+            <div className="max-lg:w-full email border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
+              <BsPerson className="text-[#6A7368]" />
+              <input
+                type="text"
+                name="lastName"
+                placeholder="Last Name"
+                value={formData.lastName}
+                onChange={handleChange}
+                required
+                className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
+              />
+            </div>
+
+            {/* Email */}
             <div className="max-lg:w-full email border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
               <FaRegEnvelope className="text-[#6A7368]" />
               <input
                 type="email"
+                name="email"
                 placeholder="Email"
+                value={formData.email}
+                onChange={handleChange}
+                required
                 className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
               />
             </div>
+
+            {/* Password */}
             <div className="max-lg:w-full password border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
               <CiLock className="text-[#6A7368]" />
               <input
                 type={showPassword ? "text" : "password"}
+                name="password"
                 placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+                required
                 className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
               />
               <button
@@ -81,11 +158,17 @@ const Signup = () => {
                 {showPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
               </button>
             </div>
+
+            {/* Confirm Password */}
             <div className="max-lg:w-full password border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
               <CiLock className="text-[#6A7368]" />
               <input
                 type={showConfirmPassword ? "text" : "password"}
+                name="confirmPassword"
                 placeholder="Confirm Password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
                 className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
               />
               <button
@@ -101,16 +184,14 @@ const Signup = () => {
               </button>
             </div>
 
-            <button className="md:mt-6 mt-16 w-full text-[#FFFDF2] password bg-[#043D12] hover:bg-[#043D12]/75 shadow-lg rounded-[27px] px-8 flex justify-center items-center lg:h-[60px] h-[48px]">
-              Register
-            </button>
-            <Link
-              to="/login"
-              className="text-[#6A7368] text-[16px] text-center"
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="md:mt-6 mt-16 w-full text-[#FFFDF2] password bg-[#043D12] hover:bg-[#043D12]/75 shadow-lg rounded-[27px] px-8 flex justify-center items-center lg:h-[60px] h-[48px]"
+              disabled={loading}
             >
-              Are you already a member?{" "}
-              <strong className="hover:text-[17px]">Log In</strong>
-            </Link>
+              {loading ? "Registering..." : "Register"}
+            </button>
           </form>
         </div>
       </div>
