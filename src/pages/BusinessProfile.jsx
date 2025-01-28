@@ -1,14 +1,19 @@
 import React, { useState } from "react";
 import { Link } from "react-router";
-import { FaRegEnvelope } from "react-icons/fa";
 import { CiLock } from "react-icons/ci";
 import { BsPerson } from "react-icons/bs";
-import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+import { MdOutlineCategory } from "react-icons/md";
+import { VscSymbolKeyword } from "react-icons/vsc";
+import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
+
 import Hand from "../components/svgs/Hand";
 
 const BusinessProfile = () => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown);
+  };
 
   return (
     <div className="w-full h-screen flex justify-center lg:grid grid-cols-2">
@@ -46,24 +51,45 @@ const BusinessProfile = () => {
               <input
                 type="text"
                 placeholder="Business Name"
-                className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
+                className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#6A7368]"
               />
             </div>
-            <div className="max-lg:w-full email border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
-              <BsPerson className="text-[#6A7368]" />
-              <input
-                type="text"
-                placeholder="Business Category"
-                className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
-              />
+            <div className="max-lg:w-full email border-[1px] rounded-[27px] px-8 border-[#363636] flex flex-col gap-2 lg:h-auto relative">
+              <button
+                type="button"
+                className="flex items-center justify-between text-[#6A7368] w-full h-[48px] focus:outline-none"
+                onClick={toggleDropdown}
+              >
+                <div className="flex items-center gap-2">
+                  <MdOutlineCategory className="text-[#6A7368] text-[18px]" />
+                  <span className="text-[#6A7368]">Business Category</span>
+                </div>
+                {showDropdown ? (
+                  <IoMdArrowDropup className="text-[#6A7368]" />
+                ) : (
+                  <IoMdArrowDropdown className="text-[#6A7368]" />
+                )}
+              </button>
+              {showDropdown && (
+                <ul className="absolute top-[50px] left-0 w-full bg-[#676767] text-white rounded-[25px] mt-4 p-2 shadow-lg">
+                  <li className="py-2 px-4 hover:bg-[#575757] cursor-pointer">
+                    Retail
+                  </li>
+                  <li className="py-2 px-4 hover:bg-[#575757] cursor-pointer">
+                    Technology
+                  </li>
+                  <li className="py-2 px-4 hover:bg-[#575757] cursor-pointer">
+                    Finance
+                  </li>
+                </ul>
+              )}
             </div>
-
             <div className="max-lg:w-full email border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
-              <FaRegEnvelope className="text-[#6A7368]" />
+              <VscSymbolKeyword className="text-[#6A7368]" />
               <input
                 type="text"
                 placeholder="Enter keywords"
-                className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
+                className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#6A7368]"
               />
             </div>
             <div className="max-lg:w-full password border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
@@ -71,7 +97,7 @@ const BusinessProfile = () => {
               <input
                 type="text"
                 placeholder="Description"
-                className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
+                className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#6A7368]"
               />
             </div>
 
