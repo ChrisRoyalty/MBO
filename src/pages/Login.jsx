@@ -75,7 +75,7 @@ const Login = () => {
                 Forgot password?
               </a>
             </div>
-            <button className="w-full text-[#FFFDF2] password bg-[#043D12] hover:bg-[#043D12]/75 shadow-lg rounded-[27px] px-8 flex justify-center items-center lg:h-[64px] h-[51px]">
+            <button className="mt-8 w-full text-[#FFFDF2] password bg-[#043D12] hover:bg-[#043D12]/75 shadow-lg rounded-[27px] px-8 flex justify-center items-center lg:h-[64px] h-[51px]">
               Log In
             </button>
             <Link

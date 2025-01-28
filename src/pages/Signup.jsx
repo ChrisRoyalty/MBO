@@ -15,7 +15,7 @@ const Signup = () => {
       {/* Left Section with Background Image */}
       <div className="max-lg:hidden w-full h-full flex justify-center items-center bg-[url('/Group2.svg')] bg-cover bg-center bg-green-800">
         <div className="w-full h-[90%] flex flex-col items-center">
-          <div className="w-[90%] text-[#FFFDF2] mt-12">
+          <div className="w-[90%] text-[#FFFDF2] mt-8">
             <h1 className="lg:text-[50px] text-[32px] font-medium">
               Welcome to <br /> MBO
             </h1>
@@ -37,7 +37,7 @@ const Signup = () => {
             Register <Hand />
           </h4>
 
-          <form className="max-lg:w-full flex flex-col gap-4 mt-8 max-lg:items-center">
+          <form className="max-lg:w-full flex flex-col gap-8 mt-8 max-lg:items-center">
             <div className="max-lg:w-full email border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
               <BsPerson className="text-[#6A7368]" />
               <input
@@ -97,20 +97,8 @@ const Signup = () => {
                 )}
               </button>
             </div>
-            <div className="max-lg:w-full remember flex items-center justify-between">
-              <div className="checkbox flex gap-2 items-center">
-                <input
-                  type="checkbox"
-                  name="remember"
-                  className="cursor-pointer w-5 h-5 text-transparent border-2 border-[#043D12] rounded-sm appearance-none focus:ring-2 focus:ring-[#043D12] peer checked:bg-[#043D12]"
-                />
-                <label className="text-[#6A7368]">Remember me</label>
-              </div>
-              <a href="#" className="text-[#6A7368]">
-                Forgot password?
-              </a>
-            </div>
-            <button className="w-full text-[#FFFDF2] password bg-[#043D12] hover:bg-[#043D12]/75 shadow-lg rounded-[27px] px-8 flex justify-center items-center lg:h-[60px] h-[48px]">
+
+            <button className="md:mt-6 mt-16 w-full text-[#FFFDF2] password bg-[#043D12] hover:bg-[#043D12]/75 shadow-lg rounded-[27px] px-8 flex justify-center items-center lg:h-[60px] h-[48px]">
               Register
             </button>
             <Link
