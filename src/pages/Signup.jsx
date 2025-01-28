@@ -30,9 +30,12 @@ const Signup = () => {
       {/* Right Section */}
       <div className="max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
         <div className="w-[80%] h-fit max-lg:mt-16">
-          <h1 className="lg:text-[50px] text-[32px] font-bold text-[#363636]">
+          <Link
+            to="/"
+            className="lg:text-[50px] text-[32px] font-bold text-[#363636]"
+          >
             MBO
-          </h1>
+          </Link>
           <h4 className="lg:text-[32px] text-[20px] font-medium text-[#043D12] flex items-center gap-2">
             Register <Hand />
           </h4>
