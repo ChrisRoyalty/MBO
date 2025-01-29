@@ -39,7 +39,7 @@ const HeroSection = () => {
             <br className="max-sm:hidden" />
             Grow.
           </h1>
-          <p className="lg:text-[28px] text-[14px] w-[80%] lg:m-none m-auto">
+          <p className="lg:text-[28px] text-[14px] w-[80%] max-lg:mx-auto">
             Create a powerful online presence. Share your story, showcase your
             products, and let your customers find you.
           </p>
