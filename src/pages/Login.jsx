@@ -10,7 +10,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 import { div } from "framer-motion/client";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
-
+import { IoIosArrowRoundBack } from "react-icons/io";
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -77,8 +77,11 @@ const Login = () => {
         </div>
 
         {/* Right Section */}
-        <div className="max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
+        <div className="relative max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
           <div className="w-[80%] h-fit max-lg:mt-16">
+            <Link to="/" className="w-fit h-fit absolute top-0 left-0 ">
+              <IoIosArrowRoundBack className="text-[#043D12] border border-[#043D12] text-[40px] m-2" />
+            </Link>
             <Link
               to="/"
               className="lg:text-[50px] text-[32px] font-bold text-[#363636]"
@@ -100,7 +103,7 @@ const Login = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email"
-                  className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
+                  className="w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
                   required
                 />
               </div>
@@ -111,7 +114,7 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password"
-                  className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
+                  className="w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
                   required
                 />
                 <button

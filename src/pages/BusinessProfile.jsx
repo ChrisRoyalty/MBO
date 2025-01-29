@@ -5,6 +5,7 @@ import { BsPerson } from "react-icons/bs";
 import { MdOutlineCategory } from "react-icons/md";
 import { VscSymbolKeyword } from "react-icons/vsc";
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
+import { IoIosArrowRoundBack } from "react-icons/io";
 
 import Hand from "../components/svgs/Hand";
 
@@ -33,8 +34,11 @@ const BusinessProfile = () => {
       </div>
 
       {/* Right Section */}
-      <div className="max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
+      <div className="relative max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
         <div className="w-[80%] h-fit max-lg:mt-20">
+          <Link to="/" className="w-fit h-fit absolute top-0 left-0 ">
+            <IoIosArrowRoundBack className="text-[#043D12] border border-[#043D12] text-[40px] m-2" />
+          </Link>
           <Link
             to="/"
             className="lg:text-[50px] text-[32px] font-bold text-[#363636]"
