@@ -2,7 +2,6 @@ import React from "react";
 import { Link } from "react-router";
 import { motion } from "framer-motion"; // Import motion from framer-motion
 import HeroImg from "../../assets/mbo-heroImg.svg";
-import Header from "../Header";
 
 const HeroSection = () => {
   // Variants for animation
@@ -40,7 +39,7 @@ const HeroSection = () => {
             <br className="max-sm:hidden" />
             Grow.
           </h1>
-          <p className="lg:text-[28px] text-[14px] w-[80%] m-auto">
+          <p className="lg:text-[28px] text-[14px] w-[80%] lg:m-none m-auto">
             Create a powerful online presence. Share your story, showcase your
             products, and let your customers find you.
           </p>
