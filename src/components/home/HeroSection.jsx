@@ -34,13 +34,13 @@ const HeroSection = () => {
           animate="visible"
           variants={textVariant}
         >
-          <h1 className="text-[#043D12] lg:text-[55px] leading-[65px] text-[32px] w-fit h-fit  lg:mt-8 max-sm:py-8 font-medium max-sm:bg-[url('/carbon-growth.svg')] bg-cover bg-center object-center">
+          <h1 className="text-[#043D12] lg:text-[55px] lg:leading-[65px] text-[32px] w-fit h-fit  lg:mt-8 max-sm:py-4 font-medium max-sm:bg-[url('/carbon-growth.svg')] bg-cover bg-center object-center">
             Elevate Your Business. <br className="max-sm:hidden" />
             Connect. Showcase.
             <br className="max-sm:hidden" />
             Grow.
           </h1>
-          <p className="lg:text-[28px] text-[14px] w-[80%]">
+          <p className="lg:text-[28px] text-[14px] w-[80%] m-auto">
             Create a powerful online presence. Share your story, showcase your
             products, and let your customers find you.
           </p>

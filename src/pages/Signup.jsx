@@ -52,10 +52,22 @@ const Signup = () => {
       });
     } catch (error) {
       const errorResponse = error.response?.data || {};
-      toast.error(
-        errorResponse.message ||
-          "An error occurred during signup. Please try again."
-      );
+
+      if (errorResponse.errors && Array.isArray(errorResponse.errors)) {
+        // Display each error message in the 'errors' array
+        errorResponse.errors.forEach((errMsg) => {
+          toast.error(errMsg);
+        });
+      } else if (errorResponse.error) {
+        // Display single error message from 'error' field
+        toast.error(errorResponse.error);
+      } else {
+        // Default error message if no specific errors are found
+        toast.error(
+          errorResponse.message ||
+            "An error occurred during signup. Please try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -93,11 +105,11 @@ const Signup = () => {
           </h4>
 
           <form
-            className="max-lg:w-full flex flex-col gap-8 mt-8 max-lg:items-center"
+            className="max-lg:w-full flex flex-col gap-6 mt-8 max-lg:items-center"
             onSubmit={handleSubmit}
           >
             {/* First Name */}
-            <div className="max-lg:w-full email border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
+            <div className="max-lg:w-full email border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[50px] h-[48px]">
               <BsPerson className="text-[#6A7368]" />
               <input
                 type="text"
@@ -106,12 +118,12 @@ const Signup = () => {
                 value={formData.firstName}
                 onChange={handleChange}
                 required
-                className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
+                className="bg-transparent w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
               />
             </div>
 
             {/* Last Name */}
-            <div className="max-lg:w-full email border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
+            <div className="max-lg:w-full email border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[50px] h-[48px]">
               <BsPerson className="text-[#6A7368]" />
               <input
                 type="text"
@@ -120,12 +132,12 @@ const Signup = () => {
                 value={formData.lastName}
                 onChange={handleChange}
                 required
-                className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
+                className="bg-transparent w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
               />
             </div>
 
             {/* Email */}
-            <div className="max-lg:w-full email border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
+            <div className="max-lg:w-full email border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[50px] h-[48px]">
               <FaRegEnvelope className="text-[#6A7368]" />
               <input
                 type="email"
@@ -134,12 +146,12 @@ const Signup = () => {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
+                className="bg-transparent w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
               />
             </div>
 
             {/* Password */}
-            <div className="max-lg:w-full password border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
+            <div className="max-lg:w-full password border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[50px] h-[48px]">
               <CiLock className="text-[#6A7368]" />
               <input
                 type={showPassword ? "text" : "password"}
@@ -148,7 +160,7 @@ const Signup = () => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
+                className="bg-transparent w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
               />
               <button
                 type="button"
@@ -160,7 +172,7 @@ const Signup = () => {
             </div>
 
             {/* Confirm Password */}
-            <div className="max-lg:w-full password border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
+            <div className="max-lg:w-full password border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[50px] h-[48px]">
               <CiLock className="text-[#6A7368]" />
               <input
                 type={showConfirmPassword ? "text" : "password"}
@@ -169,7 +181,7 @@ const Signup = () => {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
-                className="max-lg:w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
+                className="bg-transparent w-full h-full border-none focus:outline-none focus:border-transparent text-[#043D12]"
               />
               <button
                 type="button"
@@ -185,13 +197,18 @@ const Signup = () => {
             </div>
 
             {/* Submit Button */}
-            <button
-              type="submit"
-              className="md:mt-6 mt-16 w-full text-[#FFFDF2] password bg-[#043D12] hover:bg-[#043D12]/75 shadow-lg rounded-[27px] px-8 flex justify-center items-center lg:h-[60px] h-[48px]"
-              disabled={loading}
-            >
-              {loading ? "Registering..." : "Register"}
-            </button>
+            <div className="text-center flex flex-col gap-4">
+              <button
+                type="submit"
+                className="mt-6 w-full text-[#FFFDF2] password bg-[#043D12] hover:bg-[#043D12]/75 shadow-lg rounded-[27px] px-8 flex justify-center items-center lg:h-[60px] h-[48px]"
+                disabled={loading}
+              >
+                {loading ? "Registering..." : "Register"}
+              </button>
+              <Link to="/login" className="text-center text-[#6A7368]">
+                Are you already a member? <strong>Log In</strong>
+              </Link>
+            </div>
           </form>
         </div>
       </div>

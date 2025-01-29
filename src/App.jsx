@@ -7,6 +7,8 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Subscribe from "./pages/Subscribe";
 import BusinessProfile from "./pages/BusinessProfile";
+import VerifyEmail from "./pages/VerifyEmail";
+
 function App() {
   return (
     <>
@@ -19,6 +21,7 @@ function App() {
         <Route path="/create-account" element={<Signup />} />
         <Route path="/subscribe" element={<Subscribe />} />
         <Route path="/business-profile" element={<BusinessProfile />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
       </Routes>
     </>
   );
