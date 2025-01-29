@@ -113,7 +113,7 @@ const Benefits = () => {
             </div>
             {vector && (
               <motion.div
-                className="vectorImg w-full flex justify-center items-center"
+                className="vectorImg flex justify-center items-center"
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{

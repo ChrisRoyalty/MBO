@@ -96,9 +96,9 @@ const HeroSection = () => {
     <motion.div
       whileInView="visible"
       viewport={{ once: false }}
-      className="w-full md:h-[80vh] flex flex-col items-center lg:items-end bg-[#FFFDF2]"
+      className="w-full md:h-[80vh] flex flex-col items-center bg-[#FFFDF2]"
     >
-      <div className="w-[93%] h-full text-[#043D12] grid grid-cols-1 md:grid-cols-2">
+      <div className=" h-full w-[85%] text-[#043D12] grid grid-cols-1 md:grid-cols-2">
         {/* Animated Text Section */}
         <motion.div
           initial="hidden"
