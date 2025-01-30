@@ -17,10 +17,10 @@ const VerifyEmail = () => {
     }
 
     axios
-      .post("https://mbo.bookbank.com.ng/member/verify-emai", { token })
+      .post("https://mbo.bookbank.com.ng/member/verify-email", { token })
       .then((response) => {
         toast.success(response.data.message || "Email verified successfully!");
-        setTimeout(() => navigate("/login"), 2000); // Redirect after 2s
+        setTimeout(() => navigate("/login"), 1000); // Redirect after 2s
       })
       .catch((error) => {
         toast.error(error.response?.data?.error || "Verification failed.");

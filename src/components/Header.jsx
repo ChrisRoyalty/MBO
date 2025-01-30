@@ -90,8 +90,8 @@ const Header = () => {
               to={item.path}
               className={`text-[20px] transition ${
                 location.pathname === item.path
-                  ? "text-[#8afc91] font-bold border-b-2 border-[#8afc91]"
-                  : "hover:text-[#8afc91]"
+                  ? "text-white font-bold border-b-2 border-white"
+                  : "hover:text-[21px]"
               } ${item.className || ""}`}
             >
               {item.name}

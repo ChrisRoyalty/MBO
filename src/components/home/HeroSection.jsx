@@ -39,12 +39,12 @@ const HeroSection = () => {
           whileInView="visible"
           viewport={{ once: false }}
           variants={animations.slideLeft}
-          className="details flex flex-col md:gap-2 gap-4 text-center md:text-left md:py-12"
+          className="details flex flex-col md:gap-4 gap-4 text-center md:text-left md:py-12"
         >
           <h1 className="text-[#043D12] lg:text-[55px] lg:leading-[65px] text-[32px] max-w-full lg:mt-8 font-medium">
-            Elevate Your Business. <br className="max-sm:hidden" />
+            Elevate Your Business. <br className="" />
             Connect. Showcase.
-            <br className="max-sm:hidden" />
+            <br className="" />
             Grow.
           </h1>
           <p className="lg:text-[28px] text-[14px] max-w-full mx-auto md:mx-0">
@@ -55,7 +55,7 @@ const HeroSection = () => {
             <motion.div variants={animations.buttonHover} whileHover="hover">
               <Link
                 to="/business-profile"
-                className="w-fit bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[12px] md:px-8 font-bold px-4 py-3 md:py-4"
+                className="w-fit bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[12px] md:px-8 font-bold px-4 py-4 md:py-5"
               >
                 Create my Profile
               </Link>
@@ -63,7 +63,7 @@ const HeroSection = () => {
             <motion.div variants={animations.buttonHover} whileHover="hover">
               <Link
                 to="/subscribe"
-                className="w-fit bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[12px] md:px-8 font-bold px-4 py-3 md:py-4"
+                className="w-fit bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[12px] md:px-8 font-bold px-4 py-4 md:py-5"
               >
                 Explore Businesses
               </Link>
