@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import DemoImg from "../../assets/demo.svg";
 import VectorIcon1 from "../../assets/vector1.svg";
@@ -17,9 +17,9 @@ const fadeInVariants = {
 
 const Benefits = () => {
   return (
-    <div className="w-full flex justify-center items-center py-18 lg:bg-[#FFFFFF] bg-[#FAFEF4]">
+    <div className="w-full flex justify-center items-center py-18 lg:bg-[#FFFFFF] bg-[#FAFEF4] overflow-hidden">
       <motion.div
-        className="w-[75%] flex flex-col gap-14 text-[#043D12]"
+        className="w-full max-w-[85%] flex flex-col gap-14 text-[#043D12] mx-auto"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: false }}
@@ -63,7 +63,7 @@ const Benefits = () => {
         ].map(({ id, title, text, image, vector }, index) => (
           <motion.div
             key={id}
-            className="w-full h-fit flex flex-col lg:gap-4 gap-16"
+            className="w-full h-fit flex flex-col lg:gap-4 gap-16 overflow-hidden"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: false }}
@@ -80,19 +80,19 @@ const Benefits = () => {
               },
             }}
           >
-            <div className="flex max-lg:flex-col max-lg:text-center lg:justify-between items-center max-sm:gap-4">
+            <div className="w-full flex max-lg:flex-col max-lg:justify-center justify-between items-center max-sm:gap-4 text-center lg:text-left">
               <motion.div
-                className={index % 2 !== 0 ? "lg:order-2" : ""}
+                className={`${index % 2 !== 0 ? "lg:order-2" : ""} `}
                 variants={fadeInVariants}
               >
                 <motion.h1
-                  className="lg:text-[40px] text-[32px]"
+                  className="lg:text-[40px] text-[32px] "
                   variants={fadeInVariants}
                 >
                   {title}
                 </motion.h1>
                 <motion.p
-                  className="md:text-[20px] text-[18px] w-[80%] max-lg:m-auto"
+                  className="md:text-[20px] text-[18px]"
                   variants={fadeInVariants}
                 >
                   {text}
@@ -101,7 +101,9 @@ const Benefits = () => {
               <motion.img
                 src={image}
                 alt={`${id}_img`}
-                className={index % 2 !== 0 ? "lg:order-1" : ""}
+                className={`max-w-full h-auto object-contain ${
+                  index % 2 !== 0 ? "lg:order-1" : ""
+                }`}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{

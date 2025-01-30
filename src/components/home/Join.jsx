@@ -29,10 +29,6 @@ const animations = {
   buttonHover: {
     hover: { scale: 1.1, transition: { type: "spring", stiffness: 300 } },
   },
-  staggerContainer: {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.3 } },
-  },
 };
 
 const Join = () => {
@@ -41,9 +37,9 @@ const Join = () => {
       whileInView="visible"
       viewport={{ once: false }}
       variants={animations.fadeIn}
-      className="w-full flex justify-center items-center bg-[#FAFEF4] py-18"
+      className="w-full flex justify-center items-center bg-[#FAFEF4] py-18 overflow-hidden"
     >
-      <div className="w-[85%] flex flex-col gap-10 text-center">
+      <div className="w-[85%] flex flex-col gap-10 text-center mx-auto overflow-hidden">
         {/* Title Section */}
         <motion.h1
           initial="hidden"
@@ -56,7 +52,7 @@ const Join = () => {
         </motion.h1>
 
         {/* Cards Section */}
-        <div className="w-full grid md:grid-cols-3 lg:gap-10 gap-24">
+        <div className="w-full grid md:grid-cols-3 lg:gap-10 gap-24 overflow-hidden">
           {[
             {
               img: SignupIcon,
@@ -86,12 +82,12 @@ const Join = () => {
               whileInView="visible"
               variants={card.animation}
               viewport={{ once: false }}
-              className="flex flex-col items-center justify-center text-center gap-6"
+              className="flex flex-col items-center justify-center text-center gap-6 overflow-hidden"
             >
               <img
                 src={card.img}
                 alt={`${card.title}_Img`}
-                className="h-[250px] w-fit"
+                className="h-[250px] w-auto object-contain"
               />
               <figcaption className="text-[24px] text-[#043D12]">
                 <h5 className="font-bold">{card.title}</h5>
@@ -107,7 +103,7 @@ const Join = () => {
           whileInView="visible"
           variants={animations.slideUp}
           viewport={{ once: false }}
-          className="mt-12"
+          className="mt-12 overflow-hidden"
         >
           <motion.div variants={animations.buttonHover} whileHover="hover">
             <Link
