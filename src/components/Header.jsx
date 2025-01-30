@@ -14,28 +14,24 @@ const navItemVariants = {
   }),
 };
 
-const menuVariants = {
-  hidden: { opacity: 0, scale: 0.8 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.4, ease: "easeOut" },
-  },
-};
-
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const location = useLocation(); // Get current path
+  const location = useLocation();
 
   const navItems = [
     { name: "Home", path: "/" },
     { name: "Community", path: "/community" },
-    { name: "Log In", path: "/login" },
+    {
+      name: "Log In",
+      path: "/login",
+      className:
+        "border-[1px] border-[#FFFFFF] rounded-[39px] lg:ml-8 px-8 py-2 hover:bg-white hover:text-[#02530c] active:bg-white active:text-[#02530c]",
+    },
   ];
 
   return (
-    <div className="w-full h-fit flex justify-center items-center bg-[#FFFDF2] py-[5vh]">
-      <div className="w-[85%] h-[8vh] md:h-[10vh] bg-[#043D12] px-[20px] md:px-[50px] flex justify-between items-center rounded-[48px] shadow-lg">
+    <div className="w-full h-fit flex justify-center items-center bg-[#FFFDF2] py-[5vh] lg:py-[6vh]">
+      <div className="w-[85%] h-[8vh] md:h-[10vh] bg-[#043D12] px-[20px] md:px-[50px] flex justify-between items-center rounded-[48px] md:shadow-lg">
         {/* Logo */}
         <Link to="/">
           <img
@@ -49,10 +45,13 @@ const Header = () => {
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              variants={menuVariants}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+                transition: { duration: 0.4, ease: "easeOut" },
+              }}
+              exit={{ opacity: 0, scale: 0.8 }}
               className="absolute top-[15vh] left-0 w-full bg-[#FFFDF2] flex flex-col items-center py-6 shadow-lg md:hidden rounded-b-[40px]"
             >
               <nav className="flex flex-col items-center gap-6 w-full">
@@ -72,7 +71,7 @@ const Header = () => {
                         location.pathname === item.path
                           ? "text-[#02530c] font-bold border-b-2 border-[#02530c]"
                           : "text-[#043D12] hover:text-[#02530c]"
-                      }`}
+                      } ${item.className || ""}`}
                     >
                       {item.name}
                     </Link>
@@ -93,7 +92,7 @@ const Header = () => {
                 location.pathname === item.path
                   ? "text-[#8afc91] font-bold border-b-2 border-[#8afc91]"
                   : "hover:text-[#8afc91]"
-              }`}
+              } ${item.className || ""}`}
             >
               {item.name}
             </Link>
