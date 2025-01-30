@@ -56,21 +56,21 @@ const Join = () => {
           {[
             {
               img: SignupIcon,
-              title: "SIGN UP",
+              title: <Link to="/create-account">SIGN UP</Link>,
               description:
                 "Create your business profile in just a few minutes.",
               animation: animations.slideLeft,
             },
             {
               img: SubscribeIcon,
-              title: "Subscribe",
+              title: <Link to="/subscribe">Subscribe</Link>,
               description:
                 "Choose a single annual plan for access and promotion.",
               animation: animations.slideUp,
             },
             {
               img: GrowIcon,
-              title: "GROW",
+              title: <Link to="/business-profile">Grow</Link>,
               description:
                 "Share your profile, connect with customers, and track your growth.",
               animation: animations.slideRight,

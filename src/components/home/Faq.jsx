@@ -108,10 +108,10 @@ const Faq = () => {
             Common questions you might want to ask
           </p>
         </div>
-        <div className="w-full flex flex-col lg:gap-4 gap-16">
-          <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-12">
+        <div className="w-full flex flex-col lg:gap-4 gap-16 ">
+          <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-12 ">
             {/* FAQ Questions */}
-            <div className="lg:order-2">
+            <div className="lg:order-2 h-[60vh] overflow-y-auto">
               {faqItems.map((item, index) => (
                 <figure
                   key={index}
