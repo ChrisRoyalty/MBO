@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import MindPowerLogo from "../assets/mbo-logo.png";
 import MenuIcon from "../assets/menu.svg";
@@ -25,8 +25,13 @@ const menuVariants = {
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const navItems = ["Home", "Community", "Log In"];
-  const navLinks = ["/", "/community", "/login"];
+  const location = useLocation(); // Get current path
+
+  const navItems = [
+    { name: "Home", path: "/" },
+    { name: "Community", path: "/community" },
+    { name: "Log In", path: "/login" },
+  ];
 
   return (
     <div className="w-full h-fit flex justify-center items-center bg-[#FFFDF2] py-[5vh]">
@@ -53,7 +58,7 @@ const Header = () => {
               <nav className="flex flex-col items-center gap-6 w-full">
                 {navItems.map((item, index) => (
                   <motion.div
-                    key={item}
+                    key={item.path}
                     variants={navItemVariants}
                     initial="hidden"
                     animate="visible"
@@ -61,11 +66,15 @@ const Header = () => {
                     custom={index}
                   >
                     <Link
-                      to={navLinks[index]}
+                      to={item.path}
                       onClick={() => setIsOpen(false)}
-                      className="text-[20px] text-[#043D12] font-medium px-8 py-2 hover:text-[#02530c] transition"
+                      className={`text-[20px] font-medium px-8 py-2 transition ${
+                        location.pathname === item.path
+                          ? "text-[#02530c] font-bold border-b-2 border-[#02530c]"
+                          : "text-[#043D12] hover:text-[#02530c]"
+                      }`}
                     >
-                      {item}
+                      {item.name}
                     </Link>
                   </motion.div>
                 ))}
@@ -76,13 +85,17 @@ const Header = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex gap-8 items-center text-white">
-          {navItems.map((item, index) => (
+          {navItems.map((item) => (
             <Link
-              key={item}
-              to={navLinks[index]}
-              className="text-[20px] hover:text-[#8afc91] transition"
+              key={item.path}
+              to={item.path}
+              className={`text-[20px] transition ${
+                location.pathname === item.path
+                  ? "text-[#8afc91] font-bold border-b-2 border-[#8afc91]"
+                  : "hover:text-[#8afc91]"
+              }`}
             >
-              {item}
+              {item.name}
             </Link>
           ))}
         </div>
