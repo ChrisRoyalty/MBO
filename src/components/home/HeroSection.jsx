@@ -55,7 +55,7 @@ const HeroSection = () => {
             <motion.div variants={animations.buttonHover} whileHover="hover">
               <Link
                 to="/business-profile"
-                className="w-fit bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[14px] md:px-8 px-2 py-3 md:py-4"
+                className="w-fit bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[10px] md:px-8 font-bold px-4 py-3 md:py-4"
               >
                 Create my Profile
               </Link>
@@ -63,7 +63,7 @@ const HeroSection = () => {
             <motion.div variants={animations.buttonHover} whileHover="hover">
               <Link
                 to="/subscribe"
-                className="w-fit bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[14px] md:px-8 px-2 py-3 md:py-4"
+                className="w-fit bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[10px] md:px-8 font-bold px-4 py-3 md:py-4"
               >
                 Explore Businesses
               </Link>
