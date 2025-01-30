@@ -51,11 +51,11 @@ const HeroSection = () => {
             Create a powerful online presence. Share your story, showcase your
             products, and let your customers find you.
           </p>
-          <div className="btns flex md:gap-8 gap-6 justify-center md:justify-start mt-4">
+          <div className="btns flex md:gap-6 gap-4 justify-center md:justify-start mt-4">
             <motion.div variants={animations.buttonHover} whileHover="hover">
               <Link
                 to="/business-profile"
-                className="bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[14px] md:px-8 px-4 py-3 md:py-4"
+                className="w-fit bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[14px] md:px-8 px-4 py-3 md:py-4"
               >
                 Create my Profile
               </Link>
@@ -63,7 +63,7 @@ const HeroSection = () => {
             <motion.div variants={animations.buttonHover} whileHover="hover">
               <Link
                 to="/subscribe"
-                className="bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[14px] md:px-8 px-4 py-3 md:py-4"
+                className="w-fit bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[14px] md:px-8 px-4 py-3 md:py-4"
               >
                 Explore Businesses
               </Link>
@@ -77,7 +77,7 @@ const HeroSection = () => {
           whileInView="visible"
           viewport={{ once: false }}
           variants={animations.slideRight}
-          className="visual h-full overflow-hidden"
+          className="visual h-full overflow-hidden max-lg:mt-8"
         >
           <div className="w-full md:h-[80vh] h-auto">
             <img
