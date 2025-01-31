@@ -63,14 +63,14 @@ const Join = () => {
             },
             {
               img: SubscribeIcon,
-              title: <Link to="/subscribe">Subscribe</Link>,
+              title: <Link to="/subscribe">SUBSCRIBE</Link>,
               description:
                 "Choose a single annual plan for access and promotion.",
               animation: animations.slideUp,
             },
             {
               img: GrowIcon,
-              title: <Link to="/business-profile">Grow</Link>,
+              title: <Link to="/business-profile">GROW</Link>,
               description:
                 "Share your profile, connect with customers, and track your growth.",
               animation: animations.slideRight,

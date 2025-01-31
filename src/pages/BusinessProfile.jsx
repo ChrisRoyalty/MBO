@@ -186,9 +186,9 @@ const BusinessProfile = () => {
                   <span className="text-[#6A7368]">{selectedCategory}</span>
                 </div>
                 {showDropdown ? (
-                  <IoMdArrowDropup className="text-[#6A7368]" />
+                  <IoMdArrowDropup className="text-[#6A7368] cursor-pointer" />
                 ) : (
-                  <IoMdArrowDropdown className="text-[#6A7368]" />
+                  <IoMdArrowDropdown className="text-[#6A7368] cursor-pointer" />
                 )}
               </button>
               {showDropdown && (
