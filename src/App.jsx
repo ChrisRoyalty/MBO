@@ -8,6 +8,8 @@ import Signup from "./pages/Signup";
 import Subscribe from "./pages/Subscribe";
 import BusinessProfile from "./pages/BusinessProfile";
 import VerifyEmail from "./pages/VerifyEmail";
+import ForgottenPassword from "./pages/ForgottenPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 function App() {
   return (
@@ -22,6 +24,8 @@ function App() {
         <Route path="/subscribe" element={<Subscribe />} />
         <Route path="/business-profile" element={<BusinessProfile />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/forgotten-password" element={<ForgottenPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
       </Routes>
     </>
   );

@@ -136,9 +136,13 @@ const Login = () => {
                   />
                   <label className="text-[#6A7368]">Remember me</label>
                 </div>
-                <a href="#" className="text-[#6A7368]">
+                <Link
+                  to="/forgotten-password"
+                  href="#"
+                  className="text-[#6A7368]"
+                >
                   Forgot password?
-                </a>
+                </Link>
               </div>
               <button
                 type="submit"
