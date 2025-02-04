@@ -38,7 +38,7 @@ const Signup = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        "https://mbo.bookbank.com.ng/member/sign-up",
+        "http://localhost:3000/member/sign-up",
         formData
       );
       toast.success(

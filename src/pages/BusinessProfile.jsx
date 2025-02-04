@@ -92,7 +92,6 @@ const categories = [
   },
   {
     name: "Trades and Maintenance",
-    examples: ["Plumbing", "Electricians", "Landscaping", ""],
     examples: [
       "Plumbing",
       "Electricians",
