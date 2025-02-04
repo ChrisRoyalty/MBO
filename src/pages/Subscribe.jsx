@@ -104,7 +104,7 @@ const Subscribe = () => {
               {/* Flutterwave Payment Button */}
               <div className="shadow-lg mt-8 register px-6 md:px-14 md:py-4 py-3 bg-[#043D12] rounded-[9px] text-[#FFFDF2] flex flex-col gap-2">
                 <FlutterWaveButton
-                  className="bg-transparent text-white font-medium text-[18px] border-2 border-white px-4 py-2 rounded-lg"
+                  className="cursor-pointer bg-transparent text-white font-medium text-[18px] border-2 border-white px-4 py-2 rounded-lg"
                   {...fwConfig}
                   text="Subscribe Now"
                 />

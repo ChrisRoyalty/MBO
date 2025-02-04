@@ -43,9 +43,9 @@ const HeroSection = () => {
         >
           <h1 className="text-[#043D12] lg:text-[55px] lg:leading-[65px] text-[32px] max-w-full lg:mt-8 font-medium">
             Elevate Your Business. <br className="" />
-            Connect. Showcase.
-            <br className="" />
-            Grow.
+            <strong className="lg:text-[30px] text-[20px] italic">
+              Connect. Showcase. Grow.
+            </strong>
           </h1>
           <p className="lg:text-[28px] text-[14px] max-w-full mx-auto md:mx-0">
             Create a powerful online presence. Share your story, showcase your

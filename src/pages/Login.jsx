@@ -22,22 +22,23 @@ const Login = () => {
   };
   const navigate = useNavigate(); // Initialize navigate function
 
+  const BASE_URL = import.meta.env.VITE_BASE_URL; // Use Vite's import.meta.env
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = await axios.post(
-        "https://mbo.bookbank.com.ng/member/login",
-        { email, password }
-      );
+      const response = await axios.post(`${BASE_URL}/login`, {
+        email,
+        password,
+      });
 
       toast.success(response.data.message || "Login successful!");
 
-      // Delay navigation slightly to allow toast to show
       setTimeout(() => {
         navigate("/business-profile");
-      }, 1500); // 1.5 seconds delay
+      }, 1500);
     } catch (error) {
       const errorResponse = error.response?.data || {};
 
