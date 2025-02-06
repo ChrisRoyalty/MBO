@@ -59,7 +59,7 @@ const animations = {
   },
 };
 
-const Start = () => {
+const AddBusiness = () => {
   return (
     <motion.div
       initial="hidden"
@@ -82,16 +82,17 @@ const Start = () => {
           variants={animations.fadeIn}
           className="lg:text-[40px] text-[30px]"
         >
-          Don’t Hesitate, Get Started Now!
+          Don't see your business here?
         </motion.h1>
         <motion.p
           initial="hidden"
           whileInView="visible"
           viewport={{ once: false }}
           variants={animations.fadeIn}
-          className="lg:text-[20px] text-[18px]"
+          className="lg:text-[20px] text-[18px] w-[60%] mx-auto leading-9"
         >
-          Create your profile and let the world discover you!
+          Stand out and connect with potential customers today. Create your
+          profile and let the world discover you!
         </motion.p>
         <motion.div
           initial="hidden"
@@ -107,7 +108,7 @@ const Start = () => {
             href="/create-account"
             className="bg-[#FFFDF2] text-[#043D12] rounded-[48px] shadow-lg lg:text-[18px] text-[14px] md:px-8 px-4 py-3 md:py-4 w-fit mx-auto font-medium"
           >
-            Create my Profile
+            Add Your Business
           </motion.a>
         </motion.div>
       </motion.div>
@@ -115,4 +116,4 @@ const Start = () => {
   );
 };
 
-export default Start;
+export default AddBusiness;

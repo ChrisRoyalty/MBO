@@ -43,7 +43,7 @@ const HeroSection = () => {
         >
           <h1 className="text-[#043D12] lg:text-[55px] lg:leading-[65px] text-[32px] max-w-full lg:mt-8 font-medium">
             Elevate Your Business. <br className="" />
-            <strong className="lg:text-[30px] text-[20px] italic">
+            <strong className="lg:text-[32px] text-[20px] italic">
               Connect. Showcase. Grow.
             </strong>
           </h1>

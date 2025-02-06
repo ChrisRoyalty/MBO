@@ -23,7 +23,7 @@ const VerifyEmail = () => {
     }
 
     axios
-      .patch(`https://mbo.bookbank.com.ng/member/verify-emai?token=${token}`)
+      .get(`https://mbo.bookbank.com.ng/member/verify-emai?token=${token}`)
       .then((response) => {
         toast.success(response.data.message || "Email verified successfully!");
         console.log("Navigating to /subscribe...");
