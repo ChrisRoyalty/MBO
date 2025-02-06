@@ -66,7 +66,7 @@ const AddBusiness = () => {
       whileInView="visible"
       viewport={{ once: false }}
       variants={animations.scaleUp}
-      className="w-full h-[50vh] flex justify-center items-center bg-[#043D12]"
+      className="w-full lg:h-[50vh] max-lg:py-[7vh] flex justify-center items-center bg-[#043D12]"
     >
       <motion.div
         initial="hidden"
@@ -89,7 +89,7 @@ const AddBusiness = () => {
           whileInView="visible"
           viewport={{ once: false }}
           variants={animations.fadeIn}
-          className="lg:text-[20px] text-[18px] w-[60%] mx-auto leading-9"
+          className="lg:text-[20px] text-[18px] md:w-[60%] sm:w-[80%] w-full  mx-auto leading-9"
         >
           Stand out and connect with potential customers today. Create your
           profile and let the world discover you!
