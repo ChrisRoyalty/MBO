@@ -41,7 +41,7 @@ const Discover = () => {
           variants={animations.slideLeft}
           className="details flex flex-col md:gap-10 gap-8 text-center md:text-left max-lg:items-center"
         >
-          <h1 className=" text-[#FFFDF2] lg:leading-[65px] max-w-full lg:mt-8 font-medium max-lg:w-[80%] max-lg:mx-auto max-lg:text-center md:text-[48px] text-[32px]">
+          <h1 className=" text-[#FFFDF2] lg:leading-[65px] max-w-full mt-8 font-medium max-lg:mx-auto max-lg:text-center md:text-[45px] text-[32px]">
             Discover Businesses Near You Within the MindPower Network
           </h1>
 
