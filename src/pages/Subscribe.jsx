@@ -1,8 +1,42 @@
 import React from "react";
 import Good from "../components/svgs/Good";
 import { TbCurrencyNaira } from "react-icons/tb";
+import { FlutterWaveButton, closePaymentModal } from "flutterwave-react-v3";
 
 const Subscribe = () => {
+  const config = {
+    public_key: "FLWPUBK_TEST-5e9e360f5c8914da44ae6d55a0ae2867-X", // Replace with your Flutterwave public key
+    tx_ref: `MBO-${Date.now()}`, // Unique transaction reference
+    amount: 15000,
+    currency: "NGN",
+    payment_options: "card, banktransfer, ussd",
+    customer: {
+      email: "user@example.com", // Replace with dynamic user email if available
+      phone_number: "08012345678", // Replace with dynamic user phone if available
+      name: "John Doe", // Replace with dynamic user name if available
+    },
+    customizations: {
+      title: "MBO Subscription",
+      description: "Payment for yearly subscription",
+      logo: "https://yourwebsite.com/logo.png", // Add your logo URL
+    },
+  };
+
+  const fwConfig = {
+    ...config,
+    callback: (response) => {
+      console.log(response);
+      if (response.status === "successful") {
+        alert("Payment successful! Your subscription is now active.");
+        // Here, you should send a request to your backend to activate the subscription
+      }
+      closePaymentModal();
+    },
+    onClose: () => {
+      console.log("Payment closed");
+    },
+  };
+
   return (
     <div className="bg-[#043D12] w-full h-[100vh] max-lg:py-16 lg:h-screen flex flex-col justify-center items-center">
       <div className="w-[85%] md:w-[70%] h-fit text-center flex flex-col gap-8">
@@ -66,14 +100,14 @@ const Subscribe = () => {
                   Enhanced Credibility{" "}
                 </li>
               </ul>
+
+              {/* Flutterwave Payment Button */}
               <div className="shadow-lg mt-8 register px-6 md:px-14 md:py-4 py-3 bg-[#043D12] rounded-[9px] text-[#FFFDF2] flex flex-col gap-2">
-                <h4 className="md:text-[22px] text-[16px] font-medium">
-                  REGISTER
-                </h4>
-                <p className="md:text-[16px] text-[12px] md:leading-8">
-                  Secure Your Spot Today. Subscribe Now and{" "}
-                  <br className="max-md:hidden" /> Watch Your Business Thrive!
-                </p>
+                <FlutterWaveButton
+                  className="bg-transparent text-white font-medium text-[18px] border-2 border-white px-4 py-2 rounded-lg"
+                  {...fwConfig}
+                  text="Subscribe Now"
+                />
               </div>
             </div>
           </div>

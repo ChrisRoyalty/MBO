@@ -133,7 +133,10 @@ const BusinessProfile = () => {
       <div className="max-lg:hidden w-full h-full flex justify-center items-center bg-[url('/Group2.svg')] bg-cover bg-center bg-green-800">
         <div className="w-full h-[90%] flex flex-col items-center">
           <div className="w-[90%] text-[#FFFDF2] mt-8">
-            <Link to="/" className="lg:text-[50px] text-[32px] font-medium">
+            <Link
+              to="/"
+              className="lg:text-[50px] text-[32px] font-medium leading-[70px]"
+            >
               Tell us about <br /> your business{" "}
             </Link>
             <p className="text-[18px]">
