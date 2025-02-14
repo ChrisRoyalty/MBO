@@ -7,39 +7,31 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const ForgottenPassword = () => {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(""); // Only email state
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match!");
-      return;
-    }
-
-    if (!token) {
-      toast.error("Invalid or missing token.");
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      const response = await axios.patch(
-        `https://mbo.bookbank.com.ng/member/reset-password?token=${token}`,
-        { password, confirmPassword }
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/forgot-password`, // Use the VITE_ prefixed environment variable
+        { email }
       );
 
-      toast.success(response.data.message || "Password reset successful!");
+      toast.success(
+        response.data.message || "Password reset instructions sent!"
+      );
 
       setTimeout(() => {
         navigate("/login");
       }, 1500);
     } catch (error) {
       const errorMessage =
-        error.response?.data?.error || "Reset failed. Try again.";
+        error.response?.data?.error || "Reset request failed. Try again.";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);

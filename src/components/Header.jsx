@@ -13,7 +13,6 @@ const navItemVariants = {
     transition: { delay: i * 0.15, duration: 0.4, ease: "easeOut" },
   }),
 };
-
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
@@ -31,7 +30,7 @@ const Header = () => {
 
   return (
     <div className="w-full h-fit flex justify-center items-center bg-[#FFFDF2] py-[5vh] lg:py-[6vh]">
-      <div className="w-[85%] h-[8vh] md:h-[10vh] bg-[#043D12] px-[20px] md:px-[50px] flex justify-between items-center rounded-[48px] md:shadow-lg">
+      <div className="w-[85%] h-[8vh] md:h-[10vh] bg-[#043D12] px-[20px] md:px-[50px] lg:py-10 flex justify-between items-center rounded-[48px] md:shadow-lg">
         {/* Logo */}
         <Link to="/">
           <img
@@ -85,17 +84,30 @@ const Header = () => {
         {/* Desktop Navigation */}
         <div className="hidden md:flex gap-8 items-center text-white">
           {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`text-[20px] transition ${
-                location.pathname === item.path
-                  ? "text-white font-bold border-b-2 border-white"
-                  : "hover:text-[21px]"
-              } ${item.className || ""}`}
-            >
-              {item.name}
-            </Link>
+            <motion.div key={item.path} className="relative group">
+              <Link
+                to={item.path}
+                className={`relative text-[20px] transition-all duration-300 ${
+                  location.pathname === item.path
+                    ? "text-[#FFCF00] font-bold"
+                    : "hover:text-[#FFCF00]"
+                } ${item.className || ""}`}
+              >
+                {item.name}
+                {/* Creeping underline animation */}
+                {item.path !== "/login" && (
+                  <motion.div
+                    className="absolute bottom-[-3px] left-0 h-[3px] bg-[#FFCF00] origin-left"
+                    initial={{ width: 0 }}
+                    animate={{
+                      width: location.pathname === item.path ? "100%" : "0%",
+                    }}
+                    whileHover={{ width: "100%" }}
+                    transition={{ duration: 0.4, ease: "easeInOut" }}
+                  />
+                )}
+              </Link>
+            </motion.div>
           ))}
         </div>
 

@@ -22,15 +22,18 @@ const Footer = () => {
       initial="hidden"
       whileInView="visible"
       viewport={{ once: false }}
-      className="bg-[#FAFEF4] w-full h-fit flex justify-center items-center text-[#043D12]"
+      className="bg-[#FAFEF4] w-full h-fit flex flex-col justify-center items-center text-[#043D12]"
     >
       <motion.div
         variants={fadeInUp}
-        className="w-[85%] h-fit flex max-lg:flex-col justify-between py-8 gap-8"
+        className="w-[85%] h-fit flex max-lg:flex-col max-lg:text-center justify-between py-8 gap-8"
       >
-        <motion.div variants={fadeInUp} className="w-full flex flex-col gap-4">
+        <motion.div
+          variants={fadeInUp}
+          className="w-full flex flex-col gap-4 max-lg:items-center"
+        >
           <Link path="/" className="logo">
-            <img src={MindPowerLogo} alt="Mind-Power-Logo" className="w-32" />
+            <img src={MindPowerLogo} alt="Mind-Power-Logo" className=" h-16" />
           </Link>
           <p className="text-[16px] text-[#043D12]">
             Your business deserves a platform designed for growth. Join a
@@ -51,22 +54,12 @@ const Footer = () => {
             )}
           </div>
         </motion.div>
-        <motion.nav
-          variants={fadeInUp}
-          className="w-fit flex items-start gap-4 text-[16px] font-medium"
-        >
-          <Link className="hover:text-[17px]" to="/">
-            Home
-          </Link>
-          <Link className="hover:text-[17px]" to="/community">
-            Community
-          </Link>
-        </motion.nav>
+
         <motion.div
           variants={fadeInUp}
-          className="w-full contact flex flex-col gap-4"
+          className="w-full contact flex flex-col gap-4 max-lg:items-center"
         >
-          <h4 className="text-[16px] font-medium">Contact Info</h4>
+          <h4 className="text-[17px] font-bold">Contact Info</h4>
           <p className="text-[14px]">
             <strong>Address:</strong> 3 CONVENANT CLOSE BEHIND RUFUS OBI
             CHEMIST, ALONG ABA-OWERRI ROAD, Aba 450272
@@ -82,11 +75,31 @@ const Footer = () => {
         </motion.div>
         <motion.nav
           variants={fadeInUp}
-          className="policies text-[14px] flex lg:justify-center items-start gap-2 w-full"
+          className="policies text-[14px] flex flex-col gap-2 w-full items-center"
         >
-          <Link to="privacy-policy">Privacy Policy</Link>
-          <Link to="terms-of-service">Terms of service</Link>
+          <div className="flex flex-col gap-6">
+            <Link className="hover:text-[17px]" to="/">
+              Home
+            </Link>
+            <Link className="hover:text-[17px]" to="/community">
+              Community
+            </Link>
+            <Link to="privacy-policy" className="hover:text-[17px]">
+              Privacy Policy
+            </Link>
+            <Link to="terms-of-service" className="hover:text-[17px]">
+              Terms of service
+            </Link>
+          </div>
         </motion.nav>
+      </motion.div>
+      <motion.div
+        variants={fadeInUp}
+        className="h-[10vh] policies text-[14px] flex flex-col gap-2 w-full items-center justify-center border-t-[1px] border-[#043D12]"
+      >
+        <p className="text-[#043D12]">
+          © 2025 Digital Aba. All rights reserved.
+        </p>
       </motion.div>
     </motion.div>
   );

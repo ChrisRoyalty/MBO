@@ -31,7 +31,7 @@ const ResetPassword = () => {
 
     try {
       const response = await axios.patch(
-        `https://mbo.bookbank.com.ng/member/reset-password?token=${token}`, // Token in URL
+        `${import.meta.env.VITE_BASE_URL}/reset-password?token=${token}`, // Token in URL
         { password, confirmPassword }
       );
 

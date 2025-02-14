@@ -29,6 +29,7 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Form submitted, sending request...");
 
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match!");
@@ -36,14 +37,16 @@ const Signup = () => {
     }
 
     setLoading(true);
+
     try {
-      const response = await axios.post(
-        "http://localhost:3000/member/sign-up",
-        formData
-      );
-      toast.success(
-        response.data.message || "Signup successful! Welcome to MBO."
-      );
+      const apiUrl = `${import.meta.env.VITE_BASE_URL}/sign-up`;
+      console.log("API URL:", apiUrl);
+      console.log("Sending Data:", formData);
+
+      const response = await axios.post(apiUrl, formData);
+      console.log("Response received:", response);
+
+      toast.success(response.data.message || "Signup successful!");
       setFormData({
         firstName: "",
         lastName: "",
@@ -52,23 +55,8 @@ const Signup = () => {
         confirmPassword: "",
       });
     } catch (error) {
-      const errorResponse = error.response?.data || {};
-
-      if (errorResponse.errors && Array.isArray(errorResponse.errors)) {
-        // Display each error message in the 'errors' array
-        errorResponse.errors.forEach((errMsg) => {
-          toast.error(errMsg);
-        });
-      } else if (errorResponse.error) {
-        // Display single error message from 'error' field
-        toast.error(errorResponse.error);
-      } else {
-        // Default error message if no specific errors are found
-        toast.error(
-          errorResponse.message ||
-            "An error occurred during signup. Please try again."
-        );
-      }
+      console.error("Error:", error);
+      toast.error("Signup failed! Check logs.");
     } finally {
       setLoading(false);
     }

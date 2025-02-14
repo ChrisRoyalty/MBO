@@ -5,7 +5,7 @@ import { FlutterWaveButton, closePaymentModal } from "flutterwave-react-v3";
 
 const Subscribe = () => {
   const config = {
-    public_key: "FLWPUBK_TEST-5e9e360f5c8914da44ae6d55a0ae2867-X", // Replace with your Flutterwave public key
+     // Replace with your Flutterwave public key
     tx_ref: `MBO-${Date.now()}`, // Unique transaction reference
     amount: 15000,
     currency: "NGN",
@@ -24,12 +24,38 @@ const Subscribe = () => {
 
   const fwConfig = {
     ...config,
-    callback: (response) => {
+    callback: async (response) => {
       console.log(response);
       if (response.status === "successful") {
-        alert("Payment successful! Your subscription is now active.");
-        // Here, you should send a request to your backend to activate the subscription
+        // Send transaction details to backend for verification
+        try {
+          const res = await fetch("http://localhost:5000/api/verify-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              transactionId: response.transaction_id, // Send transaction ID
+              tx_ref: response.tx_ref, // Send reference
+              amount: config.amount,
+              currency: config.currency,
+              customer: config.customer,
+            }),
+          });
+  
+          const data = await res.json();
+          console.log("Backend Response:", data);
+  
+          if (res.ok) {
+            alert("Payment verified! Subscription activated.");
+          } else {
+            alert("Payment verification failed.");
+          }
+        } catch (error) {
+          console.error("Error verifying payment:", error);
+        }
+      } else {
+        alert("Payment was not successful.");
       }
+  
       closePaymentModal();
     },
     onClose: () => {
@@ -104,7 +130,7 @@ const Subscribe = () => {
               {/* Flutterwave Payment Button */}
               <div className="shadow-lg mt-8 register px-6 md:px-14 md:py-4 py-3 bg-[#043D12] rounded-[9px] text-[#FFFDF2] flex flex-col gap-2">
                 <FlutterWaveButton
-                  className="bg-transparent text-white font-medium text-[18px] border-2 border-white px-4 py-2 rounded-lg"
+                  className="cursor-pointer bg-transparent text-white font-medium text-[18px] border-2 border-white px-4 py-2 rounded-lg"
                   {...fwConfig}
                   text="Subscribe Now"
                 />

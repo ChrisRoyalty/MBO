@@ -10,6 +10,7 @@ import BusinessProfile from "./pages/BusinessProfile";
 import VerifyEmail from "./pages/VerifyEmail";
 import ForgottenPassword from "./pages/ForgottenPassword";
 import ResetPassword from "./pages/ResetPassword";
+import SearchPage from "./pages/SearchPage";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/forgotten-password" element={<ForgottenPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/search" element={<SearchPage />} />
       </Routes>
     </>
   );
