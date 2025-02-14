@@ -11,15 +11,22 @@ import VerifyEmail from "./pages/VerifyEmail";
 import ForgottenPassword from "./pages/ForgottenPassword";
 import ResetPassword from "./pages/ResetPassword";
 import SearchPage from "./pages/SearchPage";
+import UserDashboard from "./pages/UserDashboard";
+import CreateProfile from "./components/user-dashboard/CreateProfile";
+import Profile from "./components/user-dashboard/Profile";
+import Analytics from "./components/user-dashboard/Analytics";
 
 function App() {
   return (
     <>
       <Routes>
+        {/* Main Layout */}
         <Route path="/" element={<Layout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/community" element={<Community />} />
+          <Route index element={<Home />} />
+          <Route path="community" element={<Community />} />
         </Route>
+
+        {/* Authentication & Misc Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/create-account" element={<Signup />} />
         <Route path="/subscribe" element={<Subscribe />} />
@@ -28,6 +35,16 @@ function App() {
         <Route path="/forgotten-password" element={<ForgottenPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/search" element={<SearchPage />} />
+
+        {/* User Dashboard with Nested Routes */}
+        <Route path="/user-dashboard" element={<UserDashboard />}>
+          <Route index element={<Profile />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="create-profile" element={<CreateProfile />} />
+        </Route>
+
+        {/* Standalone Route */}
+        {/* <Route path="/create-profile" element={<CreateProfile />} /> */}
       </Routes>
     </>
   );
