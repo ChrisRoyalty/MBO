@@ -6,7 +6,7 @@ import { MdOutlineAnalytics } from "react-icons/md";
 import { IoIosLogOut } from "react-icons/io";
 import { CgMenuLeftAlt } from "react-icons/cg";
 import { MdOutlineCancelPresentation } from "react-icons/md";
-import BusinessImg from "../assets/businessImg.jpeg";
+import BusinessImg from "../../assets/businessImg.jpeg";
 import { motion } from "framer-motion";
 
 const navItems = [
@@ -32,7 +32,7 @@ const navItems = [
   },
 ];
 
-const UserDashboard = () => {
+const AdminDashboard = () => {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(
     JSON.parse(sessionStorage.getItem("sidebarState")) || false
@@ -182,4 +182,4 @@ const UserDashboard = () => {
   );
 };
 
-export default UserDashboard;
+export default AdminDashboard;

@@ -54,7 +54,7 @@ const HeroSection = () => {
           <div className="btns flex md:gap-2 lg:gap-4 gap-4  justify-center md:justify-start mt-4">
             <motion.div variants={animations.buttonHover} whileHover="hover">
               <Link
-                to="/business-profile"
+                to="/create-account"
                 className="w-fit bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[12px] md:px-8 font-bold px-4 py-4 md:py-5"
               >
                 Create my Profile
@@ -62,7 +62,7 @@ const HeroSection = () => {
             </motion.div>
             <motion.div variants={animations.buttonHover} whileHover="hover">
               <Link
-                to="/subscribe"
+                to="/community/all-businesses"
                 className="w-fit bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[12px] md:px-8 font-bold px-4 py-4 md:py-5"
               >
                 Explore Businesses

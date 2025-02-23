@@ -1,131 +1,123 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { CiLock } from "react-icons/ci";
 import { BsPerson } from "react-icons/bs";
 import { MdOutlineCategory } from "react-icons/md";
 import { VscSymbolKeyword } from "react-icons/vsc";
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
-import { IoIosArrowRoundBack } from "react-icons/io";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import Hand from "../components/svgs/Hand";
 
-const categories = [
-  {
-    name: "Retail and E-commerce",
-    examples: [
-      "Grocery Stores",
-      "Clothing and Accessories",
-      "Electronics",
-      "Home Goods",
-      "Online Stores",
-    ],
-  },
-  {
-    name: "Food and Beverage",
-    examples: [
-      "Restaurants",
-      "Cafés",
-      "Catering Services",
-      "Bakeries",
-      "Food Trucks",
-    ],
-  },
-  {
-    name: "Professional Services",
-    examples: [
-      "Legal Services",
-      "Accounting and Tax Services",
-      "Consulting",
-      "Real Estate Agencies",
-      "Business Coaching",
-    ],
-  },
-  {
-    name: "Health and Wellness",
-    examples: [
-      "Gyms and Fitness Studios",
-      "Spas and Salons",
-      "Medical Practices",
-      "Alternative Medicine",
-      "Mental Health Services",
-    ],
-  },
-  {
-    name: "Creative and Media",
-    examples: [
-      "Photography",
-      "Graphic Design",
-      "Marketing Agencies",
-      "Content Creation",
-      "Publishing",
-    ],
-  },
-  {
-    name: "Technology",
-    examples: [
-      "IT Services",
-      "Software Development",
-      "Web Design",
-      "Cybersecurity",
-      "Tech Support",
-    ],
-  },
-  {
-    name: "Education and Training",
-    examples: [
-      "Schools",
-      "Online Courses",
-      "Vocational Training",
-      "Vocational Training",
-      "Childcare Services",
-    ],
-  },
-  {
-    name: "Events and Entertainment",
-    examples: [
-      "Event Planning",
-      "DJs and Musicians",
-      "Party Rentals",
-      "Cinemas",
-      "Entertainment Venues",
-    ],
-  },
-  {
-    name: "Trades and Maintenance",
-    examples: ["Plumbing", "Electricians", "Landscaping", ""],
-    examples: [
-      "Plumbing",
-      "Electricians",
-      "Landscaping",
-      "Cleaning Services",
-      "Construction",
-    ],
-  },
-  {
-    name: "Nonprofits and Community",
-    examples: [
-      "NGOs",
-      "Religious Organizations",
-      "Community Groups",
-      "Advocacy Groups",
-    ],
-  },
-  { name: "Other", examples: [] },
-];
-
 const BusinessProfile = () => {
   const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(
-    "Select Business Category"
-  );
+  const [selectedCategory, setSelectedCategory] = useState({
+    id: "",
+    name: "",
+  });
+  const [categories, setCategories] = useState([]);
+  const [error, setError] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [description, setDescription] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(
+        "https://mbo.bookbank.com.ng/member/all-category"
+      );
+      setCategories(response.data.category);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const toggleDropdown = () => {
     setShowDropdown(!showDropdown);
   };
 
-  const handleCategorySelect = (category) => {
-    setSelectedCategory(category);
-    setShowDropdown(false);
+  const handleCategorySelect = (id, name) => {
+    setSelectedCategory({ id, name }); // Store both ID and name
+    setShowDropdown(false); // Close dropdown after selection
+  };
+
+  const navigate = useNavigate(); // Initialize navigate function
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedCategory.id) {
+      toast.error("Please select a business category.");
+      return;
+    }
+
+    const memberId = localStorage.getItem("member_id");
+    const token = localStorage.getItem("token");
+
+    if (!memberId) {
+      toast.error("Member ID is missing. Please log in again.");
+      return;
+    }
+
+    const payload = {
+      businessName,
+      categoryIds: [selectedCategory.id],
+      description,
+      keyword: keyword.split(",").map((kw) => kw.trim()),
+    };
+
+    try {
+      setLoading(true);
+
+      const response = await axios.post(
+        `https://mbo.bookbank.com.ng/member/create-profile/${memberId}`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data?.newProfile?.id) {
+        const profileId = response.data.newProfile.id;
+
+        // Store in localStorage
+        localStorage.setItem("profile_id", profileId);
+
+        console.log("Stored Profile ID:", profileId); // ✅ Debugging
+      }
+
+      toast.success(
+        response.data.message || "Business profile created successfully!"
+      );
+
+      // ✅ Redirect user after 2 seconds
+      setTimeout(() => {
+        navigate("/user-dashboard");
+      }, 2000);
+    } catch (error) {
+      console.error(
+        "Error submitting form:",
+        error.response ? error.response.data : error.message
+      );
+
+      toast.error(
+        error.response?.data?.error ||
+          "Failed to create business profile. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -138,7 +130,7 @@ const BusinessProfile = () => {
               to="/"
               className="lg:text-[50px] text-[32px] font-medium leading-[70px]"
             >
-              Tell us about <br /> your business{" "}
+              Tell us about <br /> your business
             </Link>
             <p className="text-[18px]">
               Step into a community that puts your business in the spotlight.
@@ -166,13 +158,19 @@ const BusinessProfile = () => {
             Business Profile <Hand />
           </h4>
 
-          <form className="max-lg:w-full flex flex-col gap-6 md:mt-8 mt-16 max-lg:items-center">
+          <form
+            className="max-lg:w-full flex flex-col gap-6 md:mt-8 mt-16 max-lg:items-center"
+            onSubmit={handleSubmit}
+          >
             {/* Business Name */}
             <div className="max-lg:w-full border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
               <BsPerson className="text-[#6A7368]" />
               <input
                 type="text"
+                required
                 placeholder="Business Name"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
                 className="max-lg:w-full h-full border-none focus:outline-none text-[#6A7368]"
               />
             </div>
@@ -186,7 +184,9 @@ const BusinessProfile = () => {
               >
                 <div className="flex items-center gap-2">
                   <MdOutlineCategory className="text-[#6A7368] text-[18px]" />
-                  <span className="text-[#6A7368]">{selectedCategory}</span>
+                  <span className="text-sm md:text-base truncate max-w-[80%]">
+                    {selectedCategory.name || "Select Business Category"}
+                  </span>
                 </div>
                 {showDropdown ? (
                   <IoMdArrowDropup className="text-[#6A7368] cursor-pointer" />
@@ -194,18 +194,21 @@ const BusinessProfile = () => {
                   <IoMdArrowDropdown className="text-[#6A7368] cursor-pointer" />
                 )}
               </button>
+
               {showDropdown && (
                 <ul className="absolute top-[50px] border-4 border-[#043D12] left-0 w-full bg-[#FFFDF2] text-[#043D12] rounded-[25px] mt-2 p-2 shadow-lg max-h-[200px] overflow-y-auto">
-                  {categories.map((category, index) => (
+                  {categories.map((category) => (
                     <li
-                      key={index}
+                      key={category.id}
                       className="py-2 px-4 cursor-pointer hover:bg-[#043D12]/30 rounded-[20px]"
-                      onClick={() => handleCategorySelect(category.name)}
+                      onClick={() =>
+                        handleCategorySelect(category.id, category.name)
+                      } // Pass both ID and name
                     >
                       {category.name}
-                      {category.examples.length > 0 && (
+                      {category.description && (
                         <p className="text-xs text-[#043D12]/90">
-                          {category.examples.join(", ")}
+                          {category.description}
                         </p>
                       )}
                     </li>
@@ -213,13 +216,17 @@ const BusinessProfile = () => {
                 </ul>
               )}
             </div>
+            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
 
             {/* Keywords */}
             <div className="max-lg:w-full border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
               <VscSymbolKeyword className="text-[#6A7368]" />
               <input
                 type="text"
+                required
                 placeholder="Enter keywords"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
                 className="max-lg:w-full h-full border-none focus:outline-none text-[#6A7368]"
               />
             </div>
@@ -229,14 +236,21 @@ const BusinessProfile = () => {
               <CiLock className="text-[#6A7368]" />
               <input
                 type="text"
+                required
                 placeholder="Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 className="max-lg:w-full h-full border-none focus:outline-none text-[#6A7368]"
               />
             </div>
 
             {/* Submit Button */}
-            <button className="md:mt-6 mt-16 w-full text-[#FFFDF2] bg-[#043D12] hover:bg-[#043D12]/75 shadow-lg rounded-[27px] px-8 flex justify-center items-center lg:h-[60px] h-[48px]">
-              Create Profile{" "}
+            <button
+              type="submit"
+              disabled={loading}
+              className="cursor-pointer md:mt-6 mt-16 w-full text-[#FFFDF2] bg-[#043D12] hover:bg-[#043D12]/75 shadow-lg rounded-[27px] px-8 flex justify-center items-center lg:h-[60px] h-[48px]"
+            >
+              {loading ? "Submitting..." : "Create Profile"}
             </button>
           </form>
         </div>

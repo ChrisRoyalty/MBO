@@ -8,7 +8,6 @@ import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import Hand from "../components/svgs/Hand";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { IoIosArrowRoundBack } from "react-icons/io";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -56,7 +55,28 @@ const Signup = () => {
       });
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Signup failed! Check logs.");
+
+      if (error.response) {
+        const errorData = error.response.data;
+
+        // If the API response contains an "error" key, display it exactly as received
+        if (errorData.error) {
+          toast.error(errorData.error);
+        } else if (errorData.message) {
+          toast.error(errorData.message);
+        } else if (errorData.errors) {
+          // If the API sends validation errors as an object
+          Object.values(errorData.errors).forEach((errMsgArray) => {
+            errMsgArray.forEach((errMsg) => {
+              toast.error(errMsg);
+            });
+          });
+        } else {
+          toast.error("Signup failed! Unexpected error.");
+        }
+      } else {
+        toast.error("Signup failed! Please check your network.");
+      }
     } finally {
       setLoading(false);
     }

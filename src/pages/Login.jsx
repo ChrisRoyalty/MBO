@@ -34,25 +34,37 @@ const Login = () => {
         password,
       });
 
+      console.log("🔍 Login API Full Response:", response.data); // Debugging
+
+      // Ensure `member` and `id` exist before using them
+      if (!response.data.member || !response.data.member.id) {
+        console.error("❌ Member ID is missing in response.");
+        return;
+      }
+
+      // Extract and store ID and token
+      const { id } = response.data.member;
+      const { token } = response.data;
+
+      if (!id || !token) {
+        console.error("❌ Missing Member ID or Token, not storing.");
+        return;
+      }
+
+      localStorage.setItem("member_id", id);
+      localStorage.setItem("token", token);
+
+      console.log("✅ Stored Member ID:", localStorage.getItem("member_id"));
+      console.log("✅ Stored Token:", localStorage.getItem("token"));
+
       toast.success(response.data.message || "Login successful!");
 
       setTimeout(() => {
         navigate("/business-profile");
       }, 1500);
     } catch (error) {
-      const errorResponse = error.response?.data || {};
-
-      if (errorResponse.errors && Array.isArray(errorResponse.errors)) {
-        errorResponse.errors.forEach((errMsg) => {
-          toast.error(errMsg);
-        });
-      } else if (errorResponse.error) {
-        toast.error(errorResponse.error);
-      } else {
-        toast.error("An unexpected error occurred. Please try again.");
-      }
-
-      console.log("Login error:", error.response?.data || error);
+      console.error("❌ Login error:", error.response?.data || error);
+      toast.error("Login failed. Please try again.");
     } finally {
       setIsLoading(false);
     }

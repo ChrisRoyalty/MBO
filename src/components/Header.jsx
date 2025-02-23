@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import MindPowerLogo from "../assets/mbo-logo.png";
 import MenuIcon from "../assets/menu.svg";
+import ProfilePic from "../assets/profilepic.svg";
 
 const navItemVariants = {
   hidden: { opacity: 0, scale: 0.5, y: -20 },
@@ -13,6 +14,7 @@ const navItemVariants = {
     transition: { delay: i * 0.15, duration: 0.4, ease: "easeOut" },
   }),
 };
+
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
@@ -29,8 +31,29 @@ const Header = () => {
   ];
 
   return (
-    <div className="w-full h-fit flex justify-center items-center bg-[#FFFDF2] py-[5vh] lg:py-[6vh]">
-      <div className="w-[85%] h-[8vh] md:h-[10vh] bg-[#043D12] px-[20px] md:px-[50px] lg:py-10 flex justify-between items-center rounded-[48px] md:shadow-lg">
+    <div
+      className={`w-full h-fit flex flex-col justify-center items-center transition-all duration-500 relative ${
+        location.pathname === "/community/profile"
+          ? "bg-cover bg-center bg-no-repeat py-[5vh] lg:pt-[6vh] pb-[12vh]"
+          : "bg-[#FFFDF2] py-[5vh] lg:py-[6vh]"
+      }`}
+      style={{
+        backgroundImage:
+          location.pathname === "/community/profile"
+            ? "url('/profile.svg')"
+            : "none",
+      }}
+    >
+      {/* Profile Picture Positioned at Bottom */}
+      {location.pathname === "/community/profile" && (
+        <img
+          src={ProfilePic}
+          alt="Profile_Picture"
+          className="absolute bottom-[-60px] w-[120px] h-[120px] rounded-full border-4 border-[#FFCF00] shadow-lg lg:left-[12%]"
+        />
+      )}
+
+      <div className="w-[85%] h-[8vh] md:h-[10vh] bg-[#043D12] px-[20px] md:px-[50px] lg:py-10 flex justify-between items-center rounded-[48px] md:shadow-lg relative z-10">
         {/* Logo */}
         <Link to="/">
           <img
@@ -67,6 +90,8 @@ const Header = () => {
                       to={item.path}
                       onClick={() => setIsOpen(false)}
                       className={`text-[20px] font-medium px-8 py-2 transition ${
+                        (item.path === "/community" &&
+                          location.pathname.startsWith("/community")) ||
                         location.pathname === item.path
                           ? "text-[#02530c] font-bold border-b-2 border-[#02530c]"
                           : "text-[#043D12] hover:text-[#02530c]"
@@ -88,6 +113,8 @@ const Header = () => {
               <Link
                 to={item.path}
                 className={`relative text-[20px] transition-all duration-300 ${
+                  (item.path === "/community" &&
+                    location.pathname.startsWith("/community")) ||
                   location.pathname === item.path
                     ? "text-[#FFCF00] font-bold"
                     : "hover:text-[#FFCF00]"
