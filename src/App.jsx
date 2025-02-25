@@ -1,7 +1,8 @@
 import React from "react";
 import { ToastContainer } from "react-toastify";
-
 import { Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext"; // Import AuthProvider
+import PrivateRoute from "./components/PrivateRoute"; // Import PrivateRoute
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Community from "./pages/Community";
@@ -21,7 +22,7 @@ import ProductAndServices from "./components/user-dashboard/ProductAndServices";
 import ContactAndSocials from "./components/user-dashboard/ContactAndSocials";
 import Subscription from "./components/user-dashboard/Subscription";
 import Password from "./components/user-dashboard/Password";
-import EditPofile from "./components/user-dashboard/EditProfile";
+import EditProfile from "./components/user-dashboard/EditProfile";
 import AllBusiness from "./components/community/AllBusiness";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import CommunityMain from "./components/community/CommunityMain";
@@ -29,12 +30,22 @@ import ProfilePage from "./components/community/ProfilePage";
 
 function App() {
   return (
-    <>
+    <AuthProvider>
       <ToastContainer position="top-right" autoClose={3000} />
-
       <Routes>
-        {/* Main Layout */}
-        <Route path="/" element={<Layout />}>
+        {/* Public Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/create-account" element={<Signup />} />
+
+        {/* Protected Routes */}
+        <Route
+          path="/"
+          element={
+            // <PrivateRoute>
+            <Layout />
+            // </PrivateRoute>
+          }
+        >
           <Route index element={<Home />} />
           <Route path="community" element={<Community />}>
             <Route index element={<CommunityMain />} />
@@ -44,24 +55,67 @@ function App() {
           </Route>
         </Route>
 
-        {/* Authentication & Misc Routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/create-account" element={<Signup />} />
-        <Route path="/subscribe" element={<Subscribe />} />
-        <Route path="/business-profile" element={<BusinessProfile />} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
-        <Route path="/forgotten-password" element={<ForgottenPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/search" element={<SearchPage />} />
+        <Route
+          path="/subscribe"
+          element={
+            <PrivateRoute>
+              <Subscribe />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/business-profile"
+          element={
+            <PrivateRoute>
+              <BusinessProfile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/verify-email"
+          element={
+            <PrivateRoute>
+              <VerifyEmail />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/forgotten-password"
+          element={
+            <PrivateRoute>
+              <ForgottenPassword />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/reset-password/:token"
+          element={
+            <PrivateRoute>
+              <ResetPassword />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/search"
+          element={
+            <PrivateRoute>
+              <SearchPage />
+            </PrivateRoute>
+          }
+        />
 
         {/* User Dashboard with Nested Routes */}
-        <Route path="/user-dashboard" element={<UserDashboard />}>
-          {/* Index route for User Dashboard */}
+        <Route
+          path="/user-dashboard"
+          element={
+            <PrivateRoute>
+              <UserDashboard />
+            </PrivateRoute>
+          }
+        >
           <Route index element={<Profile />} />
-
-          {/* Profile section with nested routes */}
           <Route path="profile" element={<CreateProfile />}>
-            <Route index element={<EditPofile />} />
+            <Route index element={<EditProfile />} />
             <Route
               path="products-and-services"
               element={<ProductAndServices />}
@@ -70,25 +124,25 @@ function App() {
             <Route path="subscription" element={<Subscription />} />
             <Route path="password" element={<Password />} />
           </Route>
-
-          {/* Other user dashboard routes */}
           <Route path="analytics" element={<Analytics />} />
           <Route path="create-profile" element={<CreateProfile />} />
         </Route>
 
-        <Route path="/admin" element={<AdminDashboard />}>
-          {/* Index route for User Dashboard */}
+        {/* Admin Dashboard */}
+        <Route
+          path="/admin"
+          element={
+            <PrivateRoute>
+              <AdminDashboard />
+            </PrivateRoute>
+          }
+        >
           <Route index element={<Profile />} />
-
-          {/* Other user dashboard routes */}
           <Route path="analytics" element={<Analytics />} />
           <Route path="create-profile" element={<CreateProfile />} />
         </Route>
-
-        {/* Standalone Route */}
-        {/* <Route path="/create-profile" element={<CreateProfile />} /> */}
       </Routes>
-    </>
+    </AuthProvider>
   );
 }
 

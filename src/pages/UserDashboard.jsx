@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import React, { useState, useEffect, useContext } from "react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { LuLayoutGrid } from "react-icons/lu";
 import { PiUserCircle } from "react-icons/pi";
 import { MdOutlineAnalytics } from "react-icons/md";
@@ -8,6 +8,8 @@ import { CgMenuLeftAlt } from "react-icons/cg";
 import { MdOutlineCancelPresentation } from "react-icons/md";
 import BusinessImg from "../assets/businessImg.jpeg";
 import { motion } from "framer-motion";
+import { AuthContext } from "../context/AuthContext";
+import { toast } from "react-toastify";
 
 const navItems = [
   {
@@ -34,34 +36,38 @@ const navItems = [
 
 const UserDashboard = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, logout } = useContext(AuthContext);
   const [isSidebarOpen, setIsSidebarOpen] = useState(
     JSON.parse(sessionStorage.getItem("sidebarState")) || false
   );
 
   useEffect(() => {
     sessionStorage.setItem("sidebarState", JSON.stringify(isSidebarOpen));
-  }, [isSidebarOpen]);
+    if (!isAuthenticated) {
+      navigate("/login");
+    }
+  }, [isSidebarOpen, isAuthenticated, navigate]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
   };
 
   const handleLogout = () => {
-    sessionStorage.clear();
-    window.location.href = "/login";
+    logout(); // Use AuthContext logout
+    toast.success("Logged out successfully!");
+    navigate("/login");
   };
 
   return (
     <div className="w-full flex flex-col md:flex-row h-screen overflow-hidden relative">
-      {/* Sidebar */}
       <motion.aside
         initial={{ x: "-100%" }}
         animate={{ x: isSidebarOpen ? "0%" : "-100%" }}
         transition={{ duration: 0.5, ease: "easeInOut" }}
         className={`max-md:fixed z-50 top-0 left-0 lg:w-[25%] max-md:h-screen py-14 px-10 md:h-full h-auto overflow-y-auto bg-white border-r border-black shadow-2xl 
-  ${isSidebarOpen ? "absolute md:relative" : "absolute"}`}
+        ${isSidebarOpen ? "absolute md:relative" : "absolute"}`}
       >
-        {/* Close Sidebar Button */}
         <MdOutlineCancelPresentation
           onClick={toggleSidebar}
           className="text-[#043D12] text-[35px] absolute top-4 right-4 cursor-pointer transition-transform hover:scale-110"
@@ -108,7 +114,6 @@ const UserDashboard = () => {
               </motion.div>
             ))}
 
-            {/* Logout Button */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -116,7 +121,7 @@ const UserDashboard = () => {
             >
               <button
                 onClick={handleLogout}
-                className="text-[15px] flex items-center gap-4 px-6 py-2 rounded-[11px] transition-all duration-300 bg-red-600 text-white hover:bg-red-700"
+                className="text-[15px] flex items-center gap-4 px-6 py-2 rounded-[11px] transition-all duration-300 bg-red-600 text-white hover:bg-red-700 w-full"
               >
                 <IoIosLogOut className="text-[25px]" />
                 Logout
@@ -125,7 +130,6 @@ const UserDashboard = () => {
           </nav>
         </div>
 
-        {/* Business Profile Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -157,7 +161,6 @@ const UserDashboard = () => {
         </motion.div>
       </motion.aside>
 
-      {/* Main Content */}
       <main
         className={`transition-all duration-500 ${
           isSidebarOpen ? "md:w-[calc(100%-16rem)] ml-auto" : "w-full"

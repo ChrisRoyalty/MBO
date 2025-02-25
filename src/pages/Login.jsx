@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link } from "react-router";
+import React, { useState, useContext } from "react";
+import { Link } from "react-router-dom"; // Updated to react-router-dom
 import { FaRegEnvelope } from "react-icons/fa";
 import { CiLock } from "react-icons/ci";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
@@ -8,63 +8,105 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
-import { div } from "framer-motion/client";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
-// import { IoIosArrowRoundBack } from "react-icons/io";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
+
+// JWT decoding function
+const decodeJWT = (token) => {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error("❌ Error decoding JWT:", error);
+    return {};
+  }
+};
+
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const togglePasswordVisibility = () => {
-    setShowPassword((prev) => !prev);
-  };
-  const navigate = useNavigate(); // Initialize navigate function
+  const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
 
-  const BASE_URL = import.meta.env.VITE_BASE_URL; // Use Vite's import.meta.env
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = await axios.post(`${BASE_URL}/login`, {
+      const response = await axios.post(`${BASE_URL}/member/login`, {
         email,
         password,
       });
 
-      console.log("🔍 Login API Full Response:", response.data); // Debugging
+      console.log("🔍 Login API Full Response:", response.data);
 
-      // Ensure `member` and `id` exist before using them
-      if (!response.data.member || !response.data.member.id) {
-        console.error("❌ Member ID is missing in response.");
+      const { token, member } = response.data;
+      if (!token) {
+        console.error("❌ Token is missing in response.");
+        toast.error("Authentication failed. Missing credentials.");
         return;
       }
 
-      // Extract and store ID and token
-      const { id } = response.data.member;
-      const { token } = response.data;
+      // Decode token to get member ID and status
+      const tokenPayload = decodeJWT(token);
+      const { id: memberId, subscriptionStatus, profileStatus } = tokenPayload;
 
-      if (!id || !token) {
-        console.error("❌ Missing Member ID or Token, not storing.");
+      if (!memberId) {
+        console.error("❌ Member ID is missing in token payload.");
+        toast.error("Invalid response from server.");
         return;
       }
 
-      localStorage.setItem("member_id", id);
+      // Store token, member ID, and member data in localStorage
       localStorage.setItem("token", token);
+      localStorage.setItem("member_id", memberId);
+      localStorage.setItem("member", JSON.stringify(member)); // Store member object
+      login(token); // Update AuthContext with token
 
-      console.log("✅ Stored Member ID:", localStorage.getItem("member_id"));
       console.log("✅ Stored Token:", localStorage.getItem("token"));
+      console.log("✅ Stored Member ID:", localStorage.getItem("member_id"));
+      console.log("✅ Stored Member Data:", localStorage.getItem("member"));
+      console.log("🔍 Subscription Status from Token:", subscriptionStatus);
+      console.log("🔍 Profile Status from Token:", profileStatus);
 
       toast.success(response.data.message || "Login successful!");
 
+      // Redirect based on setup status
       setTimeout(() => {
-        navigate("/business-profile");
+        if (profileStatus === true && subscriptionStatus === "active") {
+          console.log("✅ Setup complete, redirecting to /dashboard");
+          navigate("/dashboard");
+        } else if (subscriptionStatus === "inactive") {
+          console.log("✅ Redirecting to /subscription");
+          navigate("/subscribe");
+        } else if (subscriptionStatus === "active" && profileStatus === false) {
+          console.log("✅ Redirecting to /business-profile");
+          navigate("/business-profile");
+        } else {
+          console.warn("⚠️ Unexpected status combination:", {
+            subscriptionStatus,
+            profileStatus,
+          });
+          navigate("/business-profile");
+        }
       }, 1500);
     } catch (error) {
       console.error("❌ Login error:", error.response?.data || error);
-      toast.error("Login failed. Please try again.");
+      toast.error(
+        error.response?.data?.message || "Login failed. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +116,6 @@ const Login = () => {
     <div>
       <ToastContainer />
       <div className="w-full h-screen flex justify-center lg:grid grid-cols-2">
-        {/* Left Section with Background Image */}
         <div className="max-lg:hidden w-full h-full flex justify-center items-center bg-[url('/Group2.svg')] bg-cover bg-center bg-green-800">
           <div className="w-full h-[90%] flex flex-col items-center">
             <div className="w-[90%] text-[#FFFDF2] mt-12">
@@ -88,11 +129,9 @@ const Login = () => {
             </div>
           </div>
         </div>
-
-        {/* Right Section */}
         <div className="relative max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
           <div className="w-[80%] h-fit max-lg:mt-16">
-            <Link to="/" className="w-fit h-fit absolute top-0 left-0 ">
+            <Link to="/" className="w-fit h-fit absolute top-0 left-0">
               <p className="text-white rounded-lg shadow-l border border-[#043D12] bg-[#043D12] m-2 px-2 py-1 text-[15px]">
                 back
               </p>
@@ -106,7 +145,6 @@ const Login = () => {
             <h4 className="lg:text-[32px] text-[20px] font-medium text-[#043D12] flex items-center gap-2">
               Log In <Hand />
             </h4>
-
             <form
               onSubmit={handleSubmit}
               className="max-lg:w-full flex flex-col gap-8 mt-8 max-lg:items-center"
@@ -134,7 +172,7 @@ const Login = () => {
                 />
                 <button
                   type="button"
-                  onClick={togglePasswordVisibility}
+                  onClick={() => setShowPassword((prev) => !prev)}
                   className="text-[#6A7368] ml-4 focus:outline-none"
                 >
                   {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
@@ -149,11 +187,7 @@ const Login = () => {
                   />
                   <label className="text-[#6A7368]">Remember me</label>
                 </div>
-                <Link
-                  to="/forgotten-password"
-                  href="#"
-                  className="text-[#6A7368]"
-                >
+                <Link to="/forgotten-password" className="text-[#6A7368]">
                   Forgot password?
                 </Link>
               </div>

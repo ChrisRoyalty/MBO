@@ -1,39 +1,59 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Good from "../components/svgs/Good";
 import { TbCurrencyNaira } from "react-icons/tb";
 import { FlutterWaveButton, closePaymentModal } from "flutterwave-react-v3";
+import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode"; // Import jwt-decode to decode token
 
 const Subscribe = () => {
+  const navigate = useNavigate();
+
+  // Check authentication and get user data on mount
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No token found, redirecting to login...");
+      navigate("/login");
+    }
+  }, [navigate]);
+
+  // Retrieve member data from localStorage
+  const storedMember = JSON.parse(localStorage.getItem("member") || "{}");
+  const customer = {
+    email: storedMember.email || "user@example.com", // Dynamic email
+    phone_number: storedMember.phone_number || "08012345678", // Fallback if not available
+    name: `${storedMember.firstname || "John"} ${
+      storedMember.lastname || "Doe"
+    }`, // Dynamic name
+  };
+
   const config = {
     public_key: "FLWPUBK_TEST-5e9e360f5c8914da44ae6d55a0ae2867-X", // Replace with your Flutterwave public key
     tx_ref: `MBO-${Date.now()}`, // Unique transaction reference
     amount: 15000,
     currency: "NGN",
     payment_options: "card, banktransfer, ussd",
-    customer: {
-      email: "user@example.com", // Replace with dynamic user email if available
-      phone_number: "08012345678", // Replace with dynamic user phone if available
-      name: "John Doe", // Replace with dynamic user name if available
-    },
+    customer, // Use dynamic customer data
     customizations: {
       title: "MBO Subscription",
       description: "Payment for yearly subscription",
-      logo: "https://yourwebsite.com/logo.png", // Add your logo URL
+      logo: "/mindpower-logo.svg", // Add your logo URL
     },
   };
 
   const fwConfig = {
     ...config,
     callback: (response) => {
-      console.log(response);
+      console.log("🔍 Payment Response:", response);
       if (response.status === "successful") {
         alert("Payment successful! Your subscription is now active.");
-        // Here, you should send a request to your backend to activate the subscription
+        // Optionally, send a request to your backend to activate the subscription here
+        navigate("/business-profile"); // Redirect to business profile creation
       }
-      closePaymentModal();
+      closePaymentModal(); // Close the payment modal
     },
     onClose: () => {
-      console.log("Payment closed");
+      console.log("Payment modal closed");
     },
   };
 
@@ -73,7 +93,7 @@ const Subscribe = () => {
                   <Good />
                 </li>
                 <li className="md:text-[20px] text-[16px] text-[#676767]">
-                  Boosted Visibility{" "}
+                  Boosted Visibility
                 </li>
               </ul>
               <ul className="flex items-center gap-4">
@@ -81,7 +101,7 @@ const Subscribe = () => {
                   <Good />
                 </li>
                 <li className="md:text-[20px] text-[16px] text-[#676767]">
-                  Affordable and Flexible{" "}
+                  Affordable and Flexible
                 </li>
               </ul>
               <ul className="flex items-center gap-4">
@@ -89,7 +109,7 @@ const Subscribe = () => {
                   <Good />
                 </li>
                 <li className="md:text-[20px] text-[16px] text-[#676767]">
-                  Networking Opportunities{" "}
+                  Networking Opportunities
                 </li>
               </ul>
               <ul className="flex items-center gap-4">
@@ -97,7 +117,7 @@ const Subscribe = () => {
                   <Good />
                 </li>
                 <li className="md:text-[20px] text-[16px] text-[#676767]">
-                  Enhanced Credibility{" "}
+                  Enhanced Credibility
                 </li>
               </ul>
 

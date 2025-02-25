@@ -10,7 +10,7 @@ import {
   Legend,
 } from "recharts";
 import { IoIosNotificationsOutline } from "react-icons/io";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Added useNavigate for redirection
 import BusinessImg from "../../assets/businessImg.jpeg";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import ProfileProgressBar from "./ProfileProgressBar";
@@ -24,6 +24,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isFirstVisit, setIsFirstVisit] = useState(true); // Track first visit
+  const navigate = useNavigate(); // For redirection
 
   // Define metrics configuration
   const METRICS = [
@@ -63,9 +64,11 @@ const Profile = () => {
     const profileId = localStorage.getItem("profile_id");
     const token = localStorage.getItem("token");
 
+    // Redirect if profile_id or token is missing
     if (!profileId || !token) {
       setError("Profile ID or Token is missing from localStorage!");
       setLoading(false);
+      navigate("/login"); // Redirect to login page
       return;
     }
 
@@ -90,7 +93,7 @@ const Profile = () => {
     };
 
     fetchProfile();
-  }, []);
+  }, [navigate]);
 
   // Handle dropdown click outside
   useEffect(() => {
