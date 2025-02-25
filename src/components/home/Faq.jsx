@@ -20,7 +20,7 @@ const Faq = () => {
     {
       question: "Who can register on MBO?",
       answer:
-        "Only members of the MindPower Network are eligible to create business profiles on the platform.",
+        "Anyone who owns a business can register and create a profile on the MindPower Business Platform",
     },
     {
       question: "What are the subscription fees?",

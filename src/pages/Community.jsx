@@ -1,21 +1,19 @@
 import React from "react";
-import Discover from "../components/community/Discover";
-import Search from "../components/community/Search";
-import NewBusinesses from "../components/community/NewBusinesses";
-import TrendingBusiness from "../components/community/TrendingBusiness";
-import PopularServices from "../components/community/PopularServices";
-import AddBusiness from "../components/community/AddBusiness";
+import { Outlet } from "react-router-dom";
+
 import Footer from "../components/Footer";
+import CommunityMain from "../components/community/CommunityMain.jsx";
 
 const Community = () => {
   return (
-    <div className="">
-      <Discover />
-      <Search />
-      <NewBusinesses />
-      <TrendingBusiness />
-      <PopularServices />
-      <AddBusiness />
+    <div>
+      {/* Static Sections That Should Always Be Visible */}
+      {/* <CommunityMain /> */}
+
+      {/* Outlet for Nested Routes */}
+      <Outlet />
+
+      {/* Footer Should Always Be Visible */}
       <Footer />
     </div>
   );

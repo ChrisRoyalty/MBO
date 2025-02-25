@@ -39,7 +39,7 @@ const Search = () => {
 
   // Handle search button click to navigate to /search page
   const handleSearchButtonClick = () => {
-    navigate("/search");
+    navigate("/community/search");
   };
 
   return (

@@ -1,8 +1,11 @@
-import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useState, useContext } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import MindPowerLogo from "../assets/mbo-logo.png";
 import MenuIcon from "../assets/menu.svg";
+import ProfilePic from "../assets/profilepic.svg";
+import { AuthContext } from "../context/AuthContext";
+import { toast } from "react-toastify";
 
 const navItemVariants = {
   hidden: { opacity: 0, scale: 0.5, y: -20 },
@@ -13,25 +16,62 @@ const navItemVariants = {
     transition: { delay: i * 0.15, duration: 0.4, ease: "easeOut" },
   }),
 };
+
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, logout } = useContext(AuthContext);
+
+  const handleLogout = () => {
+    logout(); // Use AuthContext logout
+    toast.success("Logged out successfully!");
+    navigate("/login");
+    setIsOpen(false); // Close mobile menu if open
+  };
 
   const navItems = [
     { name: "Home", path: "/" },
     { name: "Community", path: "/community" },
-    {
-      name: "Log In",
-      path: "/login",
-      className:
-        "border-[1px] border-[#FFFFFF] rounded-[39px] lg:ml-8 px-8 py-2 hover:bg-white hover:text-[#02530c] active:bg-white active:text-[#02530c]",
-    },
+    isAuthenticated
+      ? {
+          name: "Log Out",
+          path: "#",
+          className:
+            "border-[1px] border-[#FFFFFF] rounded-[39px] lg:ml-8 px-8 py-2 hover:bg-red-500 hover:text-white active:bg-red-600 active:text-white",
+          onClick: handleLogout,
+        }
+      : {
+          name: "Log In",
+          path: "/login",
+          className:
+            "border-[1px] border-[#FFFFFF] rounded-[39px] lg:ml-8 px-8 py-2 hover:bg-white hover:text-[#02530c] active:bg-white active:text-[#02530c]",
+        },
   ];
 
   return (
-    <div className="w-full h-fit flex justify-center items-center bg-[#FFFDF2] py-[5vh] lg:py-[6vh]">
-      <div className="w-[85%] h-[8vh] md:h-[10vh] bg-[#043D12] px-[20px] md:px-[50px] lg:py-10 flex justify-between items-center rounded-[48px] md:shadow-lg">
-        {/* Logo */}
+    <div
+      className={`w-full h-fit flex flex-col justify-center items-center transition-all duration-500 relative ${
+        location.pathname === "/community/profile"
+          ? "bg-cover bg-center bg-no-repeat py-[5vh] lg:pt-[6vh] pb-[12vh]"
+          : "bg-[#FFFDF2] py-[5vh] lg:py-[6vh]"
+      }`}
+      style={{
+        backgroundImage:
+          location.pathname === "/community/profile"
+            ? "url('/profile.svg')"
+            : "none",
+      }}
+    >
+      {location.pathname === "/community/profile" && (
+        <img
+          src={ProfilePic}
+          alt="Profile_Picture"
+          className="absolute bottom-[-60px] w-[120px] h-[120px] rounded-full border-4 border-[#FFCF00] shadow-lg lg:left-[12%]"
+        />
+      )}
+
+      <div className="w-[85%] h-[8vh] md:h-[10vh] bg-[#043D12] px-[20px] md:px-[50px] lg:py-10 flex justify-between items-center rounded-[48px] md:shadow-lg relative z-10">
         <Link to="/">
           <img
             src={MindPowerLogo}
@@ -40,7 +80,6 @@ const Header = () => {
           />
         </Link>
 
-        {/* Mobile Menu */}
         <AnimatePresence>
           {isOpen && (
             <motion.div
@@ -63,17 +102,30 @@ const Header = () => {
                     exit="hidden"
                     custom={index}
                   >
-                    <Link
-                      to={item.path}
-                      onClick={() => setIsOpen(false)}
-                      className={`text-[20px] font-medium px-8 py-2 transition ${
-                        location.pathname === item.path
-                          ? "text-[#02530c] font-bold border-b-2 border-[#02530c]"
-                          : "text-[#043D12] hover:text-[#02530c]"
-                      } ${item.className || ""}`}
-                    >
-                      {item.name}
-                    </Link>
+                    {item.onClick ? (
+                      <button
+                        onClick={item.onClick}
+                        className={`text-[20px] font-medium px-8 py-2 transition ${
+                          item.className || ""
+                        }`}
+                      >
+                        {item.name}
+                      </button>
+                    ) : (
+                      <Link
+                        to={item.path}
+                        onClick={() => setIsOpen(false)}
+                        className={`text-[20px] font-medium px-8 py-2 transition ${
+                          (item.path === "/community" &&
+                            location.pathname.startsWith("/community")) ||
+                          location.pathname === item.path
+                            ? "text-[#02530c] font-bold border-b-2 border-[#02530c]"
+                            : "text-[#043D12] hover:text-[#02530c]"
+                        } ${item.className || ""}`}
+                      >
+                        {item.name}
+                      </Link>
+                    )}
                   </motion.div>
                 ))}
               </nav>
@@ -81,37 +133,47 @@ const Header = () => {
           )}
         </AnimatePresence>
 
-        {/* Desktop Navigation */}
         <div className="hidden md:flex gap-8 items-center text-white">
           {navItems.map((item) => (
             <motion.div key={item.path} className="relative group">
-              <Link
-                to={item.path}
-                className={`relative text-[20px] transition-all duration-300 ${
-                  location.pathname === item.path
-                    ? "text-[#FFCF00] font-bold"
-                    : "hover:text-[#FFCF00]"
-                } ${item.className || ""}`}
-              >
-                {item.name}
-                {/* Creeping underline animation */}
-                {item.path !== "/login" && (
-                  <motion.div
-                    className="absolute bottom-[-3px] left-0 h-[3px] bg-[#FFCF00] origin-left"
-                    initial={{ width: 0 }}
-                    animate={{
-                      width: location.pathname === item.path ? "100%" : "0%",
-                    }}
-                    whileHover={{ width: "100%" }}
-                    transition={{ duration: 0.4, ease: "easeInOut" }}
-                  />
-                )}
-              </Link>
+              {item.onClick ? (
+                <button
+                  onClick={item.onClick}
+                  className={`relative text-[20px] transition-all duration-300 ${
+                    item.className || ""
+                  }`}
+                >
+                  {item.name}
+                </button>
+              ) : (
+                <Link
+                  to={item.path}
+                  className={`relative text-[20px] transition-all duration-300 ${
+                    (item.path === "/community" &&
+                      location.pathname.startsWith("/community")) ||
+                    location.pathname === item.path
+                      ? "text-[#FFCF00] font-bold"
+                      : "hover:text-[#FFCF00]"
+                  } ${item.className || ""}`}
+                >
+                  {item.name}
+                  {item.path !== "/login" && (
+                    <motion.div
+                      className="absolute bottom-[-3px] left-0 h-[3px] bg-[#FFCF00] origin-left"
+                      initial={{ width: 0 }}
+                      animate={{
+                        width: location.pathname === item.path ? "100%" : "0%",
+                      }}
+                      whileHover={{ width: "100%" }}
+                      transition={{ duration: 0.4, ease: "easeInOut" }}
+                    />
+                  )}
+                </Link>
+              )}
             </motion.div>
           ))}
         </div>
 
-        {/* Hamburger Menu Button */}
         <button className="md:hidden" onClick={() => setIsOpen(!isOpen)}>
           <img src={MenuIcon} alt="Hamburger_Icon" className="w-8 h-8" />
         </button>
