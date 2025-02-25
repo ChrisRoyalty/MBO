@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { FaRegEnvelope } from "react-icons/fa";
 import { CiLock } from "react-icons/ci";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
@@ -9,7 +9,12 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 import { div } from "framer-motion/client";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom"; 
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "../redux/authSlice"; // Ensure this path is correct
+
+import {jwtDecode} from "jwt-decode"; // Ensure you install this: npm install jwt-decode
+
 // import { IoIosArrowRoundBack } from "react-icons/io";
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -20,24 +25,58 @@ const Login = () => {
   const togglePasswordVisibility = () => {
     setShowPassword((prev) => !prev);
   };
-  const navigate = useNavigate(); // Initialize navigate function
+  const navigate = useNavigate();
+  const dispatch = useDispatch(); 
 
   const BASE_URL = import.meta.env.VITE_BASE_URL; // Use Vite's import.meta.env
-
+  const routes = {
+    admin: "/admin/dashboard",
+    user: {
+      inactiveSubscription: "/subscribe",
+      incompleteProfile: "/create-profile",
+      activeUser: "/user-dashboard",
+    },
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = await axios.post(`${BASE_URL}/login`, {
+      const response = await axios.post(`${BASE_URL}/member/login`, {
         email,
         password,
       });
+      const { token, member } = response.data;
+      const decodedToken = jwtDecode(token);
+    const { id, role, subscriptionStatus, profileStatus } = decodedToken;
 
+    const user = {
+      id,
+      role,
+      subscriptionStatus,
+      profileStatus,
+      firstName: response.data.member.firstname,
+      lastName: response.data.member.lastname,
+      email: response.data.member.email,
+    };
+
+    // Dispatch user to Redux store
+    dispatch(loginSuccess({ token, user }));
+    console.log("User object:", user);
+  
       toast.success(response.data.message || "Login successful!");
-
       setTimeout(() => {
-        navigate("/business-profile");
+        const route =
+          role === "admin"
+            ? routes.admin
+            : subscriptionStatus !== "active"
+            ? routes.user.inactiveSubscription
+            : !profileStatus
+            ? routes.user.incompleteProfile
+            : routes.user.activeUser;
+  
+        navigate(route);
       }, 1500);
     } catch (error) {
       const errorResponse = error.response?.data || {};
