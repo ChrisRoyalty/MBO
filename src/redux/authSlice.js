@@ -1,9 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  user: null,
-  token: null,
-  isAuthenticated: false,
+  user: JSON.parse(sessionStorage.getItem("user")) || null,
+  token: sessionStorage.getItem("authToken") || null,
+  isAuthenticated: !!sessionStorage.getItem("authToken"),
 };
 
 const authSlice = createSlice({
@@ -14,11 +14,19 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.isAuthenticated = true;
+
+      // Persist authentication data in sessionStorage
+      sessionStorage.setItem("authToken", action.payload.token);
+      sessionStorage.setItem("user", JSON.stringify(action.payload.user));
     },
     logout: (state) => {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
+
+      // Remove authentication data from sessionStorage
+      sessionStorage.removeItem("authToken");
+      sessionStorage.removeItem("user");
     },
   },
 });

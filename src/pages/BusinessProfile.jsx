@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { loginSuccess, logout } from "../redux/authSlice";
 import { Link } from "react-router-dom";
 import { CiLock } from "react-icons/ci";
 import { BsPerson } from "react-icons/bs";
@@ -9,26 +11,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { AuthContext } from "../context/AuthContext";
-import Hand from "../components/svgs/Hand";
 
-// JWT decoding function
-const decodeJWT = (token) => {
-  try {
-    const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
-    );
-    return JSON.parse(jsonPayload);
-  } catch (error) {
-    console.error("❌ Error decoding JWT:", error);
-    return {};
-  }
-};
+import Hand from "../components/svgs/Hand";
 
 const BusinessProfile = () => {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -44,31 +28,37 @@ const BusinessProfile = () => {
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { login } = useContext(AuthContext);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
-
+  const token = useSelector((state) => state.auth.token);
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-  const fetchCategories = async () => {
-    try {
-      const response = await axios.get(`${BASE_URL}/member/all-category`);
-      console.log("🔍 Categories Response:", response.data);
-      setCategories(response.data.category || response.data.categories || []); // Adjust based on actual key
-      setIsLoadingCategories(false);
-    } catch (error) {
-      console.error(
-        "❌ Error fetching categories:",
-        error.response?.data || error
-      );
-      toast.error("Failed to load categories. Please try again.");
-      setCategories([]);
-      setIsLoadingCategories(false);
-    }
-  };
+  useEffect(() => {
+    toast.success("Toast is working!");
+  }, []);
 
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/member/all-category`);
+        setCategories(response.data.category || response.data.categories || []);
+        setIsLoadingCategories(false);
+      } catch (error) {
+        console.error(
+          "Error fetching categories:",
+          error.response?.data || error
+        );
+        toast.error("Failed to load categories. Please try again.");
+        setCategories([]);
+        setIsLoadingCategories(false);
+      }
+    };
     fetchCategories();
-  }, []);
+  }, [BASE_URL]);
+
+  // useEffect(() => {
+  //   fetchCategories();
+  // }, []);
 
   const toggleDropdown = () => {
     setShowDropdown(!showDropdown);
@@ -86,8 +76,6 @@ const BusinessProfile = () => {
       return;
     }
 
-    const token = localStorage.getItem("token");
-
     if (!token) {
       toast.error("Token missing. Please log in again.");
       navigate("/login");
@@ -101,141 +89,41 @@ const BusinessProfile = () => {
       keyword: keyword.split(",").map((kw) => kw.trim()),
     };
 
-    const profileEndpoint = `${BASE_URL}/member/create-profile`;
-
-    console.log("🔍 Submitting to:", profileEndpoint);
-    console.log("🔍 Payload:", payload);
-    console.log("🔍 Token:", token);
-
     try {
       setLoading(true);
+      const response = await axios.post(
+        `${BASE_URL}/member/create-profile`,
+        payload,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-      const response = await axios.post(profileEndpoint, payload, {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      console.log("✅ Profile Creation Response:", response.data);
-
-      if (response.data?.profile?.id) {
-        const profileId = response.data.profile.id;
-        localStorage.setItem("profile_id", profileId);
-        console.log("✅ Stored Profile ID:", profileId);
-      }
-
-      let newToken = response.data.token;
+      const newToken = response.data.token;
       if (newToken) {
-        localStorage.setItem("token", newToken);
-        login(newToken);
-        const decoded = decodeJWT(newToken);
-        console.log("✅ New Token Payload:", decoded);
-        if (decoded.profileStatus === true) {
-          console.log("✅ Profile status updated to true");
-        } else {
-          console.warn("⚠️ ProfileStatus not updated in token");
-        }
-      } else {
-        console.warn("⚠️ No new token in response, refreshing token...");
-        try {
-          const refreshResponse = await axios.get(
-            `${BASE_URL}/member/token/refresh`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          newToken = refreshResponse.data.token;
-          localStorage.setItem("token", newToken);
-          login(newToken);
-          const decoded = decodeJWT(newToken);
-          console.log("✅ Refreshed Token Payload:", decoded);
-          if (decoded.profileStatus === true) {
-            console.log("✅ Profile status updated to true via refresh");
-          } else {
-            console.warn("⚠️ ProfileStatus still not true after refresh");
-            await updateProfileStatus(token);
-          }
-        } catch (refreshError) {
-          console.error(
-            "❌ Token refresh failed:",
-            refreshError.response?.data || refreshError
-          );
-          await updateProfileStatus(token);
-        }
+        sessionStorage.setItem("token", newToken);
+        dispatch(loginSuccess(newToken));
       }
 
-      toast.success(
-        response.data.message || "Business profile created successfully!"
-      );
-
-      setTimeout(() => {
-        navigate("/user-dashboard");
-      }, 2000);
+      toast.success("Business profile created successfully!");
+      setTimeout(() => navigate("/user-dashboard/profile"), 2000);
     } catch (error) {
-      console.error(
-        "❌ Error submitting form:",
-        error.response ? error.response.data : error.message
-      );
-      const errorMessage =
-        error.response?.data?.message || "Failed to create business profile.";
-      toast.error(errorMessage);
-
-      if (
-        error.response?.status === 403 &&
-        error.response.data.message === "You already have a profile."
-      ) {
-        console.log("✅ User already has a profile, checking status");
-        const currentToken = localStorage.getItem("token");
-        const decoded = decodeJWT(currentToken);
-        console.log("🔍 Current Token Payload:", decoded);
-        if (decoded.profileStatus === true) {
-          toast.info("Profile already exists. Redirecting to dashboard...");
-          setTimeout(() => {
-            navigate("/user-dashboard");
-          }, 2000);
-        } else {
-          console.warn("⚠️ Profile exists but profileStatus is not true");
-          await updateProfileStatus(currentToken);
-        }
+      const errorData = error.response?.data;
+      const status = errorData?.status;
+      const message = errorData?.message || "An error occurred.";
+      toast.error(message); // Fire toast first
+      //console.log(message, "taost");
+      if (status === 403) {
+        setTimeout(() => navigate("/user-dashboard/profile"), 1500);
+      } else if (status === 401) {
+        setTimeout(() => navigate("/login"), 1500);
+      } else {
+        setTimeout(() => toast.error(message || "An error occurred."), 1500);
       }
     } finally {
       setLoading(false);
     }
   };
-
-  const updateProfileStatus = async (currentToken) => {
-    try {
-      const updateResponse = await axios.patch(
-        `${BASE_URL}/member/profile/status`,
-        { profileStatus: true },
-        {
-          headers: {
-            Authorization: `Bearer ${currentToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      const updatedToken = updateResponse.data.token;
-      if (updatedToken) {
-        localStorage.setItem("token", updatedToken);
-        login(updatedToken);
-        console.log("✅ Updated Token Payload:", decodeJWT(updatedToken));
-        toast.success("Profile status updated successfully!");
-      } else {
-        console.warn("⚠️ No token returned from status update");
-        toast.error("Status updated, but token not refreshed. Log in again.");
-      }
-    } catch (updateError) {
-      console.error(
-        "❌ Failed to update profileStatus:",
-        updateError.response?.data || updateError
-      );
-      toast.error("Failed to confirm profile setup. Contact support.");
-    }
-  };
-
   return (
     <div className="w-full h-screen flex justify-center lg:grid grid-cols-2">
       <div className="max-lg:hidden w-full h-full flex justify-center items-center bg-[url('/Group2.svg')] bg-cover bg-center bg-green-800">

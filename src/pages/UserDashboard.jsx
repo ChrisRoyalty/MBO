@@ -8,7 +8,8 @@ import { CgMenuLeftAlt } from "react-icons/cg";
 import { MdOutlineCancelPresentation } from "react-icons/md";
 import BusinessImg from "../assets/businessImg.jpeg";
 import { motion } from "framer-motion";
-import { AuthContext } from "../context/AuthContext";
+import { useDispatch, useSelector } from "react-redux";
+import { logout, selectAuth } from "../redux/authSlice";
 import { toast } from "react-toastify";
 
 const navItems = [
@@ -37,7 +38,9 @@ const navItems = [
 const UserDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, logout } = useContext(AuthContext);
+  const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector(selectAuth); // Get auth state from Redux
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(
     JSON.parse(sessionStorage.getItem("sidebarState")) || false
   );
@@ -54,7 +57,7 @@ const UserDashboard = () => {
   };
 
   const handleLogout = () => {
-    logout(); // Use AuthContext logout
+    dispatch(logout()); // Use Redux logout action
     toast.success("Logged out successfully!");
     navigate("/login");
   };

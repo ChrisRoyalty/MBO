@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../redux/authSlice"; // Ensure this path is correct
 
-import { jwtDecode } from "jwt-decode"; 
+import { jwtDecode } from "jwt-decode";
 
 // import { IoIosArrowRoundBack } from "react-icons/io";
 const Login = () => {
@@ -30,11 +30,11 @@ const Login = () => {
 
   const BASE_URL = import.meta.env.VITE_BASE_URL; // Use Vite's import.meta.env
   const routes = {
-    admin: "/admin/dashboard",
+    admin: "/admin/analytics",
     user: {
       inactiveSubscription: "/subscribe",
-      incompleteProfile: "/create-profile",
-      activeUser: "/user-dashboard",
+      incompleteProfile: "/business-profile",
+      activeUser: "/user-dashboard/profile",
     },
   };
 
@@ -61,10 +61,6 @@ const Login = () => {
         email: member.email,
       };
 
-      // Dispatch user to Redux store
-      dispatch(loginSuccess({ token, user }));
-      console.log("User object:", user);
-
       toast.success(response.data.message || "Login successful!");
       setTimeout(() => {
         const route =
@@ -75,28 +71,31 @@ const Login = () => {
             : !profileStatus
             ? routes.user.incompleteProfile
             : routes.user.activeUser;
-
+        dispatch(loginSuccess({ token, user }));
         navigate(route);
       }, 1500);
     } catch (error) {
       const errorResponse = error.response?.data || {};
 
-      if (errorResponse.errors && Array.isArray(errorResponse.errors)) {
-        errorResponse.errors.forEach((errMsg) => {
-          toast.error(errMsg);
-        });
-      } else if (errorResponse.error) {
-        toast.error(errorResponse.error);
+      if (errorResponse.status === 403) {
+        toast.error(
+          errorResponse.message || "Access denied. Please verify your email."
+        );
+        return; // Stop further execution
+      }
+
+      // Handle other errors
+      if (errorResponse.message) {
+        toast.error(errorResponse.message);
       } else {
         toast.error("An unexpected error occurred. Please try again.");
       }
 
-      console.log("Login error:", error.response?.data || error);
+      console.error("Login error:", error.response?.data || error);
     } finally {
       setIsLoading(false);
     }
   };
-
   return (
     <div>
       <ToastContainer />

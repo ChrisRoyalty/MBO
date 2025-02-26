@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux"; // Import useSelector
 import { toast } from "react-toastify";
 import { TbCurrencyNaira } from "react-icons/tb";
-import { FlutterWaveButton } from "flutterwave-react-v3";
+import { FlutterWaveButton, closePaymentModal } from "flutterwave-react-v3";
 import axios from "axios";
 import {jwtDecode} from "jwt-decode"; // Ensure jwt-decode is installed
 import  Good from "../components/svgs/Good"; 
@@ -62,10 +62,8 @@ const Subscribe = () => {
       currency: "NGN",
       payment_options: "card, banktransfer, ussd",
       customer: {
-        customer: {
           email: user?.email,
-          name: `${user?.firstname} ${user?.lastname}`
-        },
+          name: `${user?.firstname} ${user?.lastname}`  
       },
       customizations: {
         title: "MBO Subscription",
