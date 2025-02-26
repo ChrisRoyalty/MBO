@@ -14,6 +14,7 @@ import { Link, useNavigate } from "react-router-dom"; // Added useNavigate for r
 import BusinessImg from "../../assets/businessImg.jpeg";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import ProfileProgressBar from "./ProfileProgressBar";
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const Profile = () => {
   const [timeRange, setTimeRange] = useState("monthly");
@@ -74,7 +75,7 @@ const Profile = () => {
 
     const fetchProfile = async () => {
       try {
-        const API_URL = `https://mbo.bookbank.com.ng/member/get-profile/${profileId}`;
+        const API_URL = `${BASE_URL}/member/get-profile/${profileId}`;
         const response = await axios.get(API_URL, {
           headers: { Authorization: `Bearer ${token}` },
         });

@@ -1,7 +1,6 @@
 import React from "react";
 import { ToastContainer } from "react-toastify";
 import { Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext"; // Import AuthProvider
 import PrivateRoute from "./components/PrivateRoute"; // Import PrivateRoute
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
@@ -36,16 +35,7 @@ function App() {
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/create-account" element={<Signup />} />
-
-        {/* Protected Routes */}
-        <Route
-          path="/"
-          element={
-            // <PrivateRoute>
-            <Layout />
-            // </PrivateRoute>
-          }
-        >
+        <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="community" element={<Community />}>
             <Route index element={<CommunityMain />} />
@@ -54,7 +44,7 @@ function App() {
             <Route path="profile" element={<ProfilePage />} />
           </Route>
         </Route>
-
+        {/* Protected Routes */}
         <Route
           path="/subscribe"
           element={

@@ -70,8 +70,8 @@ const Subscribe = () => {
       currency: "NGN",
       payment_options: "card, banktransfer, ussd",
       customer: {
-        email: email,
-        name: fullName,
+        email: user?.email,
+        name: `${user?.firstname} ${user?.lastname}`,
       },
       customizations: {
         title: "MBO Subscription",

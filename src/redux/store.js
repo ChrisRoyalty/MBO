@@ -3,11 +3,19 @@ import { persistStore, persistReducer } from "redux-persist";
 //import storage from "redux-persist/lib/storage"; // default storage (localStorage)
 import authReducer from "./authSlice";
 import storageSession from "redux-persist/lib/storage/session";
-import { FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from "redux-persist/es/constants";
+import {
+  FLUSH,
+  REHYDRATE,
+  PAUSE,
+  PERSIST,
+  PURGE,
+  REGISTER,
+} from "redux-persist/es/constants";
 
 const persistConfig = {
   key: "root",
   storage: storageSession, // Use session storage instead of local storage
+  whitelist: ["token", "isAuthenticated"], // Persist only these fields
 };
 
 const persistedReducer = persistReducer(persistConfig, authReducer);
