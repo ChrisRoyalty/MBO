@@ -1,9 +1,10 @@
-import React, { useContext } from "react";
+import React from "react";
 import { Navigate } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
+import { useSelector } from "react-redux";
+import { selectAuth } from "../redux/authSlice"; // Import the selector
 
 const PrivateRoute = ({ children }) => {
-  const { isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated } = useSelector(selectAuth); // Get authentication state from Redux
 
   console.log("🔍 PrivateRoute Check - isAuthenticated:", isAuthenticated);
 
