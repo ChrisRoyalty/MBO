@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../redux/authSlice"; // Ensure this path is correct
 
-import { jwtDecode } from "jwt-decode"; // Ensure you install this: npm install jwt-decode
+import { jwtDecode } from "jwt-decode"; 
 
 // import { IoIosArrowRoundBack } from "react-icons/io";
 const Login = () => {
