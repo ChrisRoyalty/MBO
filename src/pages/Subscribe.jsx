@@ -2,10 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux"; // Import useSelector
 import { toast } from "react-toastify";
 import { TbCurrencyNaira } from "react-icons/tb";
-import { FlutterWaveButton } from "flutterwave-react-v3";
+import { FlutterWaveButton, closePaymentModal } from "flutterwave-react-v3";
 import axios from "axios";
-import {jwtDecode} from "jwt-decode"; // Ensure jwt-decode is installed
-import  Good from "../components/svgs/Good"; 
+import { jwtDecode } from "jwt-decode"; // Ensure jwt-decode is installed
+import Good from "../components/svgs/Good";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 const PUBLIC_KEY = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
@@ -17,7 +17,6 @@ const Subscribe = () => {
   // Access the user from Redux
   const user = useSelector((state) => state.auth.user); // Use Redux to get the user state
   const token = useSelector((state) => state.auth.token); // Get token from Redux
-
 
   useEffect(() => {
     // Check if user is authenticated using the token
@@ -34,7 +33,6 @@ const Subscribe = () => {
     }
   }, [token]);
 
-
   // Fetch subscription details dynamically
   useEffect(() => {
     const fetchSubscriptions = async () => {
@@ -47,7 +45,7 @@ const Subscribe = () => {
         console.error("Error fetching subscriptions:", error);
       }
     };
-  
+
     fetchSubscriptions();
   }, []);
   const handlePayment = (subscription) => {
@@ -55,6 +53,16 @@ const Subscribe = () => {
       toast.error("User details not found. Please log in.");
       return null;
     }
+
+    // Ensure email and name are valid strings
+    const email = user.email || "";
+    const fullName = `${user.firstname || ""} ${user.lastname || ""}`.trim();
+
+    if (!email) {
+      toast.error("Email is required for payment. Please update your profile.");
+      return null;
+    }
+
     const config = {
       public_key: PUBLIC_KEY,
       tx_ref: `MBO-${Date.now()}`,
@@ -62,21 +70,20 @@ const Subscribe = () => {
       currency: "NGN",
       payment_options: "card, banktransfer, ussd",
       customer: {
-        customer: {
-          email: user?.email,
-          name: `${user?.firstname} ${user?.lastname}`
-        },
+        email: email,
+        name: fullName,
       },
       customizations: {
         title: "MBO Subscription",
         description: `Payment for ${subscription.name}`,
-        logo: "https://yourwebsite.com/logo.png",
+        logo: "/mbo-logo.png",
       },
       callback: async (response) => {
-        console.log(response);
+        console.log(response, "okkkkkkkk");
         if (response.status === "successful") {
           try {
-            const res = await axios.post(`${BASE_URL}admin/payment-hook`, {
+            console.log("Sending to backend");
+            const res = await axios.post(`${BASE_URL}/admin/payment-hook`, {
               userId,
               subscriptionId: subscription.id,
               transactionId: response.transaction_id,
@@ -85,10 +92,9 @@ const Subscribe = () => {
               currency: "NGN",
               customer: {
                 email: user.email,
-                name: `${user.firstName} ${user.lastName}`,
+                name: `${user.firstname} ${user.lastname}`,
               },
             });
-
 
             console.log("Backend Response:", res.data);
 
@@ -99,11 +105,13 @@ const Subscribe = () => {
             }
           } catch (error) {
             console.error("Error verifying payment:", error);
+            alert("An error occurred while verifying payment.");
           }
         } else {
           alert("Payment was not successful.");
         }
 
+        // Ensure the modal closes
         closePaymentModal();
       },
       onClose: () => {

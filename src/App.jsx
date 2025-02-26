@@ -30,7 +30,7 @@ import ProfilePage from "./components/community/ProfilePage";
 
 function App() {
   return (
-    <AuthProvider>
+    <>
       <ToastContainer position="top-right" autoClose={3000} />
       <Routes>
         {/* Public Routes */}
@@ -98,9 +98,9 @@ function App() {
         <Route
           path="/search"
           element={
-            <PrivateRoute>
-              <SearchPage />
-            </PrivateRoute>
+            // <PrivateRoute>
+            <SearchPage />
+            // </PrivateRoute>
           }
         />
 
@@ -108,9 +108,9 @@ function App() {
         <Route
           path="/user-dashboard"
           element={
-            <PrivateRoute>
-              <UserDashboard />
-            </PrivateRoute>
+            // <PrivateRoute>
+            <UserDashboard />
+            // </PrivateRoute>
           }
         >
           <Route index element={<Profile />} />
@@ -142,7 +142,7 @@ function App() {
           <Route path="create-profile" element={<CreateProfile />} />
         </Route>
       </Routes>
-    </AuthProvider>
+    </>
   );
 }
 

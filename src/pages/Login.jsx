@@ -33,7 +33,7 @@ const Login = () => {
     admin: "/admin/dashboard",
     user: {
       inactiveSubscription: "/subscribe",
-      incompleteProfile: "/create-profile",
+      incompleteProfile: "/business-profile",
       activeUser: "/user-dashboard",
     },
   };
