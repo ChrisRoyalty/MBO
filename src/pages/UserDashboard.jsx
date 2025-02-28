@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { logout as reduxLogout } from "../redux/authSlice"; // Ensure correct path
+import { logout as reduxLogout } from "../redux/authSlice";
 import { LuLayoutGrid } from "react-icons/lu";
 import { PiUserCircle } from "react-icons/pi";
 import { MdOutlineAnalytics } from "react-icons/md";
@@ -10,8 +10,6 @@ import { CgMenuLeftAlt } from "react-icons/cg";
 import { MdOutlineCancelPresentation } from "react-icons/md";
 import BusinessImg from "../assets/businessImg.jpeg";
 import { motion } from "framer-motion";
-import { useDispatch, useSelector } from "react-redux";
-import { logout, selectAuth } from "../redux/authSlice";
 import { toast } from "react-toastify";
 
 const navItems = [
@@ -41,28 +39,43 @@ const UserDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { isAuthenticated } = useSelector(selectAuth); // Get auth state from Redux
-
-  const [isSidebarOpen, setIsSidebarOpen] = useState(
-    JSON.parse(sessionStorage.getItem("sidebarState")) || false
-  );
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem("sidebarState")) || false;
+    } catch (e) {
+      console.warn("Cannot access sessionStorage for sidebarState:", e.message);
+      return false; // Fallback to false if storage is blocked
+    }
+  });
 
   useEffect(() => {
-    sessionStorage.setItem("sidebarState", JSON.stringify(isSidebarOpen));
     if (!isAuthenticated) {
       console.log(
         "UserDashboard - Redirecting to /login due to !isAuthenticated"
       );
       navigate("/login", { replace: true });
+      return;
+    }
+
+    // Safely update sessionStorage
+    try {
+      sessionStorage.setItem("sidebarState", JSON.stringify(isSidebarOpen));
+    } catch (e) {
+      console.warn("Cannot write to sessionStorage:", e.message);
+      // Continue without throwing error
     }
   }, [isSidebarOpen, isAuthenticated, navigate]);
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen((prev) => !prev);
-  };
+  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
   const handleLogout = () => {
-    dispatch(logout()); // Use Redux logout action
+    dispatch(reduxLogout());
+    try {
+      sessionStorage.clear();
+    } catch (e) {
+      console.warn("Cannot clear sessionStorage:", e.message);
+    }
     toast.success("Logged out successfully!");
     navigate("/login", { replace: true });
   };

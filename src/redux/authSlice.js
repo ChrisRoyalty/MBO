@@ -1,9 +1,10 @@
+// redux/authSlice.js
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  user: JSON.parse(sessionStorage.getItem("user")) || null,
-  token: sessionStorage.getItem("authToken") || null,
-  isAuthenticated: !!sessionStorage.getItem("authToken"),
+  user: null,
+  token: null,
+  isAuthenticated: false,
 };
 
 const authSlice = createSlice({
@@ -14,19 +15,13 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.isAuthenticated = true;
-
-      // Persist authentication data in sessionStorage
-      sessionStorage.setItem("authToken", action.payload.token);
-      sessionStorage.setItem("user", JSON.stringify(action.payload.user));
+      // No need for sessionStorage here; redux-persist handles it
     },
     logout: (state) => {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
-
-      // Remove authentication data from sessionStorage
-      sessionStorage.removeItem("authToken");
-      sessionStorage.removeItem("user");
+      // No need to clear sessionStorage; redux-persist updates it
     },
   },
 });

@@ -106,6 +106,8 @@ function App() {
           <Route index element={<Profile />} />
           <Route path="profile" element={<CreateProfile />}>
             <Route index element={<EditProfile />} />
+            {/* <Route path="/profile" element={<Profile />} /> */}
+
             <Route
               path="products-and-services"
               element={<ProductAndServices />}
