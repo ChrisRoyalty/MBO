@@ -1,5 +1,7 @@
-import React, { useState, useContext } from "react";
-import { Link } from "react-router-dom"; // Updated to react-router-dom
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { loginSuccess } from "../redux/authSlice";
 import { FaRegEnvelope } from "react-icons/fa";
 import { CiLock } from "react-icons/ci";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
@@ -8,108 +10,95 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
-import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
+import { jwtDecode } from "jwt-decode";
 
-// JWT decoding function
-const decodeJWT = (token) => {
-  try {
-    const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
-    );
-    return JSON.parse(jsonPayload);
-  } catch (error) {
-    console.error("❌ Error decoding JWT:", error);
-    return {};
-  }
-};
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [loginAttempted, setLoginAttempted] = useState(false);
 
-  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
 
-  const BASE_URL = import.meta.env.VITE_BASE_URL;
+  const routes = {
+    admin: "/admin/analytics",
+    user: {
+      inactiveSubscription: "/subscribe",
+      incompleteProfile: "/business-profile",
+      activeUser: "/user-dashboard",
+    },
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setLoginAttempted(true);
 
     try {
       const response = await axios.post(`${BASE_URL}/member/login`, {
         email,
         password,
       });
-
-      console.log("🔍 Login API Full Response:", response.data);
-
       const { token, member } = response.data;
-      if (!token) {
-        console.error("❌ Token is missing in response.");
-        toast.error("Authentication failed. Missing credentials.");
-        return;
-      }
+      const decodedToken = jwtDecode(token);
+      const { id, role, subscriptionStatus, profileStatus } = decodedToken;
 
-      // Decode token to get member ID and status
-      const tokenPayload = decodeJWT(token);
-      const { id: memberId, subscriptionStatus, profileStatus } = tokenPayload;
+      const user = {
+        id, // memberId: "da8bdc1d-d8ab-436f-99dc-a20f78aee6a9"
+        role,
+        subscriptionStatus,
+        profileStatus,
+        firstName: member.firstname,
+        lastName: member.lastname,
+        email: member.email,
+      };
 
-      if (!memberId) {
-        console.error("❌ Member ID is missing in token payload.");
-        toast.error("Invalid response from server.");
-        return;
-      }
-
-      // Store token, member ID, and member data in localStorage
-      localStorage.setItem("token", token);
-      localStorage.setItem("member_id", memberId);
-      localStorage.setItem("member", JSON.stringify(member)); // Store member object
-      login(token); // Update AuthContext with token
-
-      console.log("✅ Stored Token:", localStorage.getItem("token"));
-      console.log("✅ Stored Member ID:", localStorage.getItem("member_id"));
-      console.log("✅ Stored Member Data:", localStorage.getItem("member"));
-      console.log("🔍 Subscription Status from Token:", subscriptionStatus);
-      console.log("🔍 Profile Status from Token:", profileStatus);
-
+      dispatch(loginSuccess({ token, user }));
       toast.success(response.data.message || "Login successful!");
-
-      // Redirect based on setup status
-      setTimeout(() => {
-        if (profileStatus === true && subscriptionStatus === "active") {
-          console.log("✅ Setup complete, redirecting to /dashboard");
-          navigate("/dashboard");
-        } else if (subscriptionStatus === "inactive") {
-          console.log("✅ Redirecting to /subscription");
-          navigate("/subscribe");
-        } else if (subscriptionStatus === "active" && profileStatus === false) {
-          console.log("✅ Redirecting to /business-profile");
-          navigate("/business-profile");
-        } else {
-          console.warn("⚠️ Unexpected status combination:", {
-            subscriptionStatus,
-            profileStatus,
-          });
-          navigate("/business-profile");
-        }
-      }, 1500);
     } catch (error) {
-      console.error("❌ Login error:", error.response?.data || error);
-      toast.error(
-        error.response?.data?.message || "Login failed. Please try again."
-      );
+      const errorResponse = error.response?.data || {};
+
+      if (errorResponse.status === 403) {
+        toast.error(
+          errorResponse.message || "Access denied. Please verify your email."
+        );
+      } else if (errorResponse.message) {
+        toast.error(errorResponse.message);
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
+
+      console.error("Login error:", error.response?.data || error);
+      setLoginAttempted(false);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && user && loginAttempted) {
+      const route =
+        user.role === "admin"
+          ? routes.admin
+          : user.subscriptionStatus !== "active"
+          ? routes.user.inactiveSubscription
+          : !user.profileStatus
+          ? routes.user.incompleteProfile
+          : routes.user.activeUser;
+
+      console.log("useEffect - Calculated route:", route);
+      navigate(route, { replace: true });
+      setLoginAttempted(false);
+    }
+  }, [isAuthenticated, user, loginAttempted, navigate]);
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
   };
 
   return (
@@ -172,7 +161,7 @@ const Login = () => {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
+                  onClick={togglePasswordVisibility}
                   className="text-[#6A7368] ml-4 focus:outline-none"
                 >
                   {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}

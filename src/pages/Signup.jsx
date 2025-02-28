@@ -5,11 +5,13 @@ import { FaRegEnvelope } from "react-icons/fa";
 import { CiLock } from "react-icons/ci";
 import { BsPerson } from "react-icons/bs";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+//import { useNavigate } from "react-router-dom"; // Import useNavigate
 import Hand from "../components/svgs/Hand";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const Signup = () => {
+  //const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -28,7 +30,6 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted, sending request...");
 
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match!");
@@ -38,13 +39,8 @@ const Signup = () => {
     setLoading(true);
 
     try {
-      const apiUrl = `${import.meta.env.VITE_BASE_URL}/sign-up`;
-      console.log("API URL:", apiUrl);
-      console.log("Sending Data:", formData);
-
+      const apiUrl = `${import.meta.env.VITE_BASE_URL}/member/sign-up`;
       const response = await axios.post(apiUrl, formData);
-      console.log("Response received:", response);
-
       toast.success(response.data.message || "Signup successful!");
       setFormData({
         firstName: "",

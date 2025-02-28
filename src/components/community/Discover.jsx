@@ -48,7 +48,7 @@ const Discover = () => {
           <div className="btns flex  justify-center md:justify-start mt-4">
             <motion.div variants={animations.buttonHover} whileHover="hover">
               <Link
-                to="/business-profile"
+                to="/community/all-businesses"
                 className="w-fit text-[#043D12] bg-[#FFFDF2] rounded-[48px] shadow-lg lg:text-[18px] text-[12px] md:px-8 font-bold px-4 py-4 md:py-5"
               >
                 Explore all Businesses

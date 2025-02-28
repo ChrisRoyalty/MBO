@@ -1,11 +1,12 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import MindPowerLogo from "../assets/mbo-logo.png";
 import MenuIcon from "../assets/menu.svg";
 import ProfilePic from "../assets/profilepic.svg";
-import { AuthContext } from "../context/AuthContext";
 import { toast } from "react-toastify";
+import { useSelector, useDispatch } from "react-redux";
+import { logout, selectAuth } from "../redux/authSlice";
 
 const navItemVariants = {
   hidden: { opacity: 0, scale: 0.5, y: -20 },
@@ -21,13 +22,17 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, logout } = useContext(AuthContext);
+
+  // Check if user is authenticated based on sessionStorage
+  const auth = useSelector(selectAuth);
+  const dispatch = useDispatch();
+  const isAuthenticated = auth.isAuthenticated;
 
   const handleLogout = () => {
-    logout(); // Use AuthContext logout
+    dispatch(logout());
     toast.success("Logged out successfully!");
     navigate("/login");
-    setIsOpen(false); // Close mobile menu if open
+    setIsOpen(false);
   };
 
   const navItems = [

@@ -1,13 +1,18 @@
-import React, { useContext } from "react";
-import { Navigate } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
+import React from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { selectAuth } from "../redux/authSlice";
 
 const PrivateRoute = ({ children }) => {
-  const { isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated } = useSelector(selectAuth);
 
   console.log("🔍 PrivateRoute Check - isAuthenticated:", isAuthenticated);
 
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+
+  return children ? children : <Outlet />; // Ensure nested routes work
 };
 
 export default PrivateRoute;

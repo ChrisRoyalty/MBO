@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { logout as reduxLogout } from "../redux/authSlice";
 import { LuLayoutGrid } from "react-icons/lu";
 import { PiUserCircle } from "react-icons/pi";
 import { MdOutlineAnalytics } from "react-icons/md";
@@ -8,7 +10,6 @@ import { CgMenuLeftAlt } from "react-icons/cg";
 import { MdOutlineCancelPresentation } from "react-icons/md";
 import BusinessImg from "../assets/businessImg.jpeg";
 import { motion } from "framer-motion";
-import { AuthContext } from "../context/AuthContext";
 import { toast } from "react-toastify";
 
 const navItems = [
@@ -37,26 +38,46 @@ const navItems = [
 const UserDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, logout } = useContext(AuthContext);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(
-    JSON.parse(sessionStorage.getItem("sidebarState")) || false
-  );
+  const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem("sidebarState")) || false;
+    } catch (e) {
+      console.warn("Cannot access sessionStorage for sidebarState:", e.message);
+      return false; // Fallback to false if storage is blocked
+    }
+  });
 
   useEffect(() => {
-    sessionStorage.setItem("sidebarState", JSON.stringify(isSidebarOpen));
     if (!isAuthenticated) {
-      navigate("/login");
+      console.log(
+        "UserDashboard - Redirecting to /login due to !isAuthenticated"
+      );
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    // Safely update sessionStorage
+    try {
+      sessionStorage.setItem("sidebarState", JSON.stringify(isSidebarOpen));
+    } catch (e) {
+      console.warn("Cannot write to sessionStorage:", e.message);
+      // Continue without throwing error
     }
   }, [isSidebarOpen, isAuthenticated, navigate]);
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen((prev) => !prev);
-  };
+  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
   const handleLogout = () => {
-    logout(); // Use AuthContext logout
+    dispatch(reduxLogout());
+    try {
+      sessionStorage.clear();
+    } catch (e) {
+      console.warn("Cannot clear sessionStorage:", e.message);
+    }
     toast.success("Logged out successfully!");
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -72,7 +93,6 @@ const UserDashboard = () => {
           onClick={toggleSidebar}
           className="text-[#043D12] text-[35px] absolute top-4 right-4 cursor-pointer transition-transform hover:scale-110"
         />
-
         <div className="flex flex-col gap-10">
           <motion.strong
             initial={{ opacity: 0, scale: 0.8 }}
@@ -82,7 +102,6 @@ const UserDashboard = () => {
           >
             MBO
           </motion.strong>
-
           <nav className="flex flex-col gap-4">
             {navItems.map((item, index) => (
               <motion.div
@@ -113,7 +132,6 @@ const UserDashboard = () => {
                 </Link>
               </motion.div>
             ))}
-
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -129,7 +147,6 @@ const UserDashboard = () => {
             </motion.div>
           </nav>
         </div>
-
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -160,7 +177,6 @@ const UserDashboard = () => {
           </div>
         </motion.div>
       </motion.aside>
-
       <main
         className={`transition-all duration-500 ${
           isSidebarOpen ? "md:w-[calc(100%-16rem)] ml-auto" : "w-full"

@@ -12,8 +12,6 @@ const VerifyEmail = () => {
   const [email, setEmail] = useState("");
 
   useEffect(() => {
-    console.log("Token from URL:", token);
-    console.log("Navigate function:", navigate);
 
     if (!token) {
       toast.error("Invalid verification link.");
@@ -23,11 +21,11 @@ const VerifyEmail = () => {
     }
 
     axios
-      .get(`https://mbo.bookbank.com.ng/member/verify-emai?token=${token}`)
+    .get(`${import.meta.env.VITE_BASE_URL}/member/verify-email?token=${token}`)
       .then((response) => {
         toast.success(response.data.message || "Email verified successfully!");
-        console.log("Navigating to /subscribe...");
-        setTimeout(() => navigate("/subscribe"), 1000); // Redirect after 1s
+        setTimeout(() => navigate(`/subscribe/${userId}`), 100); 
+        
       })
       .catch((error) => {
         toast.error(error.response?.data?.error || "Verification failed.");
@@ -45,7 +43,7 @@ const VerifyEmail = () => {
     }
 
     axios
-      .post("http://localhost:3000/member/resend-verification", { email })
+      .post(`${import.meta.env.VITE_BASE_URL}/member/resend-verification`, { email })
       .then(() => {
         toast.success("Verification email resent. Check your inbox.");
       })

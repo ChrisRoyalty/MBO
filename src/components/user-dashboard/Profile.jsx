@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
   LineChart,
@@ -10,10 +10,13 @@ import {
   Legend,
 } from "recharts";
 import { IoIosNotificationsOutline } from "react-icons/io";
-import { Link, useNavigate } from "react-router-dom"; // Added useNavigate for redirection
-import BusinessImg from "../../assets/businessImg.jpeg";
+import { Link, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import BusinessImg from "../../assets/businessImg.jpeg"; // Fallback image
 import { RiArrowDropDownLine } from "react-icons/ri";
 import ProfileProgressBar from "./ProfileProgressBar";
+
+const BASE_URL = "https://mbo.bookbank.com.ng"; // Consistent with EditProfile
 
 const Profile = () => {
   const [timeRange, setTimeRange] = useState("monthly");
@@ -23,10 +26,11 @@ const Profile = () => {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isFirstVisit, setIsFirstVisit] = useState(true); // Track first visit
-  const navigate = useNavigate(); // For redirection
+  const [isFirstVisit, setIsFirstVisit] = useState(true);
 
-  // Define metrics configuration
+  const navigate = useNavigate();
+  const { isAuthenticated, user, token } = useSelector((state) => state.auth);
+
   const METRICS = [
     {
       title: "Profile Views",
@@ -46,7 +50,7 @@ const Profile = () => {
       label: "Clicks on social media links",
       value: (data) => {
         try {
-          const socialClicks = JSON.parse(data?.socialClicks || "{}");
+          const socialClicks = data?.socialClicks || {};
           return Object.values(socialClicks).reduce(
             (total, clicks) => total + (clicks || 0),
             0
@@ -59,43 +63,48 @@ const Profile = () => {
     },
   ];
 
-  // Fetch profile data
   useEffect(() => {
-    const profileId = localStorage.getItem("profile_id");
-    const token = localStorage.getItem("token");
-
-    // Redirect if profile_id or token is missing
-    if (!profileId || !token) {
-      setError("Profile ID or Token is missing from localStorage!");
+    if (!isAuthenticated || !token) {
+      setError("Not authenticated or missing token!");
       setLoading(false);
-      navigate("/login"); // Redirect to login page
+      navigate("/login", { replace: true });
       return;
     }
 
     const fetchProfile = async () => {
       try {
-        const API_URL = `https://mbo.bookbank.com.ng/member/get-profile/${profileId}`;
+        const API_URL = `${BASE_URL}/member/my-profile`;
         const response = await axios.get(API_URL, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (response.data && response.data.profile) {
-          setProfileData(response.data.profile);
+        if (response.data && response.data.success && response.data.data) {
+          setProfileData(response.data.data);
         } else {
-          setError("No profile data found in the response.");
+          throw new Error("No profile data found in the response.");
         }
       } catch (error) {
         console.error("❌ Error Fetching Profile:", error);
-        setError(error.message);
+        if (
+          error.response?.status === 404 ||
+          error.response?.data?.message?.includes("foreign key constraint") ||
+          error.response?.data?.message?.includes("not found")
+        ) {
+          setError("Profile not found. Please create one.");
+          navigate("/business-profile", { replace: true });
+        } else {
+          setError(
+            error.response?.data?.message || "Failed to fetch profile data."
+          );
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-  }, [navigate]);
+  }, [isAuthenticated, token, navigate]);
 
-  // Handle dropdown click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (isDropdownOpen && !e.target.closest(".dropdown-container")) {
@@ -107,33 +116,40 @@ const Profile = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isDropdownOpen]);
 
-  // Toggle visibility
-  const toggleVisibility = () => {
-    setIsVisible((prevState) => !prevState);
-  };
+  const toggleVisibility = () => setIsVisible((prevState) => !prevState);
 
-  // Handle metric container click
   const handleContainerClick = (selectedMetric) => {
     setMetric(selectedMetric);
-    setIsFirstVisit(false); // Update first visit state
+    setIsFirstVisit(false);
   };
 
-  // Handle time range change
   const handleTimeRangeChange = (range) => {
     setTimeRange(range);
     setIsDropdownOpen(false);
   };
 
-  // Generate graph data based on the selected metric and time range
   const generateGraphData = () => {
     const dataPoints =
       timeRange === "daily" ? 7 : timeRange === "weekly" ? 4 : 6;
     const baseValue = profileData
       ? metric === "ProfileViews"
-        ? profileData.views
+        ? profileData.views || 0
         : metric === "sharedLinks"
-        ? profileData.sharedClicks
-        : JSON.parse(profileData.socialClicks || "{}").total || 0
+        ? profileData.sharedClicks || 0
+        : (() => {
+            try {
+              const socialClicks = profileData.socialClicks || {};
+              return (
+                Object.values(socialClicks).reduce(
+                  (total, clicks) => total + (clicks || 0),
+                  0
+                ) || 0
+              );
+            } catch (error) {
+              console.error("Error parsing socialClicks:", error);
+              return 0;
+            }
+          })()
       : 0;
 
     return Array.from({ length: dataPoints }, (_, index) => ({
@@ -142,12 +158,11 @@ const Profile = () => {
           ? `Day ${index + 1}`
           : timeRange === "weekly"
           ? `Week ${index + 1}`
-          : new Date(2023, index).toLocaleString("default", { month: "short" }), // Use month names
-      value: baseValue + Math.floor(Math.random() * 10), // Randomize for demo
+          : new Date(2023, index).toLocaleString("default", { month: "short" }),
+      value: baseValue + Math.floor(Math.random() * 10),
     }));
   };
 
-  // Classy Loader Animation with Tailwind CSS
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-[#FFFDF2]">
@@ -160,7 +175,21 @@ const Profile = () => {
     );
   }
 
-  if (error) return <div>Error: {error}</div>;
+  if (error) {
+    return (
+      <div className="text-red-600 p-4 text-center">
+        <p>{error}</p>
+        {error.includes("create one") && (
+          <Link
+            to="/business-profile"
+            className="text-blue-600 underline hover:text-blue-800"
+          >
+            Create Profile Now
+          </Link>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4 relative pb-16 px-8 overflow-y-auto z-0">
@@ -174,13 +203,18 @@ const Profile = () => {
           <Link to="/user-dashboard/profile">
             <figure className="flex items-center md:border-[1px] border-gray-300 rounded-[8px] p-2 gap-2">
               <img
-                src={BusinessImg}
+                src={profileData?.businesImg || BusinessImg} // Use fetched businesImg
                 alt="Business-img"
-                className="rounded-full w-[26px] h-[26px]"
+                className="rounded-full w-[26px] h-[26px] object-cover"
+                onError={(e) => (e.target.src = BusinessImg)} // Fallback if image fails
               />
               <figcaption className="text-[#6A7368] max-md:hidden">
-                <h3 className="text-[10px]">Ukaegbu and Sons</h3>
-                <p className="text-[8px]">Clothing and Accessories</p>
+                <h3 className="text-[10px]">
+                  {profileData?.businessName || "Ukaegbu and Sons"}
+                </h3>
+                <p className="text-[8px]">
+                  {profileData?.category || "Clothing and Accessories"}
+                </p>
               </figcaption>
             </figure>
           </Link>
@@ -192,17 +226,26 @@ const Profile = () => {
         <div className="text-[#6A7368]">
           <h2 className="text-[20px]">
             {isFirstVisit ? "Welcome" : "Welcome back"},{" "}
-            {profileData?.businessName}
+            {profileData?.businessName || user?.firstName || "User"}
           </h2>
           <p className="text-[10px] max-lg:text-center">
-            Subscription Status: <span className="text-green-600">Active</span>
+            Subscription Status:{" "}
+            <span
+              className={
+                user?.subscriptionStatus === "active"
+                  ? "text-green-600"
+                  : "text-red-600"
+              }
+            >
+              {user?.subscriptionStatus || "Unknown"}
+            </span>
           </p>
         </div>
         <ProfileProgressBar />
         <div>
           <button
             onClick={toggleVisibility}
-            className="bg-[#043D12] text-white px-4 py-2 rounded-lg"
+            className="bg-[#043D12] text-white px-4 py-2 rounded-lg hover:bg-[#03500F] transition-all"
           >
             {isVisible ? "Hide Profile" : "Show Profile"}
           </button>
@@ -212,7 +255,7 @@ const Profile = () => {
       {/* Conditionally Render Content */}
       <div
         className={`content-section transition-all duration-300 ${
-          isVisible ? "opacity-100 visible" : "opacity-0 invisible"
+          isVisible ? "opacity-100 visible" : "opacity-0 invisible h-0"
         }`}
       >
         {/* Profile Stats */}
@@ -246,7 +289,6 @@ const Profile = () => {
                 ? "Shared Links Performance is Active"
                 : "Social Clicks Performance is Active"}
             </h3>
-            {/* Time Range Dropdown */}
             <div className="mt-4 relative border-[1px] rounded-lg dropdown-container">
               <div
                 className="flex items-center gap-4 cursor-pointer rounded-lg px-2 py-1"
@@ -255,7 +297,7 @@ const Profile = () => {
                 <span className="text-[14px] text-[#6A7368]">
                   {timeRange.charAt(0).toUpperCase() + timeRange.slice(1)}
                 </span>
-                <RiArrowDropDownLine />
+                <RiArrowDropDownLine className="text-[20px]" />
               </div>
               {isDropdownOpen && (
                 <div className="absolute left-0 top-full mt-2 bg-white shadow-lg rounded-md w-full z-10">
@@ -272,34 +314,33 @@ const Profile = () => {
               )}
             </div>
           </div>
-          <div className="flex gap-0 mt-8 w-full">
-            {/* Right Side: Graph */}
-            <div className="flex-1">
-              <ResponsiveContainer height={300}>
-                <LineChart
-                  data={generateGraphData()}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
-                >
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip
-                    content={({ payload }) => (
-                      <div className="bg-white p-2 border border-gray-300">
-                        <p>{payload[0]?.payload.date}</p>
-                        <p>{payload[0]?.value}</p>
+          <div className="mt-8 w-full">
+            <ResponsiveContainer height={300}>
+              <LineChart
+                data={generateGraphData()}
+                margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
+              >
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip
+                  content={({ payload }) =>
+                    payload && payload.length ? (
+                      <div className="bg-white p-2 border border-gray-300 rounded shadow">
+                        <p>{payload[0].payload.date}</p>
+                        <p>{payload[0].value}</p>
                       </div>
-                    )}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#82ca9d"
-                    activeDot={{ r: 8 }}
-                  />
-                  <Legend />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+                    ) : null
+                  }
+                />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#82ca9d"
+                  activeDot={{ r: 8 }}
+                />
+                <Legend />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
