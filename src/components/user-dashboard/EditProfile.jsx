@@ -16,6 +16,7 @@ import {
   FaInstagram,
   FaLinkedin,
   FaTwitter,
+  FaTiktok,
 } from "react-icons/fa";
 
 const EditProfile = () => {
@@ -24,7 +25,13 @@ const EditProfile = () => {
     contactNo: [],
     businesImg: "",
     backgroundImg: "",
-    socialLinks: {},
+    socialLinks: {
+      facebook: "",
+      instagram: "",
+      twitter: "",
+      tiktok: "",
+      linkedin: "",
+    },
     description: "",
     location: "",
     keyword: [],
@@ -53,7 +60,7 @@ const EditProfile = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState({
     id: "",
-    name: profileData.category || "",
+    name: "",
   });
   const [shareableLink, setShareableLink] = useState("");
   const [showShareOptions, setShowShareOptions] = useState(false);
@@ -61,7 +68,7 @@ const EditProfile = () => {
   const { isAuthenticated, token } = useSelector((state) => state.auth);
   const BASE_URL = "https://mbo.bookbank.com.ng";
 
-  // Fetch profile data
+  // Fetch profile data and populate selectedCategory
   useEffect(() => {
     if (!isAuthenticated || !token) {
       setError("Not authenticated or missing token!");
@@ -85,7 +92,13 @@ const EditProfile = () => {
               : [],
             businesImg: profile.businesImg || "",
             backgroundImg: profile.backgroundImg || "",
-            socialLinks: profile.socialLinks || {},
+            socialLinks: {
+              facebook: profile.socialLinks?.facebook || "",
+              instagram: profile.socialLinks?.instagram || "",
+              twitter: profile.socialLinks?.twitter || "",
+              tiktok: profile.socialLinks?.tiktok || "",
+              linkedin: profile.socialLinks?.linkedin || "",
+            },
             description: profile.description || "",
             location: profile.location || "",
             keyword: Array.isArray(profile.keyword) ? profile.keyword : [],
@@ -96,7 +109,12 @@ const EditProfile = () => {
           };
           setProfileData(initialData);
           setOriginalData(initialData);
-          setSelectedCategory({ id: "", name: initialData.category || "" });
+
+          const categoryFromProfile = profile.categories?.[0] || {};
+          setSelectedCategory({
+            id: categoryFromProfile.id || "",
+            name: categoryFromProfile.name || profile.category || "",
+          });
         } else {
           setError("No profile data found in the response.");
           toast.error("No profile data found in the response.");
@@ -175,12 +193,12 @@ const EditProfile = () => {
   };
 
   // Handle social links change
-  const handleSocialLinkChange = (key, value) => {
+  const handleSocialLinkChange = (platform, value) => {
     setProfileData((prevData) => ({
       ...prevData,
       socialLinks: {
         ...prevData.socialLinks,
-        [key]: value,
+        [platform]: value,
       },
     }));
   };
@@ -316,7 +334,13 @@ const EditProfile = () => {
             : [],
           businesImg: updatedProfile.businesImg || "",
           backgroundImg: updatedProfile.backgroundImg || "",
-          socialLinks: updatedProfile.socialLinks || {},
+          socialLinks: updatedProfile.socialLinks || {
+            facebook: "",
+            instagram: "",
+            twitter: "",
+            tiktok: "",
+            linkedin: "",
+          },
           description: updatedProfile.description || "",
           location: updatedProfile.location || "",
           keyword: Array.isArray(updatedProfile.keyword)
@@ -329,7 +353,10 @@ const EditProfile = () => {
         };
         setProfileData(syncedData);
         setOriginalData(syncedData);
-        setSelectedCategory({ id: "", name: syncedData.category || "" });
+        setSelectedCategory({
+          id: updatedProfile.categories?.[0]?.id || "",
+          name: updatedProfile.category || "",
+        });
       }
     } catch (error) {
       console.error(`❌ ${formType} PATCH Error:`, error);
@@ -360,7 +387,13 @@ const EditProfile = () => {
             category: originalData?.category || "",
             keyword: originalData?.keyword || [],
             location: originalData?.location || "",
-            socialLinks: originalData?.socialLinks || {},
+            socialLinks: originalData?.socialLinks || {
+              facebook: "",
+              instagram: "",
+              twitter: "",
+              tiktok: "",
+              linkedin: "",
+            },
             description: originalData?.description || "",
             contactNo: originalData?.contactNo || [],
             businesImg: originalData?.businesImg || "",
@@ -369,7 +402,10 @@ const EditProfile = () => {
 
     setProfileData((prevData) => ({ ...prevData, ...resetFields }));
     if (formType === "business") {
-      setSelectedCategory({ id: "", name: resetFields.category || "" });
+      setSelectedCategory({
+        id: originalData?.categories?.[0]?.id || "",
+        name: resetFields.category || "",
+      });
     }
 
     setTimeout(
@@ -496,7 +532,7 @@ const EditProfile = () => {
                 {profileData.businessName}
               </h4>
               <p className="text-xs sm:text-sm">
-                {profileData.category || "Clothing and Accessories"}
+                {selectedCategory.name || "Clothing and Accessories"}
               </p>
             </figcaption>
           </figure>
@@ -605,7 +641,7 @@ const EditProfile = () => {
               </div>
               <div className="flex justify-between gap-4 relative">
                 <button
-                  type="button" // Prevent form submission
+                  type="button"
                   className="w-full h-[46px] px-4 rounded-[11px] border-[1px] border-[#6A7368] text-[#6A7368] text-[12px] sm:text-sm overflow-hidden text-ellipsis whitespace-nowrap"
                   onClick={() => {
                     if (shareableLink) {
@@ -621,7 +657,7 @@ const EditProfile = () => {
                     : "Loading shareable link..."}
                 </button>
                 <button
-                  type="button" // Prevent form submission
+                  type="button"
                   className="rounded-[11px] text-[14px] px-4 sm:px-6 py-1 shadow-lg border-[1px] border-[#6A7368] flex items-center justify-center"
                   onClick={handleShareClick}
                 >
@@ -858,8 +894,9 @@ const EditProfile = () => {
                 </button>
               </div>
             </div>
+            {/* Social Media Links */}
             <div className="text-[#6A7368] flex flex-col gap-2">
-              <label className="text-sm">Facebook Link (Social)</label>
+              <label className="text-sm">Facebook Link</label>
               <div className="flex justify-between gap-4">
                 <input
                   type="text"
@@ -879,6 +916,126 @@ const EditProfile = () => {
                   onClick={() => handleEditClick("socialLinks.facebook")}
                   className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
                     buttonActive["socialLinks.facebook"]
+                      ? "scale-95 bg-[#043D12] text-white"
+                      : "hover:bg-[#043D12] hover:text-white"
+                  }`}
+                >
+                  <FiEdit3 className="text-[18px]" />
+                  Edit
+                </button>
+              </div>
+            </div>
+            <div className="text-[#6A7368] flex flex-col gap-2">
+              <label className="text-sm">Instagram Link</label>
+              <div className="flex justify-between gap-4">
+                <input
+                  type="text"
+                  disabled={editField !== "socialLinks.instagram"}
+                  value={profileData.socialLinks.instagram || ""}
+                  onChange={(e) =>
+                    handleSocialLinkChange("instagram", e.target.value)
+                  }
+                  className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
+                    editField === "socialLinks.instagram"
+                      ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
+                      : "border-[#6A7368]"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleEditClick("socialLinks.instagram")}
+                  className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
+                    buttonActive["socialLinks.instagram"]
+                      ? "scale-95 bg-[#043D12] text-white"
+                      : "hover:bg-[#043D12] hover:text-white"
+                  }`}
+                >
+                  <FiEdit3 className="text-[18px]" />
+                  Edit
+                </button>
+              </div>
+            </div>
+            <div className="text-[#6A7368] flex flex-col gap-2">
+              <label className="text-sm">Twitter Link</label>
+              <div className="flex justify-between gap-4">
+                <input
+                  type="text"
+                  disabled={editField !== "socialLinks.twitter"}
+                  value={profileData.socialLinks.twitter || ""}
+                  onChange={(e) =>
+                    handleSocialLinkChange("twitter", e.target.value)
+                  }
+                  className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
+                    editField === "socialLinks.twitter"
+                      ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
+                      : "border-[#6A7368]"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleEditClick("socialLinks.twitter")}
+                  className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
+                    buttonActive["socialLinks.twitter"]
+                      ? "scale-95 bg-[#043D12] text-white"
+                      : "hover:bg-[#043D12] hover:text-white"
+                  }`}
+                >
+                  <FiEdit3 className="text-[18px]" />
+                  Edit
+                </button>
+              </div>
+            </div>
+            <div className="text-[#6A7368] flex flex-col gap-2">
+              <label className="text-sm">TikTok Link</label>
+              <div className="flex justify-between gap-4">
+                <input
+                  type="text"
+                  disabled={editField !== "socialLinks.tiktok"}
+                  value={profileData.socialLinks.tiktok || ""}
+                  onChange={(e) =>
+                    handleSocialLinkChange("tiktok", e.target.value)
+                  }
+                  className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
+                    editField === "socialLinks.tiktok"
+                      ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
+                      : "border-[#6A7368]"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleEditClick("socialLinks.tiktok")}
+                  className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
+                    buttonActive["socialLinks.tiktok"]
+                      ? "scale-95 bg-[#043D12] text-white"
+                      : "hover:bg-[#043D12] hover:text-white"
+                  }`}
+                >
+                  <FiEdit3 className="text-[18px]" />
+                  Edit
+                </button>
+              </div>
+            </div>
+            <div className="text-[#6A7368] flex flex-col gap-2">
+              <label className="text-sm">LinkedIn Link</label>
+              <div className="flex justify-between gap-4">
+                <input
+                  type="text"
+                  disabled={editField !== "socialLinks.linkedin"}
+                  value={profileData.socialLinks.linkedin || ""}
+                  onChange={(e) =>
+                    handleSocialLinkChange("linkedin", e.target.value)
+                  }
+                  className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
+                    editField === "socialLinks.linkedin"
+                      ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
+                      : "border-[#6A7368]"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleEditClick("socialLinks.linkedin")}
+                  className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
+                    buttonActive["socialLinks.linkedin"]
                       ? "scale-95 bg-[#043D12] text-white"
                       : "hover:bg-[#043D12] hover:text-white"
                   }`}

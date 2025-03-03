@@ -26,6 +26,7 @@ import AllBusiness from "./components/community/AllBusiness";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import CommunityMain from "./components/community/CommunityMain";
 import ProfilePage from "./components/community/ProfilePage";
+import BusinessProfile2 from "./pages/BusinessProfile2";
 
 function App() {
   return (
@@ -58,6 +59,14 @@ function App() {
           element={
             <PrivateRoute>
               <BusinessProfile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/business-profile2"
+          element={
+            <PrivateRoute>
+              <BusinessProfile2 />
             </PrivateRoute>
           }
         />

@@ -1,6 +1,11 @@
 import React from "react";
 import { motion } from "framer-motion";
 import DemoImg from "../../assets/demo.svg";
+import BenefitIcon01 from "../../assets/benefit01.svg";
+import BenefitIcon02 from "../../assets/benefit02.svg";
+import BenefitIcon03 from "../../assets/benefit03.svg";
+import BenefitIcon04 from "../../assets/benefit04.svg";
+
 import VectorIcon1 from "../../assets/vector1.svg";
 import VectorIcon2 from "../../assets/vector2.svg";
 import VectorIcon3 from "../../assets/vector3.svg";
@@ -37,28 +42,28 @@ const Benefits = () => {
             id: "showcase",
             title: "Showcase Your Business",
             text: "Create a profile with all your essential details.",
-            image: DemoImg,
+            image: BenefitIcon01,
             vector: VectorIcon1,
           },
           {
             id: "expand",
             title: "Expand Your Reach",
             text: "Promote your products and services to a wider audience.",
-            image: DemoImg,
+            image: BenefitIcon02,
             vector: VectorIcon2,
           },
           {
             id: "engage",
             title: "Engage Customers Easily",
             text: "Communicate seamlessly via WhatsApp and social media links.",
-            image: DemoImg,
+            image: BenefitIcon03,
             vector: VectorIcon3,
           },
           {
             id: "track",
             title: "Track Your Progress",
             text: "Access visitor analytics for better business insights.",
-            image: DemoImg,
+            image: BenefitIcon04,
           },
         ].map(({ id, title, text, image, vector }, index) => (
           <motion.div

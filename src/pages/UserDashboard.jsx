@@ -9,8 +9,19 @@ import { IoIosLogOut } from "react-icons/io";
 import { CgMenuLeftAlt } from "react-icons/cg";
 import { MdOutlineCancelPresentation } from "react-icons/md";
 import BusinessImg from "../assets/businessImg.jpeg";
-import { motion } from "framer-motion";
-import { toast } from "react-toastify";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
+import {
+  FaWhatsapp,
+  FaFacebook,
+  FaInstagram,
+  FaLinkedin,
+  FaTwitter,
+  FaShareAlt,
+  FaCopy,
+} from "react-icons/fa";
 
 const navItems = [
   {
@@ -35,37 +46,89 @@ const navItems = [
   },
 ];
 
+const BASE_URL = "https://mbo.bookbank.com.ng";
+
 const UserDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { isAuthenticated, token } = useSelector((state) => state.auth);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     try {
       return JSON.parse(sessionStorage.getItem("sidebarState")) || false;
     } catch (e) {
       console.warn("Cannot access sessionStorage for sidebarState:", e.message);
-      return false; // Fallback to false if storage is blocked
+      return false;
     }
   });
+  const [profileData, setProfileData] = useState({
+    businessName: "User Name",
+    businesImg: BusinessImg,
+    category: "Category",
+  });
+  const [loading, setLoading] = useState(true);
+  const [shareableLink, setShareableLink] = useState("");
+  const [showShareOptions, setShowShareOptions] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      console.log(
-        "UserDashboard - Redirecting to /login due to !isAuthenticated"
-      );
+    if (!isAuthenticated || !token) {
       navigate("/login", { replace: true });
       return;
     }
 
-    // Safely update sessionStorage
+    const fetchProfile = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/member/my-profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.data && response.data.success && response.data.data) {
+          const profile = response.data.data;
+          setProfileData({
+            businessName: profile.businessName || "User Name",
+            businesImg: profile.businesImg || BusinessImg,
+            category:
+              profile.categories?.[0]?.name || profile.category || "Category",
+          });
+        }
+      } catch (error) {
+        console.error("❌ Error Fetching Profile:", error);
+        toast.error(
+          error.response?.data?.message || "Failed to fetch profile data."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchShareableLink = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/member/share`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (
+          response.data &&
+          response.data.message === "Shareable link generated successfully"
+        ) {
+          setShareableLink(response.data.shareableLink);
+        }
+      } catch (error) {
+        console.error("❌ Error Fetching Shareable Link:", error);
+        toast.error(
+          error.response?.data?.message || "Failed to fetch shareable link."
+        );
+      }
+    };
+
+    fetchProfile();
+    fetchShareableLink();
+
     try {
       sessionStorage.setItem("sidebarState", JSON.stringify(isSidebarOpen));
     } catch (e) {
       console.warn("Cannot write to sessionStorage:", e.message);
-      // Continue without throwing error
     }
-  }, [isSidebarOpen, isAuthenticated, navigate]);
+  }, [isSidebarOpen, isAuthenticated, token, navigate]);
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
@@ -80,8 +143,84 @@ const UserDashboard = () => {
     navigate("/login", { replace: true });
   };
 
+  const handleShareClick = () => {
+    setShowShareOptions((prev) => !prev);
+    setCopied(false); // Reset copied state when toggling
+  };
+
+  const shareToSocialMedia = (platform) => {
+    if (!shareableLink) {
+      toast.error("No shareable link available!");
+      return;
+    }
+
+    const encodedLink = encodeURIComponent(shareableLink);
+    const message = `Check out my business profile: ${shareableLink}`;
+    let url;
+
+    switch (platform) {
+      case "whatsapp":
+        url = `https://api.whatsapp.com/send?text=${encodeURIComponent(
+          message
+        )}`;
+        break;
+      case "facebook":
+        url = `https://www.facebook.com/sharer/sharer.php?u=${encodedLink}`;
+        break;
+      case "instagram":
+        navigator.clipboard.writeText(message);
+        toast.info("Link copied to clipboard! Paste it in Instagram.");
+        return;
+      case "linkedin":
+        url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedLink}`;
+        break;
+      case "twitter":
+        url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+          message
+        )}`;
+        break;
+      default:
+        return;
+    }
+
+    window.open(url, "_blank");
+    setShowShareOptions(false);
+  };
+
+  const handleCopyLink = () => {
+    if (!shareableLink) {
+      toast.error("No shareable link available!");
+      return;
+    }
+    navigator.clipboard.writeText(shareableLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+  };
+
+  const shareVariants = {
+    hidden: { opacity: 0, scale: 0, y: 20 },
+    visible: { opacity: 1, scale: 1, y: 0 },
+    exit: { opacity: 0, scale: 0, y: 20 },
+  };
+
+  const rippleVariants = {
+    initial: { scale: 0, opacity: 0.5 },
+    animate: { scale: 2, opacity: 0 },
+  };
+
   return (
     <div className="w-full flex flex-col md:flex-row h-screen overflow-hidden relative">
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
       <motion.aside
         initial={{ x: "-100%" }}
         animate={{ x: isSidebarOpen ? "0%" : "-100%" }}
@@ -125,56 +264,144 @@ const UserDashboard = () => {
                       x: 5,
                       transition: { type: "spring", stiffness: 300 },
                     }}
-                    whileTap={{ scale: 0.9 }}
+                    whileTap={{ scale: 0.95 }}
                   >
                     {item.label}
                   </motion.span>
                 </Link>
               </motion.div>
             ))}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-            >
-              <button
-                onClick={handleLogout}
-                className="text-[15px] flex items-center gap-4 px-6 py-2 rounded-[11px] transition-all duration-300 bg-red-600 text-white hover:bg-red-700 w-full"
-              >
-                <IoIosLogOut className="text-[25px]" />
-                Logout
-              </button>
-            </motion.div>
           </nav>
         </div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="flex flex-col gap-10 mt-8"
+          className="flex flex-col gap-10 mt-8 relative"
         >
           <div className="rounded-[16px] border border-[#6A7368] px-4 py-4 flex flex-col gap-6">
             <figure className="flex flex-col items-center">
               <motion.img
-                src={BusinessImg}
+                src={profileData.businesImg}
                 alt="Business-img"
-                className="rounded-full w-[77px] h-[77px]"
+                className="rounded-full w-[77px] h-[77px] object-cover"
                 whileHover={{ scale: 1.1, rotate: 5 }}
                 transition={{ duration: 0.3 }}
+                onError={(e) => (e.target.src = BusinessImg)}
               />
               <figcaption className="text-center text-[#6A7368]">
-                <h3 className="text-[12px]">Ngene and Sons Ltd</h3>
-                <p className="text-[8px]">Clothing and Accessories</p>
+                <h3 className="text-[12px]">{profileData.businessName}</h3>
+                <p className="text-[8px]">{profileData.category}</p>
               </figcaption>
             </figure>
             <motion.button
-              className="text-white text-[14px] rounded-[14px] bg-[#043D12] py-3 px-2 shadow-lg hover:bg-[#03500F] transition-all"
+              className="relative text-white text-[14px] rounded-[14px] bg-[#043D12] py-3 px-4 shadow-lg overflow-hidden group"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={handleShareClick}
             >
-              Share profile link
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                <FaShareAlt className="text-[16px]" />
+                Share Profile
+              </span>
+              <span className="absolute inset-0 bg-[#03500F] transform scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-out"></span>
             </motion.button>
+            <AnimatePresence>
+              {showShareOptions && (
+                <motion.div
+                  variants={shareVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white border border-[#6A7368] rounded-lg shadow-xl p-3 flex gap-3 z-20 relative"
+                >
+                  <motion.button
+                    whileHover={{ scale: 1.2, rotate: 10 }}
+                    onClick={() => shareToSocialMedia("whatsapp")}
+                    className="text-green-500 cursor-pointer"
+                    title="Share on WhatsApp"
+                  >
+                    <FaWhatsapp className="text-[20px]" />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.2, rotate: 10 }}
+                    onClick={() => shareToSocialMedia("facebook")}
+                    className="text-blue-600 cursor-pointer"
+                    title="Share on Facebook"
+                  >
+                    <FaFacebook className="text-[20px]" />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.2, rotate: 10 }}
+                    onClick={() => shareToSocialMedia("instagram")}
+                    className="text-pink-500 cursor-pointer"
+                    title="Share on Instagram"
+                  >
+                    <FaInstagram className="text-[20px]" />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.2, rotate: 10 }}
+                    onClick={() => shareToSocialMedia("linkedin")}
+                    className="text-blue-700 cursor-pointer"
+                    title="Share on LinkedIn"
+                  >
+                    <FaLinkedin className="text-[20px]" />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.2, rotate: 10 }}
+                    onClick={() => shareToSocialMedia("twitter")}
+                    className="text-blue-400 cursor-pointer"
+                    title="Share on Twitter"
+                  >
+                    <FaTwitter className="text-[20px]" />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.2 }}
+                    onClick={handleCopyLink}
+                    className="relative text-[#043D12] cursor-pointer overflow-hidden group"
+                    title="Copy Link"
+                  >
+                    <FaCopy className="text-[20px]" />
+                    <motion.span
+                      variants={rippleVariants}
+                      initial="initial"
+                      animate={copied ? "animate" : "initial"}
+                      transition={{ duration: 0.5 }}
+                      className="absolute inset-0 bg-[#043D12] rounded-full opacity-20"
+                    />
+                  </motion.button>
+                  <AnimatePresence>
+                    {copied && (
+                      <motion.span
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.3 }}
+                        className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-[#043D12] text-white text-xs px-2 py-1 rounded shadow-lg z-30"
+                      >
+                        Copied!
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="mt-8"
+        >
+          <button
+            onClick={handleLogout}
+            className="text-[15px] flex items-center gap-4 px-6 py-2 rounded-[11px] transition-all duration-300 bg-red-600 text-white hover:bg-red-700 w-fit"
+          >
+            <IoIosLogOut className="text-[25px]" />
+            Logout
+          </button>
         </motion.div>
       </motion.aside>
       <main

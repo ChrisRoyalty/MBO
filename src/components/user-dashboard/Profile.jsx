@@ -12,18 +12,24 @@ import {
 import { IoIosNotificationsOutline } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { motion } from "framer-motion";
+import { CiUser } from "react-icons/ci";
 import BusinessImg from "../../assets/businessImg.jpeg"; // Fallback image
 import { RiArrowDropDownLine } from "react-icons/ri";
 import ProfileProgressBar from "./ProfileProgressBar";
 
-const BASE_URL = "https://mbo.bookbank.com.ng"; // Consistent with EditProfile
+const BASE_URL = "https://mbo.bookbank.com.ng";
 
 const Profile = () => {
   const [timeRange, setTimeRange] = useState("monthly");
   const [metric, setMetric] = useState("ProfileViews");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
-  const [profileData, setProfileData] = useState(null);
+  const [profileData, setProfileData] = useState({
+    businessName: "User Name",
+    category: "Category",
+    businesImg: null, // Null until loaded, uses default icon
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isFirstVisit, setIsFirstVisit] = useState(true);
@@ -79,7 +85,13 @@ const Profile = () => {
         });
 
         if (response.data && response.data.success && response.data.data) {
-          setProfileData(response.data.data);
+          const profile = response.data.data;
+          setProfileData({
+            ...profile,
+            businessName: profile.businessName || "User Name",
+            category: profile.categories?.[0]?.name || "Category",
+            businesImg: profile.businesImg || BusinessImg,
+          });
         } else {
           throw new Error("No profile data found in the response.");
         }
@@ -198,25 +210,32 @@ const Profile = () => {
         <strong className="text-[16px]">Dashboard</strong>
         <div className="flex items-center md:gap-4 px-4">
           <Link to="/">
-            <IoIosNotificationsOutline className="text-[30px] text-[#6A7368]" />
+            <IoIosNotificationsOutline className="text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
           </Link>
           <Link to="/user-dashboard/profile">
-            <figure className="flex items-center md:border-[1px] border-gray-300 rounded-[8px] p-2 gap-2">
-              <img
-                src={profileData?.businesImg || BusinessImg} // Use fetched businesImg
-                alt="Business-img"
-                className="rounded-full w-[26px] h-[26px] object-cover"
-                onError={(e) => (e.target.src = BusinessImg)} // Fallback if image fails
-              />
-              <figcaption className="text-[#6A7368] max-md:hidden">
-                <h3 className="text-[10px]">
-                  {profileData?.businessName || "Ukaegbu and Sons"}
+            <motion.figure
+              className="flex items-center bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200"
+              whileHover={{ scale: 1.05 }}
+              animate={{ opacity: [1, 0.8, 1] }}
+              transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+            >
+              {profileData.businesImg ? (
+                <img
+                  src={profileData.businesImg}
+                  alt="Business-img"
+                  className="rounded-full w-[32px] h-[32px] object-cover border-2 border-[#043D12]"
+                  onError={(e) => (e.target.src = BusinessImg)}
+                />
+              ) : (
+                <CiUser className="text-[32px] text-[#043D12] bg-gray-100 rounded-full p-1" />
+              )}
+              <figcaption className="ml-2 text-[#6A7368] max-md:hidden">
+                <h3 className="text-[12px] font-semibold">
+                  {profileData.businessName}
                 </h3>
-                <p className="text-[8px]">
-                  {profileData?.category || "Clothing and Accessories"}
-                </p>
+                <p className="text-[10px] italic">{profileData.category}</p>
               </figcaption>
-            </figure>
+            </motion.figure>
           </Link>
         </div>
       </div>
@@ -226,7 +245,7 @@ const Profile = () => {
         <div className="text-[#6A7368]">
           <h2 className="text-[20px]">
             {isFirstVisit ? "Welcome" : "Welcome back"},{" "}
-            {profileData?.businessName || user?.firstName || "User"}
+            {profileData.businessName || user?.firstName || "User"}
           </h2>
           <p className="text-[10px] max-lg:text-center">
             Subscription Status:{" "}

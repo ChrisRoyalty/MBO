@@ -11,15 +11,16 @@ import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import BusinessImg from "../../assets/businessImg.jpeg"; // Fallback image
 
+const BASE_URL = "https://mbo.bookbank.com.ng";
+
 const CreateProfile = () => {
   const location = useLocation();
   const { token } = useSelector((state) => state.auth);
-  const BASE_URL = "https://mbo.bookbank.com.ng"; // Consistent with EditProfile
 
   const [profileData, setProfileData] = useState({
-    businessName: "Ukaegbu and Sons",
-    category: "Clothing and Accessories",
-    businessImg: BusinessImg, // Default fallback
+    businessName: "User Name",
+    category: "Category",
+    businessImg: null, // Null until loaded, uses default icon
   });
   const [loading, setLoading] = useState(true);
 
@@ -39,9 +40,9 @@ const CreateProfile = () => {
         if (response.data && response.data.success && response.data.data) {
           const profile = response.data.data;
           setProfileData({
-            businessName: profile.businessName || "Ukaegbu and Sons",
-            category: profile.category || "Clothing and Accessories",
-            businessImg: profile.businesImg || BusinessImg, // Use businesImg from API
+            businessName: profile.businessName || "User Name",
+            category: profile.categories?.[0]?.name || "Category",
+            businessImg: profile.businesImg || BusinessImg,
           });
         } else {
           toast.error("No profile data found in the response.");
@@ -97,21 +98,36 @@ const CreateProfile = () => {
           </strong>
           <div className="flex items-center md:gap-4">
             <Link to="/">
-              <IoIosNotificationsOutline className="text-[30px] text-[#6A7368]" />
+              <IoIosNotificationsOutline className="text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
             </Link>
             <Link to="/user-dashboard/profile">
-              <figure className="flex items-center md:border-[1px] border-gray-300 rounded-[8px] p-2 gap-2">
-                <img
-                  src={profileData.businessImg} // Use fetched businessImg
-                  alt="Business-img"
-                  className="rounded-full w-[26px] h-[26px] object-cover"
-                  onError={(e) => (e.target.src = BusinessImg)} // Fallback if image fails
-                />
-                <figcaption className="text-[#6A7368] max-md:hidden">
-                  <h3 className="text-[10px]">{profileData.businessName}</h3>
-                  <p className="text-[8px]">{profileData.category}</p>
+              <motion.figure
+                className="flex items-center bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200"
+                whileHover={{ scale: 1.05 }}
+                animate={{ opacity: [1, 0.8, 1] }}
+                transition={{
+                  duration: 1,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              >
+                {profileData.businessImg ? (
+                  <img
+                    src={profileData.businessImg}
+                    alt="Business-img"
+                    className="rounded-full w-[32px] h-[32px] object-cover border-2 border-[#043D12]"
+                    onError={(e) => (e.target.src = BusinessImg)}
+                  />
+                ) : (
+                  <CiUser className="text-[32px] text-[#043D12] bg-gray-100 rounded-full p-1" />
+                )}
+                <figcaption className="ml-2 text-[#6A7368] max-md:hidden">
+                  <h3 className="text-[12px] font-semibold">
+                    {profileData.businessName}
+                  </h3>
+                  <p className="text-[10px] italic">{profileData.category}</p>
                 </figcaption>
-              </figure>
+              </motion.figure>
             </Link>
           </div>
         </div>

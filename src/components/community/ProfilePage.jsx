@@ -8,7 +8,7 @@ import {
   IoLocationOutline,
   IoLogoTiktok,
 } from "react-icons/io5";
-import NewBusinesses from "../community/NewBusinesses";
+import NewBusinesses from "./NewBusinesses";
 import { motion, AnimatePresence } from "framer-motion";
 import ProfileImg from "../../assets/profilepic.svg";
 import { Link } from "react-router-dom";

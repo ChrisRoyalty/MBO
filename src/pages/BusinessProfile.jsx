@@ -106,7 +106,7 @@ const BusinessProfile = () => {
       }
 
       toast.success("Business profile created successfully!");
-      setTimeout(() => navigate("/user-dashboard/profile"), 2000);
+      setTimeout(() => navigate("/business-profile2"), 2000);
     } catch (error) {
       const errorData = error.response?.data;
       const status = errorData?.status;

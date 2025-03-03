@@ -1,58 +1,15 @@
-import React, { useState } from "react";
+// src/components/community/NewBusinesses.jsx
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import ProfileImg from "../../assets/profilepic.svg";
+import axios from "axios";
 import { Link } from "react-router-dom";
+import BusinessImg from "../../assets/businessImg.jpeg"; // Fallback business image
 
-// Import business images
-import Newbusiness01 from "../../assets/new01.svg";
-import Newbusiness02 from "../../assets/new02.svg";
-import Newbusiness03 from "../../assets/new03.svg";
-import Newbusiness04 from "../../assets/new04.svg";
-import Newbusiness05 from "../../assets/new05.svg";
-import Newbusiness06 from "../../assets/new06.svg";
-import Newbusiness07 from "../../assets/new07.svg";
-import Newbusiness08 from "../../assets/new08.svg";
-
-// Business data array
-const businesses = [
-  {
-    id: 1,
-    img: Newbusiness01,
-    name: "Oversized Blazers",
-    category: "Clothing and Accessories",
-  },
-  { id: 2, img: Newbusiness02, name: "Casual Sneakers", category: "Footwear" },
-  {
-    id: 3,
-    img: Newbusiness03,
-    name: "Handmade Jewelry",
-    category: "Accessories",
-  },
-  {
-    id: 4,
-    img: Newbusiness04,
-    name: "Vintage Sunglasses",
-    category: "Eyewear",
-  },
-  { id: 5, img: Newbusiness05, name: "Eco-friendly Bags", category: "Bags" },
-  { id: 6, img: Newbusiness06, name: "Smart Watches", category: "Wearables" },
-  {
-    id: 7,
-    img: Newbusiness07,
-    name: "Athleisure Hoodies",
-    category: "Sportswear",
-  },
-  {
-    id: 8,
-    img: Newbusiness08,
-    name: "Minimalist Wallets",
-    category: "Accessories",
-  },
-];
+const BASE_URL = "https://mbo.bookbank.com.ng";
 
 // Modal Component
-const Modal = ({ business, onClose }) => {
-  if (!business) return null;
+const Modal = ({ profile, onClose }) => {
+  if (!profile) return null;
 
   return (
     <AnimatePresence>
@@ -64,61 +21,65 @@ const Modal = ({ business, onClose }) => {
         onClick={onClose}
       >
         <motion.div
-          className="bg-white px-8 py-10 rounded-lg shadow-lg w-[90%] md:w-[60%] flex flex-col md:flex-row gap-6 items-center"
+          className="bg-white px-6 py-8 rounded-lg shadow-lg w-[90%] max-w-3xl flex flex-col md:flex-row gap-6 items-start overflow-hidden"
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
           exit={{ scale: 0.8 }}
-          onClick={(e) => e.stopPropagation()} // Prevent closing on click inside
+          onClick={(e) => e.stopPropagation()}
         >
-          {/* Business Image */}
           <motion.img
-            src={business.img}
-            alt={business.name}
-            className="w-full rounded-lg"
+            src={
+              profile.productImages?.[0]?.imageUrl ||
+              profile.businesImg ||
+              BusinessImg
+            }
+            alt={profile.businessName}
+            className="w-full md:w-1/2 h-[350px] object-cover rounded-lg"
             initial={{ x: -50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.5 }}
+            onError={(e) => (e.target.src = BusinessImg)}
           />
-
-          {/* Business Details */}
           <motion.div
-            className="flex flex-col gap-4"
+            className="flex flex-col gap-4 w-full md:w-1/2 p-2"
             initial={{ x: 50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-xl font-bold text-[#043D12]">
-              {business.name}
+            <h2 className="text-2xl font-bold text-[#043D12]">
+              {profile.businessName}
             </h2>
-            <p className="text-sm text-gray-600">{business.category}</p>
-            <p className="text-gray-700">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus
-              lacinia odio vitae vestibulum.
+            <p className="text-sm text-gray-600">
+              {profile.categories[0]?.name || "Unknown Category"}
             </p>
-
-            <div className="btns flex">
-              <div className="w-fit flex items-center gap-6">
+            <p className="text-gray-700">
+              <strong>Location:</strong> {profile.location || "Not specified"}
+            </p>
+            <p className="text-gray-700">
+              <strong>Views:</strong> {profile.views || 0}
+            </p>
+            <div className="flex flex-col gap-4 mt-4">
+              <div className="flex gap-4 items-center">
                 <Link
-                  to="/"
-                  className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-2 lg:px-8 py-2  shadow-lg hover:bg-[#043D12]"
+                  to={`/profile/${profile.id}`}
+                  className="w-fit border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-4 py-2 shadow-lg hover:bg-[#043D12] text-center"
                 >
-                  View Profile{" "}
+                  View Profile
                 </Link>
                 <Link
-                  to="/"
-                  className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-2 lg:px-8 py-2  shadow-lg hover:bg-[#043D12]"
+                  to="/contact"
+                  className="w-fit border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-4 py-2 shadow-lg hover:bg-[#043D12] text-center"
                 >
-                  Contact Us{" "}
+                  Contact Us
                 </Link>
               </div>
+              <button
+                onClick={onClose}
+                className="mt-2 cursor-pointer border-[1px] border-red-600 text-red-600 font-bold rounded-lg shadow-md py-2 hover:bg-red-50"
+              >
+                Close
+              </button>
             </div>
-
-            <button
-              onClick={onClose}
-              className="mt-4 border-[1px] border-red-600 text-red-600 font-bold rounded-lg shadow-md py-2"
-            >
-              Close
-            </button>
           </motion.div>
         </motion.div>
       </motion.div>
@@ -128,7 +89,54 @@ const Modal = ({ business, onClose }) => {
 
 // Main Component
 const NewBusinesses = () => {
-  const [selectedBusiness, setSelectedBusiness] = useState(null);
+  const [selectedProfile, setSelectedProfile] = useState(null);
+  const [profiles, setProfiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      try {
+        const API_URL = `${BASE_URL}/member/all-profiles`;
+        const response = await axios.get(API_URL);
+
+        if (response.data && response.data.success && response.data.profiles) {
+          setProfiles(response.data.profiles);
+        } else {
+          throw new Error("No profiles found in the response.");
+        }
+      } catch (error) {
+        console.error("❌ Error Fetching Profiles:", error);
+        setError(
+          error.response?.data?.message || "Failed to fetch profiles data."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfiles();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-[#FFFDF2]">
+        <div className="flex space-x-2">
+          <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce"></div>
+          <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce delay-200"></div>
+          <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce delay-400"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-red-600 p-4 text-center">
+        <p>{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-fit py-16 flex justify-center bg-[#FFFDF2]">
@@ -136,45 +144,63 @@ const NewBusinesses = () => {
         <h1 className="text-[#043D12] lg:text-[32px] text-[24px] font-medium">
           Newly Added
         </h1>
-        <div className="w-full grid lg:grid-cols-4 md:grid-cols-3 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
-          {businesses.map((business, index) => (
+        <div className="w-full grid lg:grid-cols-4 md:grid-cols-3 grid-cols-2 max-[280px]:grid-cols-1 gap-8">
+          {profiles.map((profile, index) => (
             <motion.div
-              key={business.id}
-              className="flex flex-col gap-1 cursor-pointer"
+              key={profile.id}
+              className="flex flex-col gap-2 cursor-pointer h-[350px] my-8" // Increased height for larger image
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              onClick={() => setSelectedBusiness(business)}
+              onClick={() => setSelectedProfile(profile)}
             >
               <div className="profile flex items-center gap-2">
-                <img src={ProfileImg} alt="Profile_Photo" />
-                <p className="text-[12px] text-[#043D12]">Claire Fidelis</p>
-              </div>
-              <figure>
                 <img
-                  src={business.img}
-                  alt="Product_img"
-                  className="rounded-lg"
+                  src={profile.businesImg || BusinessImg}
+                  alt={profile.businessName}
+                  className="w-8 h-8 rounded-full object-cover"
+                  onError={(e) => (e.target.src = BusinessImg)}
                 />
-                <figcaption className="flex flex-col gap-4 text-[#043D12] py-2">
+                <p className="text-[12px] text-[#043D12]">
+                  {profile.businessName}
+                </p>
+              </div>
+              <figure className="flex-1">
+                <img
+                  src={
+                    profile.productImages?.[0]?.imageUrl ||
+                    profile.businesImg ||
+                    BusinessImg
+                  }
+                  alt={profile.businessName}
+                  className="w-full h-[250px] object-cover rounded-lg" // Increased height for product image
+                  onError={(e) => (e.target.src = BusinessImg)}
+                />
+                <figcaption className="flex flex-col gap-2 text-[#043D12] py-2">
                   <div className="flex flex-col gap-1">
                     <b className="lg:text-[15px] text-[10px]">
-                      {business.name}
+                      {profile.businessName}
                     </b>
-                    <p className="text-[8px]">{business.category}</p>
+                    <p className="text-[8px]">
+                      {profile.categories[0]?.name || "Unknown Category"}
+                    </p>
                   </div>
                 </figcaption>
               </figure>
+              <Link
+                onClick={() => setSelectedProfile(profile)}
+                className="w-fit border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[12px] hover:text-white px-4 py-2 shadow-lg hover:bg-[#043D12] text-center"
+              >
+                View Profile
+              </Link>
             </motion.div>
           ))}
         </div>
       </div>
-
-      {/* Modal for Selected Business */}
       <Modal
-        business={selectedBusiness}
-        onClose={() => setSelectedBusiness(null)}
+        profile={selectedProfile}
+        onClose={() => setSelectedProfile(null)}
       />
     </div>
   );
