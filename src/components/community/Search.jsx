@@ -71,8 +71,7 @@ const Search = () => {
           <CiSearch className="text-[22px] font-bold max-[200px]:hidden" />
         </motion.button>
 
-        {/* Dropdown Filters */}
-        <motion.div
+        {/* <motion.div
           ref={filterRef}
           initial={{ opacity: 0, x: -50 }}
           animate={filterInView ? { opacity: 1, x: 0 } : {}}
@@ -95,7 +94,6 @@ const Search = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false }}
             >
-              {/* Dropdown Button */}
               <button
                 onClick={() => toggleDropdown(type)}
                 className="bg-[#9DB7A4] h-[46px] rounded-[39px] flex justify-between items-center text-[#043D12] text-[16px] px-6 font-bold gap-8 shadow-lg"
@@ -108,7 +106,7 @@ const Search = () => {
                 )}
               </button>
 
-              {/* Dropdown List */}
+              
               <AnimatePresence>
                 {dropdowns[type] && (
                   <motion.ul
@@ -139,7 +137,7 @@ const Search = () => {
               </AnimatePresence>
             </motion.div>
           ))}
-        </motion.div>
+        </motion.div> */}
       </div>
     </motion.div>
   );

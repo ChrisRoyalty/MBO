@@ -53,14 +53,20 @@ const UserDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { isAuthenticated, token } = useSelector((state) => state.auth);
+
+  // Set initial state of isSidebarOpen to true for large screens
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     try {
-      return JSON.parse(sessionStorage.getItem("sidebarState")) || false;
+      const isLargeScreen = window.innerWidth >= 1024; // 1024px is typically the lg breakpoint
+      return (
+        JSON.parse(sessionStorage.getItem("sidebarState")) || isLargeScreen
+      );
     } catch (e) {
       console.warn("Cannot access sessionStorage for sidebarState:", e.message);
-      return false;
+      return window.innerWidth >= 1024; // Default to true for large screens
     }
   });
+
   const [profileData, setProfileData] = useState({
     businessName: "User Name",
     businesImg: BusinessImg,
@@ -221,17 +227,22 @@ const UserDashboard = () => {
         draggable
         pauseOnHover
       />
+      {/* Sidebar */}
       <motion.aside
         initial={{ x: "-100%" }}
-        animate={{ x: isSidebarOpen ? "0%" : "-100%" }}
+        animate={{
+          x: isSidebarOpen || window.innerWidth >= 1024 ? "0%" : "-100%",
+        }}
         transition={{ duration: 0.5, ease: "easeInOut" }}
-        className={`max-md:fixed z-50 top-0 left-0 lg:w-[25%] max-md:h-screen py-14 px-10 md:h-full h-auto overflow-y-auto bg-white border-r border-black shadow-2xl 
-        ${isSidebarOpen ? "absolute md:relative" : "absolute"}`}
+        className={`fixed lg:static z-50 top-0 left-0 lg:w-[25%] max-md:h-screen py-14 px-10 md:h-full h-auto overflow-y-auto bg-white border-r border-black shadow-2xl 
+          ${isSidebarOpen ? "absolute md:relative" : "absolute"}`}
       >
+        {/* Close button (hidden on large screens) */}
         <MdOutlineCancelPresentation
           onClick={toggleSidebar}
-          className="text-[#043D12] text-[35px] absolute top-4 right-4 cursor-pointer transition-transform hover:scale-110"
+          className="text-[#043D12] text-[35px] absolute top-4 right-4 cursor-pointer transition-transform hover:scale-110 lg:hidden"
         />
+        {/* Sidebar content */}
         <div className="flex flex-col gap-10">
           <motion.strong
             initial={{ opacity: 0, scale: 0.8 }}
@@ -316,74 +327,7 @@ const UserDashboard = () => {
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                   className="top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white border border-[#6A7368] rounded-lg shadow-xl p-3 flex gap-3 z-20 relative"
                 >
-                  <motion.button
-                    whileHover={{ scale: 1.2, rotate: 10 }}
-                    onClick={() => shareToSocialMedia("whatsapp")}
-                    className="text-green-500 cursor-pointer"
-                    title="Share on WhatsApp"
-                  >
-                    <FaWhatsapp className="text-[20px]" />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.2, rotate: 10 }}
-                    onClick={() => shareToSocialMedia("facebook")}
-                    className="text-blue-600 cursor-pointer"
-                    title="Share on Facebook"
-                  >
-                    <FaFacebook className="text-[20px]" />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.2, rotate: 10 }}
-                    onClick={() => shareToSocialMedia("instagram")}
-                    className="text-pink-500 cursor-pointer"
-                    title="Share on Instagram"
-                  >
-                    <FaInstagram className="text-[20px]" />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.2, rotate: 10 }}
-                    onClick={() => shareToSocialMedia("linkedin")}
-                    className="text-blue-700 cursor-pointer"
-                    title="Share on LinkedIn"
-                  >
-                    <FaLinkedin className="text-[20px]" />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.2, rotate: 10 }}
-                    onClick={() => shareToSocialMedia("twitter")}
-                    className="text-blue-400 cursor-pointer"
-                    title="Share on Twitter"
-                  >
-                    <FaTwitter className="text-[20px]" />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.2 }}
-                    onClick={handleCopyLink}
-                    className="relative text-[#043D12] cursor-pointer overflow-hidden group"
-                    title="Copy Link"
-                  >
-                    <FaCopy className="text-[20px]" />
-                    <motion.span
-                      variants={rippleVariants}
-                      initial="initial"
-                      animate={copied ? "animate" : "initial"}
-                      transition={{ duration: 0.5 }}
-                      className="absolute inset-0 bg-[#043D12] rounded-full opacity-20"
-                    />
-                  </motion.button>
-                  <AnimatePresence>
-                    {copied && (
-                      <motion.span
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.3 }}
-                        className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-[#043D12] text-white text-xs px-2 py-1 rounded shadow-lg z-30"
-                      >
-                        Copied!
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
+                  {/* Share buttons */}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -404,17 +348,19 @@ const UserDashboard = () => {
           </button>
         </motion.div>
       </motion.aside>
+      {/* Main content */}
       <main
         className={`transition-all duration-500 ${
           isSidebarOpen ? "md:w-[calc(100%-16rem)] ml-auto" : "w-full"
         } h-screen overflow-y-scroll`}
       >
+        {/* Menu toggle button (hidden on large screens) */}
         {!isSidebarOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="absolute z-50 top-6 lg:left-4 right-4 cursor-pointer border w-fit rounded shadow p-1 bg-white"
+            className="absolute z-50 top-6 lg:left-4 right-4 cursor-pointer border w-fit rounded shadow p-1 bg-white lg:hidden"
           >
             <CgMenuLeftAlt
               onClick={toggleSidebar}
