@@ -1,12 +1,16 @@
-import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+// src/components/Header.jsx
+import React, { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
 import MindPowerLogo from "../assets/mbo-logo.png";
 import MenuIcon from "../assets/menu.svg";
 import ProfilePic from "../assets/profilepic.svg";
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
 import { logout, selectAuth } from "../redux/authSlice";
+
+const BASE_URL = "https://mbo.bookbank.com.ng";
 
 const navItemVariants = {
   hidden: { opacity: 0, scale: 0.5, y: -20 },
@@ -22,11 +26,50 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { id } = useParams(); // Get the profile ID from the URL for profile routes
+  const [profile, setProfile] = useState(null); // State to store profile data
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Check if user is authenticated based on sessionStorage
   const auth = useSelector(selectAuth);
   const dispatch = useDispatch();
   const isAuthenticated = auth.isAuthenticated;
+
+  // Fetch profile data when on /community/profile/:id
+  useEffect(() => {
+    if (location.pathname.startsWith("/community/profile/")) {
+      setLoading(true);
+      const fetchProfile = async () => {
+        try {
+          const API_URL = `${BASE_URL}/member/get-profile/${id}`;
+          const response = await axios.get(API_URL);
+
+          if (response.data && response.data.profile) {
+            setProfile(response.data.profile);
+          } else {
+            throw new Error("Profile not found in the response.");
+          }
+        } catch (error) {
+          console.error("❌ Error Fetching Profile for Header:", error);
+          setError(
+            error.response?.data?.message || "Failed to fetch profile data."
+          );
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchProfile();
+    } else {
+      setProfile(null); // Reset profile data when not on a profile page
+    }
+  }, [location.pathname, id]);
+
+  // Debug logo rendering on route change
+  useEffect(() => {
+    console.log("Header rendered, current path:", location.pathname);
+    console.log("Profile data:", profile);
+  }, [location.pathname, profile]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -55,33 +98,32 @@ const Header = () => {
   ];
 
   return (
-    <div
-      className={`w-full h-fit flex flex-col justify-center items-center transition-all duration-500 relative ${
-        location.pathname === "/community/profile"
-          ? "bg-cover bg-center bg-no-repeat py-[5vh] lg:pt-[6vh] pb-[12vh]"
-          : "bg-[#FFFDF2] py-[5vh] lg:py-[6vh]"
-      }`}
-      style={{
-        backgroundImage:
-          location.pathname === "/community/profile"
-            ? "url('/profile.svg')"
-            : "none",
-      }}
-    >
-      {location.pathname === "/community/profile" && (
+    <div className="w-full h-fit flex flex-col justify-center items-center transition-all duration-500 relative bg-[#FFFDF2] py-[5vh] lg:py-[6vh]">
+      {/* Profile background image only on /community/profile/:id */}
+      {location.pathname.startsWith("/community/profile/") &&
+        profile?.backgroundImg && (
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0"
+            style={{
+              backgroundImage: `url(${profile.backgroundImg || ProfilePic})`,
+            }}
+          />
+        )}
+      {location.pathname.startsWith("/community/profile/") && (
         <img
-          src={ProfilePic}
+          src={profile?.businesImg || ProfilePic}
           alt="Profile_Picture"
-          className="absolute bottom-[-60px] w-[120px] h-[120px] rounded-full border-4 border-[#FFCF00] shadow-lg lg:left-[12%]"
+          className="absolute bottom-[-60px] w-[120px] h-[120px] rounded-full border-4 border-[#FFCF00] shadow-lg lg:left-[12%] z-20"
+          onError={(e) => (e.target.src = ProfilePic)} // Fallback if businesImg fails
         />
       )}
 
-      <div className="w-[85%] h-[8vh] md:h-[10vh] bg-[#043D12] px-[20px] md:px-[50px] lg:py-10 flex justify-between items-center rounded-[48px] md:shadow-lg relative z-10">
+      <div className="w-[85%] h-[8vh] md:h-[10vh] bg-[#043D12] px-[20px] md:px-[50px] lg:py-10 flex justify-between items-center rounded-[48px] shadow-lg relative z-30 mb-[50px]">
         <Link to="/">
           <img
             src={MindPowerLogo}
             alt="Mind_Power_Logo"
-            className="md:w-[47px] md:h-[55px] w-[33px] h-[39px]"
+            className="md:w-[47px] md:h-[55px] w-[33px] h-[39px] object-contain brightness-100"
           />
         </Link>
 
@@ -95,7 +137,7 @@ const Header = () => {
                 transition: { duration: 0.4, ease: "easeOut" },
               }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="absolute top-[15vh] left-0 w-full bg-[#FFFDF2] flex flex-col items-center py-6 shadow-lg md:hidden rounded-b-[40px]"
+              className="absolute top-[15vh] left-0 w-full bg-[#FFFDF2] flex flex-col items-center py-6 shadow-lg md:hidden rounded-b-[40px] z-20"
             >
               <nav className="flex flex-col items-center gap-6 w-full">
                 {navItems.map((item, index) => (

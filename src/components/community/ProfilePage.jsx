@@ -1,77 +1,39 @@
-import React, { useState } from "react";
+// src/components/community/ProfilePage.jsx
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
 import { CiSearch } from "react-icons/ci";
 import { RiEqualizerLine } from "react-icons/ri";
-import { MdOutlineCategory } from "react-icons/md";
-import { RiArrowDropDownLine, RiArrowDropUpLine } from "react-icons/ri";
-import {
-  IoCallOutline,
-  IoLocationOutline,
-  IoLogoTiktok,
-} from "react-icons/io5";
-import NewBusinesses from "../community/NewBusinesses";
-import { motion, AnimatePresence } from "framer-motion";
-import ProfileImg from "../../assets/profilepic.svg";
-import { Link } from "react-router-dom";
-// Import business images
-import Newbusiness01 from "../../assets/new01.svg";
-import Newbusiness02 from "../../assets/new02.svg";
-import Newbusiness03 from "../../assets/new03.svg";
-import Newbusiness04 from "../../assets/new04.svg";
-import Newbusiness05 from "../../assets/new05.svg";
-import Newbusiness06 from "../../assets/new06.svg";
-import Newbusiness07 from "../../assets/new07.svg";
-import Newbusiness08 from "../../assets/new08.svg";
+import { IoCallOutline, IoLocationOutline } from "react-icons/io5";
 import { FaFacebook, FaWhatsapp } from "react-icons/fa6";
 import {
-  IoLogoFacebook,
   IoLogoInstagram,
-  IoLogoLinkedin,
   IoLogoTwitter,
-  IoLogoWhatsapp,
+  IoLogoLinkedin,
   IoLogoYoutube,
 } from "react-icons/io";
+import { IoLogoWhatsapp } from "react-icons/io5";
+
+import { MdOutlineCategory } from "react-icons/md";
+import { BsTiktok } from "react-icons/bs"; // TikTok icon from react-icons/bs
 import { CiShare1 } from "react-icons/ci";
 import { BiMessage } from "react-icons/bi";
+import { useParams, useNavigate } from "react-router-dom";
+import BusinessImg from "../../assets/businessImg.jpeg"; // Fallback business image
+import ProfileImg from "../../assets/profilepic.svg"; // Profile picture for fallback
 
-const businesses = [
-  {
-    id: 1,
-    img: Newbusiness01,
-    name: "Oversized Blazers",
-    category: "Clothing and Accessories",
-  },
-  { id: 2, img: Newbusiness02, name: "Casual Sneakers", category: "Footwear" },
-  {
-    id: 3,
-    img: Newbusiness03,
-    name: "Handmade Jewelry",
-    category: "Accessories",
-  },
-  {
-    id: 4,
-    img: Newbusiness04,
-    name: "Vintage Sunglasses",
-    category: "Eyewear",
-  },
-  { id: 5, img: Newbusiness05, name: "Eco-friendly Bags", category: "Bags" },
-  { id: 6, img: Newbusiness06, name: "Smart Watches", category: "Wearables" },
-  {
-    id: 7,
-    img: Newbusiness07,
-    name: "Athleisure Hoodies",
-    category: "Sportswear",
-  },
-  {
-    id: 8,
-    img: Newbusiness08,
-    name: "Minimalist Wallets",
-    category: "Accessories",
-  },
-];
+const BASE_URL = "https://mbo.bookbank.com.ng";
 
-// Modal Component
+// Modal Component (updated to remove category, but kept for consistency in case needed elsewhere)
 const Modal = ({ business, onClose }) => {
   if (!business) return null;
+
+  const navigate = useNavigate();
+
+  const handleViewProfile = () => {
+    navigate(`/community/profile/${business.id}`); // Navigate to profile page with business.id
+    onClose(); // Close the modal after navigation
+  };
 
   return (
     <AnimatePresence>
@@ -91,12 +53,17 @@ const Modal = ({ business, onClose }) => {
         >
           {/* Business Image */}
           <motion.img
-            src={business.img}
-            alt={business.name}
-            className="w-full rounded-lg"
+            src={
+              business.productImages?.[0]?.imageUrl ||
+              business.businesImg ||
+              BusinessImg
+            }
+            alt={business.businessName}
+            className="w-full rounded-lg h-[350px] object-cover"
             initial={{ x: -50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.5 }}
+            onError={(e) => (e.target.src = BusinessImg)}
           />
 
           {/* Business Details */}
@@ -107,9 +74,8 @@ const Modal = ({ business, onClose }) => {
             transition={{ duration: 0.5 }}
           >
             <h2 className="text-xl font-bold text-[#043D12]">
-              {business.name}
+              {business.businessName}
             </h2>
-            <p className="text-sm text-gray-600">{business.category}</p>
             <p className="text-gray-700">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus
               lacinia odio vitae vestibulum.
@@ -117,17 +83,17 @@ const Modal = ({ business, onClose }) => {
 
             <div className="btns flex">
               <div className="w-fit flex items-center gap-6">
-                <Link
-                  to="/"
-                  className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-2 lg:px-8 py-2  shadow-lg hover:bg-[#043D12]"
+                <button
+                  onClick={handleViewProfile}
+                  className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-2 lg:px-8 py-2 shadow-lg hover:bg-[#043D12]"
                 >
-                  View Profile{" "}
-                </Link>
+                  View Profile
+                </button>
                 <Link
-                  to="/"
-                  className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-2 lg:px-8 py-2  shadow-lg hover:bg-[#043D12]"
+                  to={`/community/contact/${business.id}`} // Placeholder for contact route
+                  className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-2 lg:px-8 py-2 shadow-lg hover:bg-[#043D12]"
                 >
-                  Contact Us{" "}
+                  Contact Us
                 </Link>
               </div>
             </div>
@@ -144,206 +110,326 @@ const Modal = ({ business, onClose }) => {
     </AnimatePresence>
   );
 };
+
 const ProfilePage = () => {
+  const { id } = useParams(); // Get the profile ID from the URL
+  const [profile, setProfile] = useState(null);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState(""); // State for search input
 
-  // State to manage visibility of each dropdown
-  const [categoryOpen, setCategoryOpen] = useState(false);
-  const [locationOpen, setLocationOpen] = useState(false);
-  const [visibilityOpen, setVisibilityOpen] = useState(false);
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const API_URL = `${BASE_URL}/member/get-profile/${id}`;
+        const response = await axios.get(API_URL);
 
-  // Toggle dropdowns and close others when one is opened
-  const toggleCategory = () => {
-    setCategoryOpen(!categoryOpen);
-    setLocationOpen(false); // Close location dropdown
-    setVisibilityOpen(false); // Close visibility dropdown
+        if (response.data && response.data.profile) {
+          setProfile(response.data.profile);
+        } else {
+          throw new Error("Profile not found in the response.");
+        }
+      } catch (error) {
+        console.error("❌ Error Fetching Profile:", error);
+        setError(
+          error.response?.data?.message || "Failed to fetch profile data."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [id]);
+
+  // Filter products/services based on search query (if any products exist)
+  const filterProducts = (products) => {
+    if (!products || products.length === 0) return [];
+    return products.filter((product) => {
+      const matchesSearch =
+        !searchQuery ||
+        product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesSearch;
+    });
   };
 
-  const toggleLocation = () => {
-    setLocationOpen(!locationOpen);
-    setCategoryOpen(false); // Close category dropdown
-    setVisibilityOpen(false); // Close visibility dropdown
-  };
+  const filteredProducts = filterProducts(profile?.productImages || []);
 
-  const toggleVisibility = () => {
-    setVisibilityOpen(!visibilityOpen);
-    setCategoryOpen(false); // Close category dropdown
-    setLocationOpen(false); // Close location dropdown
-  };
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-[#FFFDF2]">
+        <div className="flex space-x-2">
+          <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce"></div>
+          <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce delay-200"></div>
+          <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce delay-400"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-red-600 p-4 text-center">
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return <div>Profile not found.</div>;
+  }
 
   return (
     <div className="w-full h-fit bg-[#FFFDF2] flex flex-col items-center pt-[12vh]">
-      <div className="w-[80%]">
-        <div className="w-full  text-[#043D12] flex max-sm:flex-col overflow-y-scroll">
-          {/* Sidebar for Filters */}
-          <aside className=" sm:w-[25%] h-full overflow-y-auto flex flex-col gap-8 text-[#6A7368]">
-            <h3 className="lg:text-[32px] text-[#043D12]">Claire Fidelis</h3>
-            <div className="contact flex flex-col gap-8 ">
-              <ul className="flex flex-col gap-4 ">
-                <li className="text-[13px] flex items-center gap-2 max-md:justify-center">
-                  <MdOutlineCategory /> Clothing and Accessories
+      <div className="w-[80%] max-w-[1440px] mx-auto">
+        <div className="w-full text-[#043D12] flex max-sm:flex-col overflow-y-scroll">
+          {/* Sidebar for Profile Details */}
+          <aside className="sm:w-[25%] h-[80vh] overflow-y-auto flex flex-col gap-8 text-[#6A7368]">
+            <h3 className="lg:text-[32px] text-[#043D12] max-sm:text-center text-[24px] md:text-[28px] font-bold">
+              {profile.businessName}
+            </h3>
+            <div className="contact flex flex-col gap-8">
+              <ul className="flex flex-col gap-4">
+                <li className="text-[13px] flex items-center gap-2 max-md:justify-center md:text-[14px]">
+                  <MdOutlineCategory />{" "}
+                  {profile.categories[0]?.name || "Unknown Category"}
                 </li>
-                <li className="text-[13px] flex items-center gap-2 max-md:justify-center">
-                  <IoCallOutline /> 09078909876
+                <li className="text-[13px] flex items-center gap-2 max-md:justify-center md:text-[14px]">
+                  <IoCallOutline /> {profile.contactNo?.[0] || "Not specified"}
                 </li>
-                <li className="text-[13px] flex items-center gap-2 max-md:justify-center">
-                  <IoLocationOutline /> Aba, Nigeria
+                <li className="text-[13px] flex items-center gap-2 max-md:justify-center md:text-[14px]">
+                  <IoLocationOutline /> {profile.location || "Not specified"}
                 </li>
               </ul>
-              <button className="flex items-center justify-center gap-2 border-[1px] border-[#043D12] hover:bg-[#043D12] hover:text-white rounded-[28px] px-12 py-2 shadow">
-                <FaWhatsapp />
-                Message
-              </button>
+              {profile.socialLinks?.whatsapp ? (
+                <a
+                  href={profile.socialLinks.whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 border-[1px] border-[#043D12] hover:bg-[#043D12] hover:text-white rounded-[28px] px-4 md:px-12 py-2 shadow text-[14px]"
+                >
+                  <FaWhatsapp />
+                  Message
+                </a>
+              ) : (
+                <p className="text-gray-600 text-[12px] text-center">
+                  WhatsApp not available
+                </p>
+              )}
               <ul className="views text-[14px] flex justify-between items-center">
-                <li className="">Profile Views</li>
-                <li>30</li>
+                <li>Profile Views</li>
+                <li>{profile.views || 0}</li>
               </ul>
               <div className="web-share">
                 <p className="text-[12px] text-[#043D12] font-medium px-2 py-1 w-fit">
                   ON THE WEB
                 </p>
-                <div className="content border-[1px] border-[#6A7368] rounded-[11px]    ">
-                  {/* Instagram */}
-
-                  <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
-                    <div className="flex items-center gap-4">
-                      <IoLogoInstagram className="text-[25px]" />
-                      Instagram
+                <div className="content border-[1px] border-[#6A7368] rounded-[11px]">
+                  {profile.socialLinks?.instagram && (
+                    <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
+                      <div className="flex items-center gap-4">
+                        <IoLogoInstagram className="text-[25px]" />
+                        Instagram
+                      </div>
+                      <a
+                        href={profile.socialLinks.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="cursor-pointer text-[18px]"
+                      >
+                        <CiShare1 />
+                      </a>
                     </div>
-                    <CiShare1 className="cursor-pointer text-[18px]" />
-                  </div>
-                  {/* Twitter */}
-                  <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
-                    <div className="flex items-center gap-4">
-                      <IoLogoTwitter className="text-[25px]" />
-                      Twitter
+                  )}
+                  {profile.socialLinks?.twitter && (
+                    <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
+                      <div className="flex items-center gap-4">
+                        <IoLogoTwitter className="text-[25px]" />
+                        Twitter
+                      </div>
+                      <a
+                        href={profile.socialLinks.twitter}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="cursor-pointer text-[18px]"
+                      >
+                        <CiShare1 />
+                      </a>
                     </div>
-                    <CiShare1 className="cursor-pointer text-[18px]" />
-                  </div>
-                  {/* facebook */}
-                  <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
-                    <div className="flex items-center gap-4">
-                      <FaFacebook className="curso-pointer text-[18px]" />
-                      Facebook
+                  )}
+                  {profile.socialLinks?.facebook && (
+                    <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
+                      <div className="flex items-center gap-4">
+                        <FaFacebook className="text-[18px]" />
+                        Facebook
+                      </div>
+                      <a
+                        href={profile.socialLinks.facebook}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="cursor-pointer text-[18px]"
+                      >
+                        <CiShare1 />
+                      </a>
                     </div>
-                    <CiShare1 className="cursor-pointer text-[18px]" />
-                  </div>
-
-                  {/* LinkedIn */}
-                  <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
-                    <div className="flex items-center gap-4">
-                      <IoLogoLinkedin className="text-[25px]" />
-                      LinkedIn
+                  )}
+                  {profile.socialLinks?.linkedin && (
+                    <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
+                      <div className="flex items-center gap-4">
+                        <IoLogoLinkedin className="text-[25px]" />
+                        LinkedIn
+                      </div>
+                      <a
+                        href={profile.socialLinks.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="cursor-pointer text-[18px]"
+                      >
+                        <CiShare1 />
+                      </a>
                     </div>
-                    <CiShare1 className="cursor-pointer text-[18px]" />
-                  </div>
-
-                  {/* Youtube */}
-                  <div className="flex justify-between items-center text-[14px] py-2 px-8 ">
-                    <div className="flex items-center gap-4">
-                      <IoLogoYoutube className="text-[25px]" />
-                      Youtube
+                  )}
+                  {profile.socialLinks?.tiktok && (
+                    <div className="flex justify-between items-center text-[14px] py-2 px-8">
+                      <div className="flex items-center gap-4">
+                        <BsTiktok className="text-[25px]" />
+                        TikTok
+                      </div>
+                      <a
+                        href={profile.socialLinks.tiktok}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="cursor-pointer text-[18px]"
+                      >
+                        <CiShare1 />
+                      </a>
                     </div>
-                    <CiShare1 className="cursor-pointer text-[18px]" />
-                  </div>
+                  )}
                 </div>
               </div>
               <div className="description flex flex-col gap-2">
                 <h5 className="text-[10px] text-[#6A7368]">
                   BUSINESS DESCRIPTION
                 </h5>
-                <p className="text-[13px]">
-                  I’m passionate about people. I love to listen actively to
-                  people. I love to unravel all the tiny details that make them
-                  tick. I love diversity and culture and all the colors of
-                  equity. So, User Experience Design was love at first sight for
-                  me.
+                <p className="text-[13px] md:text-[14px]">
+                  {profile.description || "No description available"}
                 </p>
               </div>
               <div className="keywords flex flex-col gap-2">
-                <h5 className="text-[10px] text-[#6A7368]">KEYWORDS </h5>
-                <p className="text-[13px]">
-                  Rice, Pancake, Palmkernel, Egusi, Ishuazu
+                <h5 className="text-[10px] text-[#6A7368]">KEYWORDS</h5>
+                <p className="text-[13px] md:text-[14px]">
+                  {profile.keyword?.join(", ") || "No keywords available"}
                 </p>
               </div>
-
               <div className="flex flex-col gap-4 pb-4">
                 <p className="text-[12px] text-[#043D12] font-medium px-2 py-1 w-fit">
                   CONTACT
                 </p>
-                <div className="content border-[1px] border-[#6A7368] rounded-[11px]    ">
-                  {/* Phone */}
-
-                  <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
-                    <div className="flex items-center gap-4">Phone</div>
-                    <IoCallOutline className="cursor-pointer text-[18px]" />
-                  </div>
-                  {/* Email */}
-                  <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
-                    <div className="flex items-center gap-4">Email</div>
-                    <BiMessage className="cursor-pointer text-[18px]" />
-                  </div>
-
-                  {/* Whatsapp */}
-                  <div className="flex justify-between items-center text-[14px] py-2 px-8 ">
-                    <div className="flex items-center gap-4">Whatsapp</div>
-                    <IoLogoWhatsapp className="cursor-pointer text-[18px]" />
-                  </div>
+                <div className="content border-[1px] border-[#6A7368] rounded-[11px]">
+                  {profile.contactNo?.[0] && (
+                    <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
+                      <div className="flex items-center gap-4">Phone</div>
+                      <a
+                        href={`tel:${profile.contactNo[0]}`}
+                        className="cursor-pointer text-[18px]"
+                      >
+                        <IoCallOutline />
+                      </a>
+                    </div>
+                  )}
+                  {/* Updated Email with dynamic data from endpoint */}
+                  {profile.member?.email && (
+                    <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
+                      <div className="flex items-center gap-4">Email</div>
+                      <a
+                        href={`mailto:${profile.member.email}`}
+                        className="cursor-pointer text-[18px]"
+                      >
+                        <BiMessage />
+                      </a>
+                    </div>
+                  )}
+                  {profile.socialLinks?.whatsapp && (
+                    <div className="flex justify-between items-center text-[14px] py-2 px-8">
+                      <div className="flex items-center gap-4">WhatsApp</div>
+                      <a
+                        href={profile.socialLinks.whatsapp}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="cursor-pointer text-[18px]"
+                      >
+                        <IoLogoWhatsapp />
+                      </a>
+                    </div>
+                  )}
                 </div>
                 <div className="membership flex flex-col gap-2">
                   <h5 className="text-[10px] text-[#6A7368]">
-                    Member Since: December 13, 2024{" "}
+                    Member Since:{" "}
+                    {new Date(profile.createdAt).toLocaleDateString("en-US", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
                   </h5>
-                  <p className="text-[13px]">Report </p>
+                  <p className="text-[13px] md:text-[14px] text-[#6A7368] cursor-pointer hover:text-[#043D12]">
+                    Report
+                  </p>
                 </div>
               </div>
             </div>
           </aside>
 
-          {/*Products Section */}
-          <div className="sm:w-[75%] h-full overflow-y-auto">
+          {/* Products/Services Section */}
+          <div className="sm:w-[75%] h-[80vh] overflow-y-auto">
             <div className="w-full h-fit py-16 flex justify-center bg-[#FFFDF2]">
               <div className="w-[85%] h-fit flex flex-col gap-8">
-                <h1 className=" border-b-[1px]  border-[#6A7368] text-[20px] text-[#6A7368] pb-1">
+                <h1 className="border-b-[1px] border-[#6A7368] text-[20px] text-[#6A7368] pb-1">
                   Products/Services
                 </h1>
-                <div className="w-full grid lg:grid-cols-3 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
-                  {businesses.map((business, index) => (
+                <div className="w-full grid xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
+                  {filteredProducts.map((product, index) => (
                     <motion.div
-                      key={business.id}
-                      className="flex flex-col gap-1 cursor-pointer"
+                      key={index}
+                      className="flex flex-col gap-1" // Removed onClick to prevent modal opening
                       initial={{ opacity: 0, y: 50 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: false }}
                       transition={{ duration: 0.5, delay: index * 0.1 }}
-                      onClick={() => setSelectedBusiness(business)}
                     >
                       <figure>
                         <img
-                          src={business.img}
-                          alt="Product_img"
-                          className="rounded-lg"
+                          src={product.imageUrl || BusinessImg}
+                          alt={product.name || "Product"}
+                          className="rounded-lg w-full h-[250px] object-cover"
+                          onError={(e) => (e.target.src = BusinessImg)}
                         />
                         <figcaption className="flex flex-col gap-4 text-[#043D12] py-2">
                           <div className="flex flex-col gap-1">
-                            <b className="lg:text-[15px] text-[10px]">
-                              {business.name}
+                            <b className="lg:text-[15px] text-[10px] md:text-[12px]">
+                              {product.name || "Unnamed Product"}
                             </b>
-                            <p className="text-[8px]">{business.category}</p>
                           </div>
                         </figcaption>
                       </figure>
                     </motion.div>
                   ))}
+                  {filteredProducts.length === 0 && (
+                    <p className="text-gray-600 text-[14px] text-center w-full">
+                      No products or services available.
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {/* Modal for Selected Business */}
+              {/* Modal for Selected Product/Service (kept for consistency, but not triggered) */}
               <Modal
                 business={selectedBusiness}
                 onClose={() => setSelectedBusiness(null)}
               />
-            </div>{" "}
+            </div>
           </div>
         </div>
       </div>

@@ -1,3 +1,4 @@
+// src/App.js
 import React from "react";
 import { ToastContainer } from "react-toastify";
 import { Routes, Route } from "react-router-dom";
@@ -26,6 +27,7 @@ import AllBusiness from "./components/community/AllBusiness";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import CommunityMain from "./components/community/CommunityMain";
 import ProfilePage from "./components/community/ProfilePage";
+import BusinessProfile2 from "./pages/BusinessProfile2";
 
 function App() {
   return (
@@ -41,7 +43,8 @@ function App() {
             <Route index element={<CommunityMain />} />
             <Route path="all-businesses" element={<AllBusiness />} />
             <Route path="search" element={<SearchPage />} />
-            <Route path="profile" element={<ProfilePage />} />
+            <Route path="profile/:id" element={<ProfilePage />} />{" "}
+            {/* Updated to dynamic route with :id */}
           </Route>
         </Route>
         {/* Protected Routes */}
@@ -58,6 +61,14 @@ function App() {
           element={
             <PrivateRoute>
               <BusinessProfile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/business-profile2"
+          element={
+            <PrivateRoute>
+              <BusinessProfile2 />
             </PrivateRoute>
           }
         />

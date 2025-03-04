@@ -101,10 +101,10 @@ const Faq = () => {
     <div className="w-full flex justify-center items-center bg-[#FAFEF4] py-18">
       <div className="w-[85%] flex flex-col gap-10">
         <div className="intro text-center">
-          <h1 className="lg:text-[40px] text-[32px] text-[#043D1266]">
+          <h1 className="lg:text-[40px] text-[32px] text-[#6A7368]">
             Frequently Asked Questions
           </h1>
-          <p className="md:text-[20px] text-[18px]">
+          <p className="md:text-[20px] text-[18px] text-[#6A7368]">
             Common questions you might want to ask
           </p>
         </div>
@@ -130,7 +130,7 @@ const Faq = () => {
                         activeIndex === index
                           ? "bg-[#043D12] text-white"
                           : "bg-[#B5BBB4] text-[#043D12]"
-                      } rounded-[26px] px-6 py-4 gap-4 w-full`}
+                      } rounded-[26px] px-6 py-4 gap-4 w-full text-[24px]`}
                       onClick={() => handleToggle(index)}
                     >
                       {item.question}
@@ -149,13 +149,13 @@ const Faq = () => {
                     }`}
                   >
                     {Array.isArray(item.answer) ? (
-                      <ul className="list-disc pl-6 text-[21px] text-[#043D12]">
+                      <ul className="list-disc pl-6 text-[20px] text-[#043D12]">
                         {item.answer.map((listItem, liIndex) => (
                           <li key={liIndex}>{listItem}</li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-[21px] text-[#043D12]">
+                      <p className="text-[20px] text-[#043D12]">
                         {item.answer}
                       </p>
                     )}

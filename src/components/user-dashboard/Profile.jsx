@@ -8,22 +8,30 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  CartesianGrid,
 } from "recharts";
 import { IoIosNotificationsOutline } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { motion } from "framer-motion";
+import { CiUser } from "react-icons/ci";
 import BusinessImg from "../../assets/businessImg.jpeg"; // Fallback image
 import { RiArrowDropDownLine } from "react-icons/ri";
 import ProfileProgressBar from "./ProfileProgressBar";
 
-const BASE_URL = "https://mbo.bookbank.com.ng"; // Consistent with EditProfile
+const BASE_URL = "https://mbo.bookbank.com.ng";
 
 const Profile = () => {
-  const [timeRange, setTimeRange] = useState("monthly");
+  const [timeRange, setTimeRange] = useState("daily"); // Default to "daily" for endpoint compatibility
   const [metric, setMetric] = useState("ProfileViews");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
-  const [profileData, setProfileData] = useState(null);
+  const [profileData, setProfileData] = useState({
+    businessName: "User Name",
+    category: "Category",
+    businesImg: null,
+  });
+  const [analyticsData, setAnalyticsData] = useState([]); // State for analytics
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isFirstVisit, setIsFirstVisit] = useState(true);
@@ -47,19 +55,8 @@ const Profile = () => {
     {
       title: "Social Clicks",
       key: "socialClicks",
-      label: "Clicks on social media links",
-      value: (data) => {
-        try {
-          const socialClicks = data?.socialClicks || {};
-          return Object.values(socialClicks).reduce(
-            (total, clicks) => total + (clicks || 0),
-            0
-          );
-        } catch (error) {
-          console.error("Error parsing socialClicks:", error);
-          return 0;
-        }
-      },
+      label: "Clicks on social media links (e.g., WhatsApp)",
+      value: (data) => data?.whatsappClicks || 0,
     },
   ];
 
@@ -71,30 +68,76 @@ const Profile = () => {
       return;
     }
 
-    const fetchProfile = async () => {
+    const fetchData = async () => {
       try {
-        const API_URL = `${BASE_URL}/member/my-profile`;
-        const response = await axios.get(API_URL, {
+        // Fetch profile data
+        const profileURL = `${BASE_URL}/member/my-profile`;
+        const profileResponse = await axios.get(profileURL, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (response.data && response.data.success && response.data.data) {
-          setProfileData(response.data.data);
+        if (
+          profileResponse.data &&
+          profileResponse.data.success &&
+          profileResponse.data.data
+        ) {
+          const profile = profileResponse.data.data;
+          setProfileData({
+            ...profile,
+            businessName: profile.businessName || "User Name",
+            category: profile.categories?.[0]?.name || "Category",
+            businesImg: profile.businesImg || BusinessImg,
+          });
         } else {
           throw new Error("No profile data found in the response.");
         }
+
+        // Fetch analytics data based on timeRange
+        const rangeMap = {
+          daily: "daily",
+          weekly: "weekly",
+          monthly: "monthly",
+          yearly: "yearly",
+        };
+        const currentTimeRange = timeRange.toLowerCase(); // Use current timeRange, normalized
+        const selectedRange = rangeMap[currentTimeRange] || "daily"; // Ensure lowercase mapping
+        console.log(
+          "Current timeRange:",
+          currentTimeRange,
+          "Selected range for API:",
+          selectedRange
+        ); // Debugging
+        const analyticsURL = `${BASE_URL}/member/get-analytics?range=${selectedRange}`;
+        console.log("API URL:", analyticsURL); // Debugging
+        const analyticsResponse = await axios.get(analyticsURL, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (
+          analyticsResponse.data &&
+          analyticsResponse.data.success &&
+          analyticsResponse.data.data
+        ) {
+          setAnalyticsData(analyticsResponse.data.data);
+          console.log("Analytics Data received:", analyticsResponse.data.data);
+        } else {
+          throw new Error("No analytics data found in the response.");
+        }
       } catch (error) {
-        console.error("❌ Error Fetching Profile:", error);
+        console.error("❌ Error Fetching Data:", error);
         if (
           error.response?.status === 404 ||
           error.response?.data?.message?.includes("foreign key constraint") ||
           error.response?.data?.message?.includes("not found")
         ) {
-          setError("Profile not found. Please create one.");
+          setError(
+            "Analytics or profile not found. Please ensure your profile is set up."
+          );
           navigate("/business-profile", { replace: true });
         } else {
           setError(
-            error.response?.data?.message || "Failed to fetch profile data."
+            error.response?.data?.message ||
+              "Failed to fetch profile or analytics data."
           );
         }
       } finally {
@@ -102,8 +145,8 @@ const Profile = () => {
       }
     };
 
-    fetchProfile();
-  }, [isAuthenticated, token, navigate]);
+    fetchData();
+  }, [isAuthenticated, token, navigate, timeRange]); // Ensure timeRange triggers re-fetch
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -124,43 +167,208 @@ const Profile = () => {
   };
 
   const handleTimeRangeChange = (range) => {
-    setTimeRange(range);
+    // Normalize range to lowercase to ensure consistency
+    const normalizedRange = range.toLowerCase();
+    setTimeRange(normalizedRange);
     setIsDropdownOpen(false);
+    console.log("Time range changed to:", normalizedRange); // Debugging
   };
 
   const generateGraphData = () => {
-    const dataPoints =
-      timeRange === "daily" ? 7 : timeRange === "weekly" ? 4 : 6;
-    const baseValue = profileData
-      ? metric === "ProfileViews"
-        ? profileData.views || 0
-        : metric === "sharedLinks"
-        ? profileData.sharedClicks || 0
-        : (() => {
-            try {
-              const socialClicks = profileData.socialClicks || {};
-              return (
-                Object.values(socialClicks).reduce(
-                  (total, clicks) => total + (clicks || 0),
-                  0
-                ) || 0
-              );
-            } catch (error) {
-              console.error("Error parsing socialClicks:", error);
-              return 0;
-            }
-          })()
-      : 0;
-
-    return Array.from({ length: dataPoints }, (_, index) => ({
-      date:
+    console.log("Analytics Data:", analyticsData, "Time Range:", timeRange);
+    if (!analyticsData || analyticsData.length === 0) {
+      console.warn("No analytics data available, showing placeholder.");
+      const rangeLimit =
         timeRange === "daily"
-          ? `Day ${index + 1}`
+          ? 7
           : timeRange === "weekly"
-          ? `Week ${index + 1}`
-          : new Date(2023, index).toLocaleString("default", { month: "short" }),
-      value: baseValue + Math.floor(Math.random() * 10),
-    }));
+          ? 4
+          : timeRange === "monthly"
+          ? 6
+          : 5;
+      return Array.from({ length: rangeLimit }, (_, index) => ({
+        date: getDefaultDate(index, timeRange),
+        value: Math.floor(Math.random() * 10) + 1, // Random values (1-10) for visibility
+      }));
+    }
+
+    const metricMap = {
+      ProfileViews: "views",
+      sharedLinks: "sharedClicks",
+      socialClicks: "whatsappClicks",
+    };
+
+    const metricKey = metricMap[metric] || "views";
+    const rangeLimit =
+      timeRange === "daily"
+        ? 7
+        : timeRange === "weekly"
+        ? 4
+        : timeRange === "monthly"
+        ? 6
+        : 5;
+
+    const graphData = analyticsData
+      .map((item) => {
+        if (!item || !item.date || item[metricKey] === undefined) {
+          console.warn("Invalid item in analytics data:", item);
+          return null;
+        }
+        // Ensure date is a valid ISO string before processing
+        const dateStr = item.date;
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) {
+          console.warn(
+            "Invalid date in analytics data:",
+            dateStr,
+            "using fallback."
+          );
+          return null; // Skip invalid dates
+        }
+        return {
+          date: formatDateForRange(dateStr, timeRange),
+          value: item[metricKey] || 0,
+        };
+      })
+      .filter((item) => item !== null)
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // If less than 2 points, pad with mock data to ensure a visible line
+    if (graphData.length < 2) {
+      console.warn("Insufficient data points, adding mock data.");
+      let lastDate = graphData.length
+        ? new Date(graphData[0]?.date || new Date())
+        : new Date();
+      if (isNaN(lastDate.getTime())) {
+        console.warn("Invalid lastDate, using current date as fallback.");
+        lastDate = new Date();
+      }
+      const mockPoints = Array.from(
+        { length: rangeLimit - graphData.length },
+        (_, index) => {
+          const newDate = new Date(lastDate);
+          try {
+            if (timeRange === "daily")
+              newDate.setDate(newDate.getDate() - (index + 1));
+            else if (timeRange === "weekly")
+              newDate.setDate(newDate.getDate() - (index + 1) * 7);
+            else if (timeRange === "monthly")
+              newDate.setMonth(newDate.getMonth() - (index + 1));
+            else newDate.setFullYear(newDate.getFullYear() - (index + 1));
+            if (isNaN(newDate.getTime())) {
+              throw new Error("Invalid date generated");
+            }
+            return {
+              date: newDate.toISOString().split("T")[0],
+              value: Math.floor(Math.random() * 10) + 1, // Random values (1-10) for visibility
+            };
+          } catch (error) {
+            console.error("Error generating mock date:", error);
+            return {
+              date: new Date(lastDate.getTime() - (index + 1) * 86400000)
+                .toISOString()
+                .split("T")[0], // Fallback to daily decrement
+              value: Math.floor(Math.random() * 10) + 1,
+            };
+          }
+        }
+      );
+      return [...graphData, ...mockPoints]
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .slice(-rangeLimit);
+    }
+
+    console.log("Generated Graph Data:", graphData);
+    return graphData.slice(-rangeLimit);
+  };
+
+  const formatDateForRange = (dateStr, range) => {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      console.warn(
+        "Invalid date string:",
+        dateStr,
+        "using current date as fallback."
+      );
+      return new Date().toISOString().split("T")[0];
+    }
+    if (range === "daily") {
+      return date.toLocaleDateString("en-US", { weekday: "short" }); // e.g., "Mon", "Tue", etc.
+    }
+    if (range === "weekly") {
+      const week = getWeekNumber(date);
+      return `Week ${week} ${date.getFullYear()}`;
+    }
+    if (range === "monthly") {
+      return date.toLocaleString("default", {
+        month: "short",
+        year: "numeric",
+      }); // e.g., "Mar 2025"
+    }
+    if (range === "yearly") return date.getFullYear().toString(); // e.g., "2025"
+    return date.toISOString().split("T")[0]; // Fallback (YYYY-MM-DD)
+  };
+
+  const getWeekNumber = (date) => {
+    if (isNaN(date.getTime())) {
+      console.warn("Invalid date for week number, using current date.");
+      date = new Date();
+    }
+    const startOfYear = new Date(date.getFullYear(), 0, 1);
+    const diff = date - startOfYear;
+    const oneWeek = 1000 * 60 * 60 * 24 * 7;
+    return Math.floor(diff / oneWeek) + 1;
+  };
+
+  const getDefaultDate = (index, range) => {
+    const now = new Date();
+    if (isNaN(now.getTime())) {
+      console.error("Current date is invalid, using fallback.");
+      return "Day 1"; // Fallback default
+    }
+    if (range === "daily") {
+      const newDate = new Date(now);
+      newDate.setDate(now.getDate() - index);
+      if (isNaN(newDate.getTime())) {
+        console.warn(
+          `Invalid date for index ${index} in daily, using fallback.`
+        );
+        return now.toLocaleDateString("en-US", { weekday: "short" });
+      }
+      return newDate.toLocaleDateString("en-US", { weekday: "short" }); // e.g., "Mon", "Sun"
+    }
+    if (range === "weekly") {
+      const newDate = new Date(now);
+      newDate.setDate(now.getDate() - index * 7);
+      if (isNaN(newDate.getTime())) {
+        console.warn(
+          `Invalid date for index ${index} in weekly, using fallback.`
+        );
+        return `Week ${getWeekNumber(now)} ${now.getFullYear()}`;
+      }
+      const week = getWeekNumber(newDate);
+      return `Week ${week} ${newDate.getFullYear()}`;
+    }
+    if (range === "monthly") {
+      const newDate = new Date(now);
+      newDate.setMonth(now.getMonth() - index);
+      if (isNaN(newDate.getTime())) {
+        console.warn(
+          `Invalid date for index ${index} in monthly, using fallback.`
+        );
+        return now.toLocaleString("default", { month: "short" });
+      }
+      return newDate.toLocaleString("default", { month: "short" });
+    }
+    const newDate = new Date(now);
+    newDate.setFullYear(now.getFullYear() - index);
+    if (isNaN(newDate.getTime())) {
+      console.warn(
+        `Invalid date for index ${index} in yearly, using fallback.`
+      );
+      return now.getFullYear().toString();
+    }
+    return newDate.getFullYear().toString(); // Yearly
   };
 
   if (loading) {
@@ -198,25 +406,32 @@ const Profile = () => {
         <strong className="text-[16px]">Dashboard</strong>
         <div className="flex items-center md:gap-4 px-4">
           <Link to="/">
-            <IoIosNotificationsOutline className="text-[30px] text-[#6A7368]" />
+            <IoIosNotificationsOutline className="text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
           </Link>
           <Link to="/user-dashboard/profile">
-            <figure className="flex items-center md:border-[1px] border-gray-300 rounded-[8px] p-2 gap-2">
-              <img
-                src={profileData?.businesImg || BusinessImg} // Use fetched businesImg
-                alt="Business-img"
-                className="rounded-full w-[26px] h-[26px] object-cover"
-                onError={(e) => (e.target.src = BusinessImg)} // Fallback if image fails
-              />
-              <figcaption className="text-[#6A7368] max-md:hidden">
-                <h3 className="text-[10px]">
-                  {profileData?.businessName || "Ukaegbu and Sons"}
+            <motion.figure
+              className="flex items-center bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200"
+              whileHover={{ scale: 1.05 }}
+              animate={{ opacity: [1, 0.8, 1] }}
+              transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+            >
+              {profileData.businesImg ? (
+                <img
+                  src={profileData.businesImg}
+                  alt="Business-img"
+                  className="rounded-full w-[32px] h-[32px] object-cover border-2 border-[#043D12]"
+                  onError={(e) => (e.target.src = BusinessImg)}
+                />
+              ) : (
+                <CiUser className="text-[32px] text-[#043D12] bg-gray-100 rounded-full p-1" />
+              )}
+              <figcaption className="ml-2 text-[#6A7368] max-md:hidden">
+                <h3 className="text-[12px] font-semibold">
+                  {profileData.businessName}
                 </h3>
-                <p className="text-[8px]">
-                  {profileData?.category || "Clothing and Accessories"}
-                </p>
+                <p className="text-[10px] italic">{profileData.category}</p>
               </figcaption>
-            </figure>
+            </motion.figure>
           </Link>
         </div>
       </div>
@@ -226,7 +441,7 @@ const Profile = () => {
         <div className="text-[#6A7368]">
           <h2 className="text-[20px]">
             {isFirstVisit ? "Welcome" : "Welcome back"},{" "}
-            {profileData?.businessName || user?.firstName || "User"}
+            {profileData.businessName || user?.firstname || "User"}
           </h2>
           <p className="text-[10px] max-lg:text-center">
             Subscription Status:{" "}
@@ -280,7 +495,7 @@ const Profile = () => {
         </div>
 
         {/* Graph */}
-        <div className="mt-8 border-[1px] border-[#6A7368] rounded-[30px] shadow-lg p-4">
+        <div className="mt-8 border-[1px] border-[#6A7368] rounded-[30px] shadow-lg p-4 z-20">
           <div className="flex items-center justify-between">
             <h3 className="text-[16px] text-[#6A7368]">
               {metric === "ProfileViews"
@@ -300,8 +515,8 @@ const Profile = () => {
                 <RiArrowDropDownLine className="text-[20px]" />
               </div>
               {isDropdownOpen && (
-                <div className="absolute left-0 top-full mt-2 bg-white shadow-lg rounded-md w-full z-10">
-                  {["daily", "weekly", "monthly"].map((range) => (
+                <div className="absolute left-0 top-full mt-2 bg-white shadow-lg rounded-md w-full z-30">
+                  {["daily", "weekly", "monthly", "yearly"].map((range) => (
                     <div
                       key={range}
                       className="p-2 cursor-pointer hover:bg-gray-100"
@@ -314,32 +529,43 @@ const Profile = () => {
               )}
             </div>
           </div>
-          <div className="mt-8 w-full">
-            <ResponsiveContainer height={300}>
-              <LineChart
-                data={generateGraphData()}
-                margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
-              >
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip
-                  content={({ payload }) =>
-                    payload && payload.length ? (
-                      <div className="bg-white p-2 border border-gray-300 rounded shadow">
-                        <p>{payload[0].payload.date}</p>
-                        <p>{payload[0].value}</p>
-                      </div>
-                    ) : null
-                  }
-                />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#82ca9d"
-                  activeDot={{ r: 8 }}
-                />
-                <Legend />
-              </LineChart>
+          <div className="mt-8 w-full h-[300px] relative z-30">
+            <ResponsiveContainer width="100%" height="100%">
+              {generateGraphData().length > 0 ? (
+                <LineChart
+                  data={generateGraphData()}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
+                >
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <CartesianGrid strokeDasharray="3 3" />{" "}
+                  {/* Grid for visibility */}
+                  <Tooltip
+                    content={({ payload }) => {
+                      console.log("Tooltip Payload:", payload);
+                      return payload && payload.length ? (
+                        <div className="bg-white p-2 border border-gray-300 rounded shadow">
+                          <p>{payload[0].payload.date}</p>
+                          <p>{payload[0].value}</p>
+                        </div>
+                      ) : (
+                        <div>No data available</div>
+                      );
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#82ca9d" // Green, visible against #FFFDF2
+                    activeDot={{ r: 8 }}
+                  />
+                  <Legend verticalAlign="top" align="right" />
+                </LineChart>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  No data available for this range
+                </div>
+              )}
             </ResponsiveContainer>
           </div>
         </div>

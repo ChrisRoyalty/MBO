@@ -10,13 +10,7 @@ import { TiArrowForwardOutline } from "react-icons/ti";
 import { TbLayoutGrid } from "react-icons/tb";
 import { MdOutlineCategory } from "react-icons/md";
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
-import {
-  FaWhatsapp,
-  FaFacebook,
-  FaInstagram,
-  FaLinkedin,
-  FaTwitter,
-} from "react-icons/fa";
+import { FaWhatsapp } from "react-icons/fa"; // Only keeping WhatsApp for sharing
 
 const EditProfile = () => {
   const [profileData, setProfileData] = useState({
@@ -24,7 +18,6 @@ const EditProfile = () => {
     contactNo: [],
     businesImg: "",
     backgroundImg: "",
-    socialLinks: {},
     description: "",
     location: "",
     keyword: [],
@@ -53,7 +46,7 @@ const EditProfile = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState({
     id: "",
-    name: profileData.category || "",
+    name: "",
   });
   const [shareableLink, setShareableLink] = useState("");
   const [showShareOptions, setShowShareOptions] = useState(false);
@@ -61,7 +54,7 @@ const EditProfile = () => {
   const { isAuthenticated, token } = useSelector((state) => state.auth);
   const BASE_URL = "https://mbo.bookbank.com.ng";
 
-  // Fetch profile data
+  // Fetch profile data and populate selectedCategory
   useEffect(() => {
     if (!isAuthenticated || !token) {
       setError("Not authenticated or missing token!");
@@ -85,7 +78,6 @@ const EditProfile = () => {
               : [],
             businesImg: profile.businesImg || "",
             backgroundImg: profile.backgroundImg || "",
-            socialLinks: profile.socialLinks || {},
             description: profile.description || "",
             location: profile.location || "",
             keyword: Array.isArray(profile.keyword) ? profile.keyword : [],
@@ -96,7 +88,12 @@ const EditProfile = () => {
           };
           setProfileData(initialData);
           setOriginalData(initialData);
-          setSelectedCategory({ id: "", name: initialData.category || "" });
+
+          const categoryFromProfile = profile.categories?.[0] || {};
+          setSelectedCategory({
+            id: categoryFromProfile.id || "",
+            name: categoryFromProfile.name || profile.category || "",
+          });
         } else {
           setError("No profile data found in the response.");
           toast.error("No profile data found in the response.");
@@ -171,17 +168,6 @@ const EditProfile = () => {
       ...prevData,
       [field]:
         field === "keyword" || field === "contactNo" ? value.split(",") : value,
-    }));
-  };
-
-  // Handle social links change
-  const handleSocialLinkChange = (key, value) => {
-    setProfileData((prevData) => ({
-      ...prevData,
-      socialLinks: {
-        ...prevData.socialLinks,
-        [key]: value,
-      },
     }));
   };
 
@@ -275,7 +261,6 @@ const EditProfile = () => {
           contactNo: profileData.contactNo,
           businesImg: profileData.businesImg,
           backgroundImg: profileData.backgroundImg,
-          socialLinks: profileData.socialLinks,
           description: profileData.description,
           location: profileData.location,
           keyword: profileData.keyword,
@@ -316,7 +301,6 @@ const EditProfile = () => {
             : [],
           businesImg: updatedProfile.businesImg || "",
           backgroundImg: updatedProfile.backgroundImg || "",
-          socialLinks: updatedProfile.socialLinks || {},
           description: updatedProfile.description || "",
           location: updatedProfile.location || "",
           keyword: Array.isArray(updatedProfile.keyword)
@@ -329,7 +313,10 @@ const EditProfile = () => {
         };
         setProfileData(syncedData);
         setOriginalData(syncedData);
-        setSelectedCategory({ id: "", name: syncedData.category || "" });
+        setSelectedCategory({
+          id: updatedProfile.categories?.[0]?.id || "",
+          name: updatedProfile.category || "",
+        });
       }
     } catch (error) {
       console.error(`❌ ${formType} PATCH Error:`, error);
@@ -360,7 +347,6 @@ const EditProfile = () => {
             category: originalData?.category || "",
             keyword: originalData?.keyword || [],
             location: originalData?.location || "",
-            socialLinks: originalData?.socialLinks || {},
             description: originalData?.description || "",
             contactNo: originalData?.contactNo || [],
             businesImg: originalData?.businesImg || "",
@@ -369,7 +355,10 @@ const EditProfile = () => {
 
     setProfileData((prevData) => ({ ...prevData, ...resetFields }));
     if (formType === "business") {
-      setSelectedCategory({ id: "", name: resetFields.category || "" });
+      setSelectedCategory({
+        id: originalData?.categories?.[0]?.id || "",
+        name: resetFields.category || "",
+      });
     }
 
     setTimeout(
@@ -396,21 +385,6 @@ const EditProfile = () => {
     switch (platform) {
       case "whatsapp":
         url = `https://api.whatsapp.com/send?text=${encodeURIComponent(
-          message
-        )}`;
-        break;
-      case "facebook":
-        url = `https://www.facebook.com/sharer/sharer.php?u=${encodedLink}`;
-        break;
-      case "instagram":
-        navigator.clipboard.writeText(message);
-        toast.info("Link copied to clipboard! Paste it in Instagram.");
-        return;
-      case "linkedin":
-        url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedLink}`;
-        break;
-      case "twitter":
-        url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
           message
         )}`;
         break;
@@ -496,7 +470,7 @@ const EditProfile = () => {
                 {profileData.businessName}
               </h4>
               <p className="text-xs sm:text-sm">
-                {profileData.category || "Clothing and Accessories"}
+                {selectedCategory.name || "Clothing and Accessories"}
               </p>
             </figcaption>
           </figure>
@@ -605,7 +579,7 @@ const EditProfile = () => {
               </div>
               <div className="flex justify-between gap-4 relative">
                 <button
-                  type="button" // Prevent form submission
+                  type="button"
                   className="w-full h-[46px] px-4 rounded-[11px] border-[1px] border-[#6A7368] text-[#6A7368] text-[12px] sm:text-sm overflow-hidden text-ellipsis whitespace-nowrap"
                   onClick={() => {
                     if (shareableLink) {
@@ -621,7 +595,7 @@ const EditProfile = () => {
                     : "Loading shareable link..."}
                 </button>
                 <button
-                  type="button" // Prevent form submission
+                  type="button"
                   className="rounded-[11px] text-[14px] px-4 sm:px-6 py-1 shadow-lg border-[1px] border-[#6A7368] flex items-center justify-center"
                   onClick={handleShareClick}
                 >
@@ -635,34 +609,6 @@ const EditProfile = () => {
                       title="Share on WhatsApp"
                     >
                       <FaWhatsapp className="text-[20px] text-green-500 hover:text-green-600" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => shareToSocialMedia("facebook")}
-                      title="Share on Facebook"
-                    >
-                      <FaFacebook className="text-[20px] text-blue-600 hover:text-blue-700" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => shareToSocialMedia("instagram")}
-                      title="Share on Instagram"
-                    >
-                      <FaInstagram className="text-[20px] text-pink-500 hover:text-pink-600" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => shareToSocialMedia("linkedin")}
-                      title="Share on LinkedIn"
-                    >
-                      <FaLinkedin className="text-[20px] text-blue-700 hover:text-blue-800" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => shareToSocialMedia("twitter")}
-                      title="Share on Twitter"
-                    >
-                      <FaTwitter className="text-[20px] text-blue-400 hover:text-blue-500" />
                     </button>
                   </div>
                 )}
@@ -849,36 +795,6 @@ const EditProfile = () => {
                   onClick={() => handleEditClick("location")}
                   className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
                     buttonActive.location
-                      ? "scale-95 bg-[#043D12] text-white"
-                      : "hover:bg-[#043D12] hover:text-white"
-                  }`}
-                >
-                  <FiEdit3 className="text-[18px]" />
-                  Edit
-                </button>
-              </div>
-            </div>
-            <div className="text-[#6A7368] flex flex-col gap-2">
-              <label className="text-sm">Facebook Link (Social)</label>
-              <div className="flex justify-between gap-4">
-                <input
-                  type="text"
-                  disabled={editField !== "socialLinks.facebook"}
-                  value={profileData.socialLinks.facebook || ""}
-                  onChange={(e) =>
-                    handleSocialLinkChange("facebook", e.target.value)
-                  }
-                  className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
-                    editField === "socialLinks.facebook"
-                      ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
-                      : "border-[#6A7368]"
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => handleEditClick("socialLinks.facebook")}
-                  className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
-                    buttonActive["socialLinks.facebook"]
                       ? "scale-95 bg-[#043D12] text-white"
                       : "hover:bg-[#043D12] hover:text-white"
                   }`}

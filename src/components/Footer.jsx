@@ -98,7 +98,7 @@ const Footer = () => {
         className="h-[10vh] policies text-[14px] flex flex-col gap-2 w-full items-center justify-center border-t-[1px] border-[#043D12]"
       >
         <p className="text-[#043D12]">
-          © 2025 Digital Aba. All rights reserved.
+          © 2025 Mind Power Aba. All rights reserved.
         </p>
       </motion.div>
     </motion.div>

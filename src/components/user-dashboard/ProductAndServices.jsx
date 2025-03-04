@@ -71,7 +71,7 @@ const ProductAndServices = () => {
           const fetchedProducts = response.data.data.productImages.map(
             (img) => ({
               id: img.id,
-              name: img.name || "Unnamed Product", // Default name if null
+              name: img.name || "Unnamed Product",
               image: img.imageUrl,
             })
           );
@@ -168,7 +168,7 @@ const ProductAndServices = () => {
     }
 
     try {
-      const response = await axios.post(
+      const response = await axios.patch(
         `${BASE_URL}/member/edit-image/${editingProduct.id}`,
         { name: newName },
         {
@@ -184,20 +184,17 @@ const ProductAndServices = () => {
           response.data.message || "Image name updated successfully!"
         );
 
-        // Update state
         setProducts((prevProducts) =>
           prevProducts.map((p) =>
             p.id === editingProduct.id ? { ...p, name: newName } : p
           )
         );
 
-        // Update localStorage
         const updatedProducts = products.map((p) =>
           p.id === editingProduct.id ? { ...p, name: newName } : p
         );
         localStorage.setItem("products", JSON.stringify(updatedProducts));
 
-        // Reset edit state
         setEditingProduct(null);
         setNewName("");
       } else {
@@ -213,12 +210,43 @@ const ProductAndServices = () => {
     }
   };
 
-  // Handle delete functionality
-  const handleDelete = (productId) => {
-    const updatedProducts = products.filter((p) => p.id !== productId);
-    setProducts(updatedProducts);
-    localStorage.setItem("products", JSON.stringify(updatedProducts));
-    toast.success(`Product ${productId} deleted successfully!`);
+  // Handle delete functionality with API call
+  const handleDelete = async (productId) => {
+    if (!token) {
+      toast.error("Authentication token missing!");
+      return;
+    }
+
+    try {
+      const response = await axios.delete(
+        `${BASE_URL}/member/delete-image/${productId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success(response.data.message || "Product deleted successfully!");
+
+        // Update state by removing the deleted product
+        const updatedProducts = products.filter((p) => p.id !== productId);
+        setProducts(updatedProducts);
+
+        // Update localStorage
+        localStorage.setItem("products", JSON.stringify(updatedProducts));
+      } else {
+        toast.error(response.data.error || "Failed to delete product.");
+      }
+    } catch (error) {
+      console.error("❌ Error Deleting Product:", error);
+      toast.error(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Failed to delete product."
+      );
+    }
   };
 
   // Loader component
