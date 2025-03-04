@@ -66,7 +66,7 @@ const Start = () => {
       whileInView="visible"
       viewport={{ once: false }}
       variants={animations.scaleUp}
-      className="w-full h-[50vh] flex justify-center items-center bg-[#043D12]"
+      className="w-full py-[10vh] flex justify-center items-center bg-[#043D12]"
     >
       <motion.div
         initial="hidden"

@@ -4,18 +4,19 @@ import axios from "axios";
 import { useSelector } from "react-redux";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";
 
 const BASE_URL = "https://mbo.bookbank.com.ng";
 
 const Subscription = () => {
   const [subscriptionData, setSubscriptionData] = useState({
     nextBillingDate: null,
-    subscriptionId: null, // To store the subscription ID for API calls
+    subscriptionId: null,
   });
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
 
   const { token } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
 
   // Fetch profile data to get subscription details
   useEffect(() => {
@@ -35,15 +36,13 @@ const Subscription = () => {
           const profile = response.data.data;
           const member = profile.member || {};
 
-          // Assuming subscription might contain nextBillingDate in a real scenario
-          // Since sample shows subscription: null, we'll use a fallback
+          // Use actual subscription date if available, otherwise set to "Not Subscribed"
           const nextBillingDate =
-            member.subscription?.nextBillingDate || // Adjust this based on actual API response structure
-            new Date("2025-01-14").toISOString(); // Fallback date if subscription is null
+            member.subscription?.nextBillingDate || "Not Subscribed";
 
           setSubscriptionData({
             nextBillingDate,
-            subscriptionId: member.id || null, // Use member ID as a placeholder; adjust if subscription has its own ID
+            subscriptionId: member.id || null,
           });
         } else {
           toast.error("No profile data found in the response.");
@@ -61,82 +60,9 @@ const Subscription = () => {
     fetchProfile();
   }, [token]);
 
-  // Handle Change Plan
-  const handleChangePlan = async () => {
-    if (!subscriptionData.subscriptionId) {
-      toast.error("No subscription ID found!");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const payload = {
-        name: "Updated Plan", // Example payload; adjust based on API requirements
-        price: 99.99,
-        description: "Updated subscription plan.",
-      };
-      const response = await axios.patch(
-        `${BASE_URL}/admin/edit-sub/${subscriptionData.subscriptionId}`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.data.success) {
-        toast.success("Subscription plan changed successfully!");
-        // Optionally refetch profile data to update nextBillingDate
-      } else {
-        toast.error(
-          response.data.message || "Failed to change subscription plan."
-        );
-      }
-    } catch (error) {
-      console.error("❌ Error Changing Subscription:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to change subscription plan."
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // Handle Cancel Subscription
-  const handleCancelSubscription = async () => {
-    if (!subscriptionData.subscriptionId) {
-      toast.error("No subscription ID found!");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const response = await axios.delete(
-        `${BASE_URL}/admin/delete-sub/${subscriptionData.subscriptionId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (response.data.success) {
-        toast.success("Subscription canceled successfully!");
-        setSubscriptionData((prev) => ({
-          ...prev,
-          nextBillingDate: null, // Reset billing date after cancellation
-        }));
-      } else {
-        toast.error(response.data.message || "Failed to cancel subscription.");
-      }
-    } catch (error) {
-      console.error("❌ Error Canceling Subscription:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to cancel subscription."
-      );
-    } finally {
-      setSubmitting(false);
-    }
+  // Handle navigation to /subscribe
+  const handleChangePlan = () => {
+    navigate("/subscribe");
   };
 
   // Loader Component
@@ -186,7 +112,9 @@ const Subscription = () => {
             <button className="max-lg:w-full flex items-center max-lg:justify-center text-[14px] text-[#FFFDF2] rounded-[11px] shadow px-2 sm:px-4 py-4 gap-2 bg-[#6A736899]">
               <ImNotification className="text-[20px]" />
               Next billing date:{" "}
-              {subscriptionData.nextBillingDate
+              {subscriptionData.nextBillingDate === "Not Subscribed"
+                ? "Not Subscribed"
+                : subscriptionData.nextBillingDate
                 ? new Date(subscriptionData.nextBillingDate).toLocaleDateString(
                     "en-US",
                     { day: "numeric", month: "short", year: "numeric" }
@@ -200,27 +128,9 @@ const Subscription = () => {
         <div className="w-fit flex items-center gap-6">
           <button
             onClick={handleChangePlan}
-            disabled={submitting}
-            className={`border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-2 lg:px-8 py-3 shadow-lg flex items-center gap-2 ${
-              submitting
-                ? "cursor-not-allowed opacity-50"
-                : "hover:text-white hover:bg-[#043D12]"
-            }`}
+            className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-2 lg:px-8 py-3 shadow-lg hover:text-white hover:bg-[#043D12]"
           >
-            {submitting ? "Processing..." : "Change Plan"}
-            {submitting && <Loader />}
-          </button>
-          <button
-            onClick={handleCancelSubscription}
-            disabled={submitting}
-            className={`border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-2 lg:px-8 py-3 shadow-lg flex items-center gap-2 ${
-              submitting
-                ? "cursor-not-allowed opacity-50"
-                : "hover:text-white hover:bg-[#043D12]"
-            }`}
-          >
-            {submitting ? "Processing..." : "Cancel Subscription"}
-            {submitting && <Loader />}
+            Change Plan
           </button>
         </div>
       </div>

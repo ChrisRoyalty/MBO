@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import BusinessImg from "../../assets/businessImg.jpeg"; // Fallback business image
+import { FaTimes } from "react-icons/fa"; // Modern X icon
 
 const BASE_URL = "https://mbo.bookbank.com.ng";
 
@@ -21,12 +22,20 @@ const Modal = ({ profile, onClose }) => {
         onClick={onClose}
       >
         <motion.div
-          className="bg-white px-6 py-8 rounded-lg shadow-lg w-[90%] max-w-3xl flex flex-col md:flex-row gap-6 items-start overflow-hidden"
+          className="bg-white px-6 py-8 rounded-lg shadow-lg w-[90%] max-w-3xl flex flex-col md:flex-row gap-6 items-start overflow-hidden relative"
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
           exit={{ scale: 0.8 }}
           onClick={(e) => e.stopPropagation()}
         >
+          {/* X Icon in Top-Right */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-[#6A7368] hover:text-[#043D12] text-xl"
+          >
+            <FaTimes />
+          </button>
+
           <motion.img
             src={
               profile.productImages?.[0]?.imageUrl ||
@@ -58,27 +67,25 @@ const Modal = ({ profile, onClose }) => {
             <p className="text-gray-700">
               <strong>Views:</strong> {profile.views || 0}
             </p>
-            <div className="flex flex-col gap-4 mt-4">
-              <div className="flex gap-4 items-center">
-                <Link
-                  to={`/profile/${profile.id}`}
+            {/* Replace View Profile with Description */}
+            <p className="text-gray-700">
+              <strong>Description:</strong>{" "}
+              {profile.description || "No description available"}
+            </p>
+            <div className="flex gap-4 items-center mt-4">
+              {/* Replace Contact Us with WhatsApp Link */}
+              {profile.socialLinks?.whatsapp ? (
+                <a
+                  href={profile.socialLinks.whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-fit border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-4 py-2 shadow-lg hover:bg-[#043D12] text-center"
                 >
-                  View Profile
-                </Link>
-                <Link
-                  to="/contact"
-                  className="w-fit border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-4 py-2 shadow-lg hover:bg-[#043D12] text-center"
-                >
-                  Contact Us
-                </Link>
-              </div>
-              <button
-                onClick={onClose}
-                className="mt-2 cursor-pointer border-[1px] border-red-600 text-red-600 font-bold rounded-lg shadow-md py-2 hover:bg-red-50"
-              >
-                Close
-              </button>
+                  Chat on WhatsApp
+                </a>
+              ) : (
+                <p className="text-gray-600 text-sm">WhatsApp not available</p>
+              )}
             </div>
           </motion.div>
         </motion.div>
@@ -148,7 +155,7 @@ const NewBusinesses = () => {
           {profiles.map((profile, index) => (
             <motion.div
               key={profile.id}
-              className="flex flex-col gap-2 cursor-pointer h-[350px] my-8" // Increased height for larger image
+              className="flex flex-col gap-2 cursor-pointer h-[350px] my-8"
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false }}
@@ -174,7 +181,7 @@ const NewBusinesses = () => {
                     BusinessImg
                   }
                   alt={profile.businessName}
-                  className="w-full h-[250px] object-cover rounded-lg" // Increased height for product image
+                  className="w-full h-[250px] object-cover rounded-lg"
                   onError={(e) => (e.target.src = BusinessImg)}
                 />
                 <figcaption className="flex flex-col gap-2 text-[#043D12] py-2">

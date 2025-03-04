@@ -47,7 +47,7 @@ const HeroSection = () => {
               Connect. Showcase. Grow.
             </strong>
           </h1>
-          <p className="lg:text-[28px] text-[14px] max-w-full mx-auto md:mx-0">
+          <p className="lg:text-[28px] text-[14px] max-w-full mx-auto md:mx-0 text-[#6A7368]">
             Create a powerful online presence. Share your story, showcase your
             products, and let your customers find you.
           </p>

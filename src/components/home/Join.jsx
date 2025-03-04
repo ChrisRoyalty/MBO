@@ -129,7 +129,9 @@ const Join = () => {
               {card.animation}
               <figcaption className="text-[24px] text-[#043D12]">
                 <h5 className="font-bold">{card.title}</h5>
-                <p className="text-[20px] lg:px-16 px-8">{card.description}</p>
+                <p className="text-[20px] lg:px-16 px-8 text-[#6A7368]">
+                  {card.description}
+                </p>
               </figcaption>
             </motion.div>
           ))}

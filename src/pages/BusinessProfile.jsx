@@ -1,17 +1,16 @@
-import React, { useState, useEffect, useContext } from "react";
+// src/components/BusinessProfile.jsx
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { loginSuccess, logout } from "../redux/authSlice";
-import { Link } from "react-router-dom";
-import { CiLock } from "react-icons/ci";
+import { loginSuccess } from "../redux/authSlice";
+import { Link, useNavigate } from "react-router-dom";
 import { BsPerson } from "react-icons/bs";
 import { MdOutlineCategory } from "react-icons/md";
 import { VscSymbolKeyword } from "react-icons/vsc";
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
+import { CiLock } from "react-icons/ci";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
 import Hand from "../components/svgs/Hand";
 
 const BusinessProfile = () => {
@@ -56,10 +55,6 @@ const BusinessProfile = () => {
     fetchCategories();
   }, [BASE_URL]);
 
-  // useEffect(() => {
-  //   fetchCategories();
-  // }, []);
-
   const toggleDropdown = () => {
     setShowDropdown(!showDropdown);
   };
@@ -69,61 +64,45 @@ const BusinessProfile = () => {
     setShowDropdown(false);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
+    console.log("BusinessProfile submitted", {
+      businessName,
+      selectedCategory,
+      keyword,
+      description,
+    });
+
+    if (!businessName.trim()) {
+      toast.error("Business name is required.");
+      return;
+    }
     if (!selectedCategory.id) {
       toast.error("Please select a business category.");
       return;
     }
-
     if (!token) {
       toast.error("Token missing. Please log in again.");
       navigate("/login");
       return;
     }
 
-    const payload = {
+    // Instead of API call, store data in sessionStorage and navigate to Step 2
+    setLoading(true);
+    const step1Data = {
       businessName,
-      categoryIds: [selectedCategory.id],
+      categoryId: selectedCategory.id,
+      keyword,
       description,
-      keyword: keyword.split(",").map((kw) => kw.trim()),
     };
-
-    try {
-      setLoading(true);
-      const response = await axios.post(
-        `${BASE_URL}/member/create-profile`,
-        payload,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      const newToken = response.data.token;
-      if (newToken) {
-        sessionStorage.setItem("token", newToken);
-        dispatch(loginSuccess(newToken));
-      }
-
-      toast.success("Business profile created successfully!");
-      setTimeout(() => navigate("/business-profile2"), 2000);
-    } catch (error) {
-      const errorData = error.response?.data;
-      const status = errorData?.status;
-      const message = errorData?.message || "An error occurred.";
-      toast.error(message); // Fire toast first
-      //console.log(message, "taost");
-      if (status === 403) {
-        setTimeout(() => navigate("/user-dashboard/profile"), 1500);
-      } else if (status === 401) {
-        setTimeout(() => navigate("/login"), 1500);
-      } else {
-        setTimeout(() => toast.error(message || "An error occurred."), 1500);
-      }
-    } finally {
+    sessionStorage.setItem("businessProfileStep1", JSON.stringify(step1Data));
+    console.log("Step 1 data stored:", step1Data);
+    setTimeout(() => {
       setLoading(false);
-    }
+      navigate("/business-profile2");
+    }, 500); // Small delay for UX feedback
   };
+
   return (
     <div className="w-full h-screen flex justify-center lg:grid grid-cols-2">
       <div className="max-lg:hidden w-full h-full flex justify-center items-center bg-[url('/Group2.svg')] bg-cover bg-center bg-green-800">
@@ -144,11 +123,9 @@ const BusinessProfile = () => {
       </div>
       <div className="relative max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
         <div className="w-[80%] h-fit max-lg:mt-20">
-          <Link to="/" className="w-fit h-fit absolute top-0 left-0 ">
-            <p className="text-white rounded-lg shadow-l border border-[#043D12] bg-[#043D12] m-2 px-2 py-1 text-[15px]">
-              back
-            </p>
-          </Link>
+          <div className="absolute top-0 right-0 m-2 text-[#043D12] font-medium">
+            1 of 2
+          </div>
           <Link
             to="/"
             className="lg:text-[50px] text-[32px] font-bold text-[#363636]"
@@ -246,9 +223,9 @@ const BusinessProfile = () => {
             <button
               type="submit"
               disabled={loading}
-              className="cursor-pointer md:mt-6 mt-16 w-full text-[#FFFDF2] bg-[#043D12] hover:bg-[#043D12]/75 shadow-lg rounded-[27px] px-8 flex justify-center items-center lg:h-[60px] h-[48px]"
+              className="cursor-pointer md:mt-6 mt-16 w-full text-[#FFFDF2] bg-[#043D12] hover:bg-[#043D12]/75 shadow-lg rounded-[27px] px-8 flex justify-center items-center lg:h-[60px] h-[48px] disabled:opacity-50"
             >
-              {loading ? "Submitting..." : "Create Profile"}
+              {loading ? "Submitting..." : "Next"}
             </button>
           </form>
         </div>

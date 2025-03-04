@@ -27,6 +27,7 @@ import AdminDashboard from "./components/admin/AdminDashboard";
 import CommunityMain from "./components/community/CommunityMain";
 import ProfilePage from "./components/community/ProfilePage";
 import BusinessProfile2 from "./pages/BusinessProfile2";
+// import BusinessProfile2 from "./pages/BusinessProfile2";
 
 function App() {
   return (

@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { IoLogoFacebook } from "react-icons/io5";
 import { FiEdit3 } from "react-icons/fi";
-import { FaInstagram, FaTwitter, FaTiktok, FaLinkedin } from "react-icons/fa";
+import {
+  FaInstagram,
+  FaTwitter,
+  FaTiktok,
+  FaLinkedin,
+  FaWhatsapp,
+} from "react-icons/fa";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { toast, ToastContainer } from "react-toastify";
@@ -81,7 +87,7 @@ const ContactAndSocials = () => {
     }
   };
 
-  // Handle form submission
+  // Handle form submission for contact details
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -98,9 +104,6 @@ const ContactAndSocials = () => {
         }
       );
 
-      console.log("Contact Update Response:", response.data); // For debugging
-
-      // Check for success based on message
       if (response.data.message === "Profile updated successfully") {
         toast.success(
           response.data.message || "Contact details updated successfully!"
@@ -128,18 +131,17 @@ const ContactAndSocials = () => {
     }
   };
 
-  // Handle social media link addition
-  const handleAddSocialLink = (platform) => {
+  // Handle social media link addition or edit
+  const handleSocialLinkClick = (platform) => {
     if (profileData.socialLinks[platform]) {
-      toast.info(
-        `${platform} link already exists: ${profileData.socialLinks[platform]}`
-      );
+      setSocialInput(profileData.socialLinks[platform]); // Pre-fill with existing link
     } else {
-      setShowSocialModal(platform);
+      setSocialInput(""); // Clear input for new link
     }
+    setShowSocialModal(platform);
   };
 
-  // Submit new social link
+  // Submit or update social link
   const handleSocialSubmit = async (platform) => {
     if (!socialInput.trim()) {
       toast.error("Please enter a valid link or username.");
@@ -159,12 +161,12 @@ const ContactAndSocials = () => {
         }
       );
 
-      console.log("Social Link Update Response:", response.data); // For debugging
-
-      // Check for success based on message
       if (response.data.message === "Profile updated successfully") {
         toast.success(
-          response.data.message || `${platform} link added successfully!`
+          response.data.message ||
+            `${platform} link ${
+              profileData.socialLinks[platform] ? "updated" : "added"
+            } successfully!`
         );
         setProfileData((prev) => ({
           ...prev,
@@ -176,19 +178,19 @@ const ContactAndSocials = () => {
         toast.error(
           response.data.error ||
             response.data.message ||
-            "Failed to add social link."
+            "Failed to update social link."
         );
       }
     } catch (error) {
-      console.error("❌ Error Adding Social Link:", error);
+      console.error("❌ Error Updating Social Link:", error);
       toast.error(
         error.response?.data?.message ||
-          "Failed to add social link due to an error."
+          "Failed to update social link due to an error."
       );
     }
   };
 
-  // Animated Loader Component
+  // Loader Component
   const Loader = () => (
     <div className="flex space-x-2 items-center">
       <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce"></div>
@@ -227,6 +229,22 @@ const ContactAndSocials = () => {
         </p>
         <div className="flex flex-col gap-16">
           <div className="content border-[1px] border-[#6A7368] rounded-[11px]">
+            {/* WhatsApp */}
+            <div className="flex justify-between py-6 px-8 border-b-[1px] border-[#6A7368]">
+              <div className="flex items-center gap-4">
+                <FaWhatsapp className="text-[25px]" />
+                WhatsApp
+              </div>
+              <button
+                onClick={() => handleSocialLinkClick("whatsapp")}
+                className="text-[14px] border-[1px] rounded-[11px] shadow px-4 py-2 flex items-center gap-2 border-[#6A7368] hover:bg-[#043D12] hover:text-white"
+              >
+                {profileData.socialLinks.whatsapp
+                  ? "Edit link"
+                  : "Add username"}
+              </button>
+            </div>
+
             {/* Facebook */}
             <div className="flex justify-between py-6 px-8 border-b-[1px] border-[#6A7368]">
               <div className="flex items-center gap-4">
@@ -234,10 +252,12 @@ const ContactAndSocials = () => {
                 Facebook
               </div>
               <button
-                onClick={() => handleAddSocialLink("facebook")}
+                onClick={() => handleSocialLinkClick("facebook")}
                 className="text-[14px] border-[1px] rounded-[11px] shadow px-4 py-2 flex items-center gap-2 border-[#6A7368] hover:bg-[#043D12] hover:text-white"
               >
-                Add username
+                {profileData.socialLinks.facebook
+                  ? "Edit link"
+                  : "Add username"}
               </button>
             </div>
 
@@ -248,10 +268,12 @@ const ContactAndSocials = () => {
                 Instagram
               </div>
               <button
-                onClick={() => handleAddSocialLink("instagram")}
+                onClick={() => handleSocialLinkClick("instagram")}
                 className="text-[14px] border-[1px] rounded-[11px] shadow px-4 py-2 flex items-center gap-2 border-[#6A7368] hover:bg-[#043D12] hover:text-white"
               >
-                Add username
+                {profileData.socialLinks.instagram
+                  ? "Edit link"
+                  : "Add username"}
               </button>
             </div>
 
@@ -262,10 +284,10 @@ const ContactAndSocials = () => {
                 Twitter
               </div>
               <button
-                onClick={() => handleAddSocialLink("twitter")}
+                onClick={() => handleSocialLinkClick("twitter")}
                 className="text-[14px] border-[1px] rounded-[11px] shadow px-4 py-2 flex items-center gap-2 border-[#6A7368] hover:bg-[#043D12] hover:text-white"
               >
-                Add username
+                {profileData.socialLinks.twitter ? "Edit link" : "Add username"}
               </button>
             </div>
 
@@ -276,10 +298,10 @@ const ContactAndSocials = () => {
                 TikTok
               </div>
               <button
-                onClick={() => handleAddSocialLink("tiktok")}
+                onClick={() => handleSocialLinkClick("tiktok")}
                 className="text-[14px] border-[1px] rounded-[11px] shadow px-4 py-2 flex items-center gap-2 border-[#6A7368] hover:bg-[#043D12] hover:text-white"
               >
-                Add username
+                {profileData.socialLinks.tiktok ? "Edit link" : "Add username"}
               </button>
             </div>
 
@@ -290,10 +312,12 @@ const ContactAndSocials = () => {
                 LinkedIn
               </div>
               <button
-                onClick={() => handleAddSocialLink("linkedin")}
+                onClick={() => handleSocialLinkClick("linkedin")}
                 className="text-[14px] border-[1px] rounded-[11px] shadow px-4 py-2 flex items-center gap-2 border-[#6A7368] hover:bg-[#043D12] hover:text-white"
               >
-                Add username
+                {profileData.socialLinks.linkedin
+                  ? "Edit link"
+                  : "Add username"}
               </button>
             </div>
           </div>
@@ -440,7 +464,8 @@ const ContactAndSocials = () => {
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg w-96">
             <h2 className="text-lg font-semibold mb-4">
-              Add {showSocialModal} Link
+              {profileData.socialLinks[showSocialModal] ? "Edit" : "Add"}{" "}
+              {showSocialModal} Link
             </h2>
             <input
               type="text"
@@ -460,7 +485,7 @@ const ContactAndSocials = () => {
                 className="px-4 py-2 bg-[#043D12] text-white rounded hover:bg-[#03280E]"
                 onClick={() => handleSocialSubmit(showSocialModal)}
               >
-                Submit
+                {profileData.socialLinks[showSocialModal] ? "Update" : "Submit"}
               </button>
             </div>
           </div>
@@ -469,14 +494,5 @@ const ContactAndSocials = () => {
     </div>
   );
 };
-
-// Animated Loader Component
-const Loader = () => (
-  <div className="flex space-x-2 items-center">
-    <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce"></div>
-    <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce delay-200"></div>
-    <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce delay-400"></div>
-  </div>
-);
 
 export default ContactAndSocials;

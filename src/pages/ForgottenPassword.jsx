@@ -57,11 +57,6 @@ const ForgottenPassword = () => {
         </div>
         <div className="relative max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
           <div className="w-[80%] h-fit max-lg:mt-16">
-            <Link to="/" className="w-fit h-fit absolute top-0 left-0 ">
-              <p className="text-white rounded-lg shadow-lg border border-[#043D12] bg-[#043D12] m-2 px-2 py-1 text-[15px]">
-                Back
-              </p>
-            </Link>
             <Link
               to="/"
               className="lg:text-[50px] text-[32px] font-bold text-[#363636]"
