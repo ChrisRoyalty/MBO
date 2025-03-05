@@ -32,7 +32,7 @@ const HeroSection = () => {
       viewport={{ once: false }}
       className="w-full flex flex-col justify-center items-center bg-[#FFFDF2] overflow-hidden"
     >
-      <div className="h-full container mx-auto px-[5vh] text-[#043D12] grid lg:grid-cols-2 grid-cols-1 min-2xl:items-center justify-center">
+      <div className="h-full container mx-auto px-[5vh] text-[#043D12] grid md:grid-cols-2 grid-cols-1 min-2xl:items-center justify-center">
         {/* Animated Text Section */}
         <motion.div
           initial="hidden"
