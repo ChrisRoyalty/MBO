@@ -13,26 +13,26 @@ import {
   IoLogoYoutube,
 } from "react-icons/io";
 import { IoLogoWhatsapp } from "react-icons/io5";
-
 import { MdOutlineCategory } from "react-icons/md";
-import { BsTiktok } from "react-icons/bs"; // TikTok icon from react-icons/bs
+import { BsTiktok } from "react-icons/bs";
 import { CiShare1 } from "react-icons/ci";
 import { BiMessage } from "react-icons/bi";
 import { useParams, useNavigate } from "react-router-dom";
-import BusinessImg from "../../assets/businessImg.jpeg"; // Fallback business image
-import ProfileImg from "../../assets/profilepic.svg"; // Profile picture for fallback
+import BusinessImg from "../../assets/businessImg.jpeg";
+import ProfileImg from "../../assets/profilepic.svg";
+import NetworkError from "../NetworkError"; // Import the NetworkError component
 
 const BASE_URL = "https://mbo.bookbank.com.ng";
 
-// Modal Component (updated to remove category, but kept for consistency in case needed elsewhere)
+// Modal Component (unchanged)
 const Modal = ({ business, onClose }) => {
   if (!business) return null;
 
   const navigate = useNavigate();
 
   const handleViewProfile = () => {
-    navigate(`/community/profile/${business.id}`); // Navigate to profile page with business.id
-    onClose(); // Close the modal after navigation
+    navigate(`/community/profile/${business.id}`);
+    onClose();
   };
 
   return (
@@ -49,9 +49,8 @@ const Modal = ({ business, onClose }) => {
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
           exit={{ scale: 0.8 }}
-          onClick={(e) => e.stopPropagation()} // Prevent closing on click inside
+          onClick={(e) => e.stopPropagation()}
         >
-          {/* Business Image */}
           <motion.img
             src={
               business.productImages?.[0]?.imageUrl ||
@@ -65,8 +64,6 @@ const Modal = ({ business, onClose }) => {
             transition={{ duration: 0.5 }}
             onError={(e) => (e.target.src = BusinessImg)}
           />
-
-          {/* Business Details */}
           <motion.div
             className="flex flex-col gap-4"
             initial={{ x: 50, opacity: 0 }}
@@ -80,7 +77,6 @@ const Modal = ({ business, onClose }) => {
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus
               lacinia odio vitae vestibulum.
             </p>
-
             <div className="btns flex">
               <div className="w-fit flex items-center gap-6">
                 <button
@@ -90,14 +86,13 @@ const Modal = ({ business, onClose }) => {
                   View Profile
                 </button>
                 <Link
-                  to={`/community/contact/${business.id}`} // Placeholder for contact route
+                  to={`/community/contact/${business.id}`}
                   className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-2 lg:px-8 py-2 shadow-lg hover:bg-[#043D12]"
                 >
                   Contact Us
                 </Link>
               </div>
             </div>
-
             <button
               onClick={onClose}
               className="mt-4 border-[1px] border-red-600 text-red-600 font-bold rounded-lg shadow-md py-2"
@@ -112,38 +107,40 @@ const Modal = ({ business, onClose }) => {
 };
 
 const ProfilePage = () => {
-  const { id } = useParams(); // Get the profile ID from the URL
+  const { id } = useParams();
   const [profile, setProfile] = useState(null);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const fetchProfile = async () => {
+    setLoading(true);
+    setError(null); // Reset error before fetching
+    try {
+      const API_URL = `${
+        import.meta.env.VITE_BASE_URL
+      }/member/get-profile/${id}`; // Replace BASE_URL
+      const response = await axios.get(API_URL);
+      if (response.data && response.data.profile) {
+        setProfile(response.data.profile);
+      } else {
+        throw new Error("Profile not found in the response.");
+      }
+    } catch (error) {
+      console.error("❌ Error Fetching Profile:", error);
+      setError(
+        error.response?.data?.message || "Failed to fetch profile data."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const API_URL = `${BASE_URL}/member/get-profile/${id}`;
-        const response = await axios.get(API_URL);
-
-        if (response.data && response.data.profile) {
-          setProfile(response.data.profile);
-        } else {
-          throw new Error("Profile not found in the response.");
-        }
-      } catch (error) {
-        console.error("❌ Error Fetching Profile:", error);
-        setError(
-          error.response?.data?.message || "Failed to fetch profile data."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProfile();
   }, [id]);
 
-  // Filter products/services based on search query (if any products exist)
   const filterProducts = (products) => {
     if (!products || products.length === 0) return [];
     return products.filter((product) => {
@@ -170,11 +167,7 @@ const ProfilePage = () => {
   }
 
   if (error) {
-    return (
-      <div className="text-red-600 p-4 text-center">
-        <p>{error}</p>
-      </div>
-    );
+    return <NetworkError message={error} onRetry={fetchProfile} />;
   }
 
   if (!profile) {
@@ -185,7 +178,6 @@ const ProfilePage = () => {
     <div className="w-full h-fit bg-[#FFFDF2] flex flex-col items-center pt-[12vh]">
       <div className="w-[80%] max-w-[1440px] mx-auto">
         <div className="w-full text-[#043D12] flex max-sm:flex-col overflow-y-scroll">
-          {/* Sidebar for Profile Details */}
           <aside className="sm:w-[25%] h-[80vh] overflow-y-auto flex flex-col gap-8 text-[#6A7368]">
             <h3 className="lg:text-[32px] text-[#043D12] max-sm:text-center text-[24px] md:text-[28px] font-bold">
               {profile.businessName}
@@ -339,7 +331,6 @@ const ProfilePage = () => {
                       </a>
                     </div>
                   )}
-                  {/* Updated Email with dynamic data from endpoint */}
                   {profile.member?.email && (
                     <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
                       <div className="flex items-center gap-4">Email</div>
@@ -382,7 +373,6 @@ const ProfilePage = () => {
             </div>
           </aside>
 
-          {/* Products/Services Section */}
           <div className="sm:w-[75%] h-[80vh] overflow-y-auto">
             <div className="w-full h-fit py-16 flex justify-center bg-[#FFFDF2]">
               <div className="w-[85%] h-fit flex flex-col gap-8">
@@ -393,7 +383,7 @@ const ProfilePage = () => {
                   {filteredProducts.map((product, index) => (
                     <motion.div
                       key={index}
-                      className="flex flex-col gap-1" // Removed onClick to prevent modal opening
+                      className="flex flex-col gap-1"
                       initial={{ opacity: 0, y: 50 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: false }}
@@ -423,8 +413,6 @@ const ProfilePage = () => {
                   )}
                 </div>
               </div>
-
-              {/* Modal for Selected Product/Service (kept for consistency, but not triggered) */}
               <Modal
                 business={selectedBusiness}
                 onClose={() => setSelectedBusiness(null)}

@@ -30,7 +30,6 @@ const BusinessProfile2 = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const token = useSelector((state) => state.auth.token);
-  const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   useEffect(() => {
     if (!token) {
@@ -41,7 +40,7 @@ const BusinessProfile2 = () => {
 
     const checkProfile = async () => {
       try {
-        await axios.get(`${BASE_URL}/member/my-profile`, {
+        await axios.get(`${import.meta.env.VITE_BASE_URL}/member/my-profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         toast.info("You already have a profile. Redirecting...", {
@@ -149,7 +148,7 @@ const BusinessProfile2 = () => {
     try {
       setLoading(true);
       const response = await axios.post(
-        `${BASE_URL}/member/create-profile`,
+        `${import.meta.env.VITE_BASE_URL}/member/create-profile`,
         payload,
         {
           headers: { Authorization: `Bearer ${token}` },

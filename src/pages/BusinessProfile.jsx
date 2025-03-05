@@ -39,7 +39,9 @@ const BusinessProfile = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/member/all-category`);
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/member/all-category`
+        );
         setCategories(response.data.category || response.data.categories || []);
         setIsLoadingCategories(false);
       } catch (error) {

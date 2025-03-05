@@ -9,8 +9,6 @@ import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
 import { logout, selectAuth } from "../redux/authSlice";
 
-const BASE_URL = "https://mbo.bookbank.com.ng";
-
 const navItemVariants = {
   hidden: { opacity: 0, scale: 0.5, y: -20 },
   visible: (i) => ({
@@ -39,7 +37,9 @@ const Header = () => {
       setLoading(true);
       const fetchProfile = async () => {
         try {
-          const API_URL = `${BASE_URL}/member/get-profile/${id}`;
+          const API_URL = `${
+            import.meta.env.VITE_BASE_URL
+          }/member/get-profile/${id}`;
           const response = await axios.get(API_URL);
 
           if (response.data && response.data.profile) {

@@ -17,7 +17,6 @@ const ProductAndServices = () => {
   const [newName, setNewName] = useState("");
 
   const { token } = useSelector((state) => state.auth);
-  const BASE_URL = "https://mbo.bookbank.com.ng";
 
   // Fetch profile data to get categoryId
   useEffect(() => {
@@ -29,9 +28,12 @@ const ProductAndServices = () => {
 
     const fetchProfile = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/member/my-profile`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/member/my-profile`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         if (response.data?.success && response.data?.data) {
           const profile = response.data.data;
           setCategoryId(profile.categories?.[0]?.id || null);
@@ -61,7 +63,7 @@ const ProductAndServices = () => {
     const fetchProductImages = async () => {
       try {
         const response = await axios.get(
-          `${BASE_URL}/member/my-product-images`,
+          `${import.meta.env.VITE_BASE_URL}/member/my-product-images`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -111,7 +113,7 @@ const ProductAndServices = () => {
 
     try {
       const response = await axios.post(
-        `${BASE_URL}/member/upload-images/${categoryId}`,
+        `${import.meta.env.VITE_BASE_URL}/member/upload-images/${categoryId}`,
         formData,
         {
           headers: {
@@ -169,7 +171,9 @@ const ProductAndServices = () => {
 
     try {
       const response = await axios.patch(
-        `${BASE_URL}/member/edit-image/${editingProduct.id}`,
+        `${import.meta.env.VITE_BASE_URL}/member/edit-image/${
+          editingProduct.id
+        }`,
         { name: newName },
         {
           headers: {
@@ -219,7 +223,7 @@ const ProductAndServices = () => {
 
     try {
       const response = await axios.delete(
-        `${BASE_URL}/member/delete-image/${productId}`,
+        `${import.meta.env.VITE_BASE_URL}/member/delete-image/${productId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

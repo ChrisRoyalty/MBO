@@ -19,7 +19,7 @@ import {
   FaFacebook,
   FaInstagram,
 } from "react-icons/fa";
-
+import NetworkError from "../components/NetworkError";
 const BASE_URL = "https://mbo.bookbank.com.ng";
 
 // Contact Dropdown Component
@@ -184,7 +184,10 @@ const SearchPage = () => {
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        const API_URL = `${BASE_URL}/member/random-profiles`;
+        const API_URL = `${
+          import.meta.env.VITE_BASE_URL
+        }/member/random-profiles`; // Replace BASE_URL
+
         const response = await axios.get(API_URL);
         if (response.data && response.data.success && response.data.profiles) {
           setProfiles(response.data.profiles);
@@ -265,11 +268,7 @@ const SearchPage = () => {
   }
 
   if (error) {
-    return (
-      <div className="text-red-600 p-4 text-center">
-        <p>{error}</p>
-      </div>
-    );
+    return <NetworkError message={error} onRetry={fetchProfile} />;
   }
 
   const toggleCategory = () => {
@@ -284,7 +283,7 @@ const SearchPage = () => {
 
   return (
     <div className="w-full bg-[#FFFDF2] flex flex-col items-center">
-      <div className="w-[80%]">
+      <div className="container mx-auto px-[5vw]">
         <header className="h-[20vh] flex max-md:flex-col max-md:my-8 justify-between items-center max-md:gap-8">
           <div className="md:w-[50%] w-full bg-[#D6E2D98C] text-[16px] px-8 rounded-[39px] shadow-lg h-[70px] text-[#043D12] flex gap-2 items-center justify-between">
             <input
@@ -315,7 +314,7 @@ const SearchPage = () => {
             {/* Category Dropdown */}
             <div className="w-full flex flex-col gap-2">
               <div
-                className="flex items-center justify-between cursor-pointer p-2 hover:bg-[#F5F7F5] rounded-lg transition-all duration-200"
+                className="flex items-center justify-between cursor-pointer p-2 hover:bg-[#E8EFE5] rounded-lg transition-all duration-200"
                 onClick={toggleCategory}
               >
                 <p className="flex items-center gap-2 text-[16px]">
@@ -347,7 +346,7 @@ const SearchPage = () => {
                             );
                             setIsCategoryOpen(false);
                           }}
-                          className="w-full lg:w-fit h-fit px-4 rounded-[11px] shadow-sm hover:bg-[#043D12] hover:text-[#FFFDF2] border-[1px] border-[#043D12] text-[#043D12] text-[14px] transition-all duration-200 py-1"
+                          className="w-full lg:w-fit h-fit px-4 rounded-[11px] shadow-sm hover:bg-[#043D12] hover:text-[#E8EFE5] border-[1px] border-[#043D12] text-[#043D12] text-[14px] transition-all duration-200 py-1"
                         >
                           {category}
                         </button>
@@ -361,7 +360,7 @@ const SearchPage = () => {
             {/* Location Dropdown */}
             <div className="w-full flex flex-col gap-2">
               <div
-                className="flex items-center justify-between cursor-pointer p-2 hover:bg-[#F5F7F5] rounded-lg transition-all duration-200"
+                className="flex items-center justify-between cursor-pointer p-2 hover:bg-[#E8EFE5] rounded-lg transition-all duration-200"
                 onClick={toggleLocation}
               >
                 <p className="flex items-center gap-2 text-[16px]">
@@ -393,7 +392,7 @@ const SearchPage = () => {
                             );
                             setIsLocationOpen(false);
                           }}
-                          className="w-full lg:w-fit h-fit py-1 px-4 rounded-[11px] shadow-sm hover:bg-[#043D12] hover:text-[#FFFDF2] border-[1px] border-[#043D12] text-[#043D12] text-[14px] transition-all duration-200"
+                          className="w-full lg:w-fit h-fit py-1 px-4 rounded-[11px] shadow-sm hover:bg-[#043D12] hover:text-[#E8EFE5] border-[1px] border-[#043D12] text-[#043D12] text-[14px] transition-all duration-200"
                         >
                           {location}
                         </button>

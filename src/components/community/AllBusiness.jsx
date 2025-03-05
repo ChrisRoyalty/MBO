@@ -14,7 +14,7 @@ import {
   FaInstagram,
 } from "react-icons/fa";
 import ProfilePic from "../../assets/profilepic.svg";
-
+import NetworkError from "../NetworkError";
 const BASE_URL = "https://mbo.bookbank.com.ng";
 
 const ContactDropdown = ({ socialLinks, onClose }) => {
@@ -173,7 +173,10 @@ const AllBusiness = () => {
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        const API_URL = `${BASE_URL}/member/random-profiles`;
+        const API_URL = `${
+          import.meta.env.VITE_BASE_URL
+        }/member/random-profiles`; // Replace BASE_URL
+
         const response = await axios.get(API_URL);
 
         if (response.data && response.data.success && response.data.profiles) {
@@ -226,11 +229,7 @@ const AllBusiness = () => {
   }
 
   if (error) {
-    return (
-      <div className="text-red-600 p-4 text-center">
-        <p>{error}</p>
-      </div>
-    );
+    return <NetworkError message={error} onRetry={fetchProfile} />;
   }
 
   return (

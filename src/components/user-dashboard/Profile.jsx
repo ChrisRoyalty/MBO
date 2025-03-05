@@ -19,8 +19,6 @@ import BusinessImg from "../../assets/businessImg.jpeg"; // Fallback image
 import { RiArrowDropDownLine } from "react-icons/ri";
 import ProfileProgressBar from "./ProfileProgressBar";
 
-const BASE_URL = "https://mbo.bookbank.com.ng";
-
 const Profile = () => {
   const [timeRange, setTimeRange] = useState("daily"); // Default to "daily" for endpoint compatibility
   const [metric, setMetric] = useState("ProfileViews");
@@ -71,7 +69,7 @@ const Profile = () => {
     const fetchData = async () => {
       try {
         // Fetch profile data
-        const profileURL = `${BASE_URL}/member/my-profile`;
+        const profileURL = `${import.meta.env.VITE_BASE_URL}/member/my-profile`;
         const profileResponse = await axios.get(profileURL, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -107,7 +105,9 @@ const Profile = () => {
           "Selected range for API:",
           selectedRange
         ); // Debugging
-        const analyticsURL = `${BASE_URL}/member/get-analytics?range=${selectedRange}`;
+        const analyticsURL = `${
+          import.meta.env.VITE_BASE_URL
+        }/member/get-analytics?range=${selectedRange}`;
         console.log("API URL:", analyticsURL); // Debugging
         const analyticsResponse = await axios.get(analyticsURL, {
           headers: { Authorization: `Bearer ${token}` },

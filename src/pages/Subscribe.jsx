@@ -7,7 +7,6 @@ import axios from "axios";
 import { jwtDecode } from "jwt-decode"; // Ensure jwt-decode is installed
 import Good from "../components/svgs/Good";
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
 const PUBLIC_KEY = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
 
 const Subscribe = () => {
@@ -37,7 +36,9 @@ const Subscribe = () => {
   useEffect(() => {
     const fetchSubscriptions = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/admin/get-sub`);
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/admin/get-sub`
+        );
         if (response.data && Array.isArray(response.data.data)) {
           setSubscriptions(response.data.data);
         }
@@ -83,18 +84,21 @@ const Subscribe = () => {
         if (response.status === "successful") {
           try {
             console.log("Sending to backend");
-            const res = await axios.post(`${BASE_URL}/admin/payment-hook`, {
-              userId,
-              subscriptionId: subscription.id,
-              transactionId: response.transaction_id,
-              tx_ref: response.tx_ref,
-              amount: subscription.price,
-              currency: "NGN",
-              customer: {
-                email: user.email,
-                name: fullName,
-              },
-            });
+            const res = await axios.post(
+              `${import.meta.env.VITE_BASE_URL}/admin/payment-hook`,
+              {
+                userId,
+                subscriptionId: subscription.id,
+                transactionId: response.transaction_id,
+                tx_ref: response.tx_ref,
+                amount: subscription.price,
+                currency: "NGN",
+                customer: {
+                  email: user.email,
+                  name: fullName,
+                },
+              }
+            );
 
             console.log("Backend Response:", res.data);
 
