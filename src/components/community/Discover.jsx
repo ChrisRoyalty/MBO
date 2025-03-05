@@ -30,9 +30,9 @@ const Discover = () => {
     <motion.div
       whileInView="visible"
       viewport={{ once: false }}
-      className="w-full pt-[10vh] h-fit flex flex-col items-center bg-[#043D12] overflow-hidden justify-center"
+      className="w-full h-fit flex flex-col items-center bg-[#043D12] overflow-hidden justify-center lg:pt-16"
     >
-      <div className="h-full w-[80%] text-[#043D12] grid grid-cols-1 lg:grid-cols-2 mx-auto min-2xl:items-center max-lg:gap-8 max-lg:items-baseline max-lg:pt-10">
+      <div className="container mx-auto px-[5vh] text-[#043D12] grid grid-cols-1 lg:grid-cols-2 min-2xl:items-center max-lg:gap-8 max-lg:items-baseline max-lg:pt-10">
         {/* Animated Text Section */}
         <motion.div
           initial="hidden"
@@ -70,7 +70,7 @@ const Discover = () => {
             <img
               src={HeroImg}
               alt="Hero-Page-img"
-              className="max-w-full lg:h-[72vh] object-center object-fill mx-auto min-2xl:h-[80vh] min-[1600px]:h-[40vh]"
+              className="max-w-full object-center object-fill"
             />
           </div>
         </motion.div>

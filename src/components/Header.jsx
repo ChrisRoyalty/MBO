@@ -96,7 +96,7 @@ const Header = () => {
 
   return (
     <div
-      className={`w-full h-fit flex flex-col justify-center items-center transition-all duration-500 relative bg-[#FFFDF2] py-[5vh] lg:py-[6vh] ${
+      className={`h-fit flex flex-col justify-center items-center transition-all duration-500 relative bg-[#FFFDF2] py-[5vh] lg:py-[6vh] ${
         location.pathname.startsWith("/community/profile/") ? "mb-[50px]" : ""
       }`}
     >
@@ -118,114 +118,119 @@ const Header = () => {
         />
       )}
 
-      <div
-        className={`main-header w-[85%] h-[8vh] md:h-[10vh] bg-[#043D12] px-[20px] md:px-[50px] lg:py-10 flex justify-between items-center rounded-[48px] shadow-lg relative z-30 ${
-          location.pathname.startsWith("/community/profile/") ? "mb-[50px]" : ""
-        }`}
-      >
-        {" "}
-        <Link to="/">
-          <img
-            src={MindPowerLogo}
-            alt="Mind_Power_Logo"
-            className="md:w-[47px] md:h-[55px] w-[33px] h-[39px] object-contain brightness-100"
-          />
-        </Link>
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{
-                opacity: 1,
-                scale: 1,
-                transition: { duration: 0.4, ease: "easeOut" },
-              }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              className="absolute top-[15vh] left-0 w-full bg-[#FFFDF2] flex flex-col items-center py-6 shadow-lg md:hidden rounded-b-[40px] z-20"
-            >
-              <nav className="flex flex-col items-center gap-6 w-full">
-                {navItems.map((item, index) => (
-                  <motion.div
-                    key={item.path}
-                    variants={navItemVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                    custom={index}
-                  >
-                    {item.onClick ? (
-                      <button
-                        onClick={item.onClick}
-                        className={`text-[20px] font-medium px-8 py-2 transition ${
-                          item.className || ""
-                        }`}
-                      >
-                        {item.name}
-                      </button>
-                    ) : (
-                      <Link
-                        to={item.path}
-                        onClick={() => setIsOpen(false)}
-                        className={`text-[20px] font-medium px-8 py-2 transition ${
-                          (item.path === "/community" &&
-                            location.pathname.startsWith("/community")) ||
-                          location.pathname === item.path
-                            ? "text-[#02530c] font-bold border-b-2 border-[#02530c]"
-                            : "text-[#043D12] hover:text-[#02530c]"
-                        } ${item.className || ""}`}
-                      >
-                        {item.name}
-                      </Link>
-                    )}
-                  </motion.div>
-                ))}
-              </nav>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <div className="hidden md:flex gap-8 items-center text-white">
-          {navItems.map((item) => (
-            <motion.div key={item.path} className="relative group">
-              {item.onClick ? (
-                <button
-                  onClick={item.onClick}
-                  className={`relative text-[20px] transition-all duration-300 ${
-                    item.className || ""
-                  }`}
-                >
-                  {item.name}
-                </button>
-              ) : (
-                <Link
-                  to={item.path}
-                  className={`relative text-[20px] transition-all duration-300 ${
-                    (item.path === "/community" &&
-                      location.pathname.startsWith("/community")) ||
-                    location.pathname === item.path
-                      ? "text-[#FFCF00] font-bold"
-                      : "hover:text-[#FFCF00]"
-                  } ${item.className || ""}`}
-                >
-                  {item.name}
-                  {item.path !== "/login" && (
+      <div className="container mx-auto px-[5vh]">
+        <div
+          className={`main-header  h-fit  bg-[#043D12] px-[20px] md:px-[50px] py-4 flex justify-between items-center rounded-[48px] shadow-lg relative z-30 ${
+            location.pathname.startsWith("/community/profile/")
+              ? "mb-[50px]"
+              : ""
+          }`}
+        >
+          {" "}
+          <Link to="/">
+            <img
+              src={MindPowerLogo}
+              alt="Mind_Power_Logo"
+              className="md:w-[47px] md:h-[55px] w-[33px] h-[39px] object-contain brightness-100"
+            />
+          </Link>
+          <AnimatePresence>
+            {isOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                  transition: { duration: 0.4, ease: "easeOut" },
+                }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className="absolute top-[15vh] left-0 w-full bg-[#FFFDF2] flex flex-col items-center py-6 shadow-lg md:hidden rounded-b-[40px] z-20"
+              >
+                <nav className="flex flex-col items-center gap-6 w-full">
+                  {navItems.map((item, index) => (
                     <motion.div
-                      className="absolute bottom-[-3px] left-0 h-[3px] bg-[#FFCF00] origin-left"
-                      initial={{ width: 0 }}
-                      animate={{
-                        width: location.pathname === item.path ? "100%" : "0%",
-                      }}
-                      whileHover={{ width: "100%" }}
-                      transition={{ duration: 0.4, ease: "easeInOut" }}
-                    />
-                  )}
-                </Link>
-              )}
-            </motion.div>
-          ))}
+                      key={item.path}
+                      variants={navItemVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="hidden"
+                      custom={index}
+                    >
+                      {item.onClick ? (
+                        <button
+                          onClick={item.onClick}
+                          className={`text-[20px] font-medium px-8 py-2 transition ${
+                            item.className || ""
+                          }`}
+                        >
+                          {item.name}
+                        </button>
+                      ) : (
+                        <Link
+                          to={item.path}
+                          onClick={() => setIsOpen(false)}
+                          className={`text-[20px] font-medium px-8 py-2 transition ${
+                            (item.path === "/community" &&
+                              location.pathname.startsWith("/community")) ||
+                            location.pathname === item.path
+                              ? "text-[#02530c] font-bold border-b-2 border-[#02530c]"
+                              : "text-[#043D12] hover:text-[#02530c]"
+                          } ${item.className || ""}`}
+                        >
+                          {item.name}
+                        </Link>
+                      )}
+                    </motion.div>
+                  ))}
+                </nav>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <div className="hidden md:flex gap-8 items-center text-white">
+            {navItems.map((item) => (
+              <motion.div key={item.path} className="relative group">
+                {item.onClick ? (
+                  <button
+                    onClick={item.onClick}
+                    className={`relative text-[20px] transition-all duration-300 ${
+                      item.className || ""
+                    }`}
+                  >
+                    {item.name}
+                  </button>
+                ) : (
+                  <Link
+                    to={item.path}
+                    className={`relative text-[20px] transition-all duration-300 ${
+                      (item.path === "/community" &&
+                        location.pathname.startsWith("/community")) ||
+                      location.pathname === item.path
+                        ? "text-[#FFCF00] font-bold"
+                        : "hover:text-[#FFCF00]"
+                    } ${item.className || ""}`}
+                  >
+                    {item.name}
+                    {item.path !== "/login" && (
+                      <motion.div
+                        className="absolute bottom-[-3px] left-0 h-[3px] bg-[#FFCF00] origin-left"
+                        initial={{ width: 0 }}
+                        animate={{
+                          width:
+                            location.pathname === item.path ? "100%" : "0%",
+                        }}
+                        whileHover={{ width: "100%" }}
+                        transition={{ duration: 0.4, ease: "easeInOut" }}
+                      />
+                    )}
+                  </Link>
+                )}
+              </motion.div>
+            ))}
+          </div>
+          <button className="md:hidden" onClick={() => setIsOpen(!isOpen)}>
+            <img src={MenuIcon} alt="Hamburger_Icon" className="w-8 h-8" />
+          </button>
         </div>
-        <button className="md:hidden" onClick={() => setIsOpen(!isOpen)}>
-          <img src={MenuIcon} alt="Hamburger_Icon" className="w-8 h-8" />
-        </button>
       </div>
     </div>
   );
