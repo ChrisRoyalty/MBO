@@ -12,8 +12,6 @@ import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
-
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -40,10 +38,13 @@ const Login = () => {
     setLoginAttempted(true);
 
     try {
-      const response = await axios.post(`${BASE_URL}/member/login`, {
-        email,
-        password,
-      });
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/member/login`,
+        {
+          email,
+          password,
+        }
+      );
       const { token, member } = response.data;
       const decodedToken = jwtDecode(token);
       const { id, role, subscriptionStatus, profileStatus } = decodedToken;

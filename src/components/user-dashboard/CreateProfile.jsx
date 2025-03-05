@@ -11,8 +11,6 @@ import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import BusinessImg from "../../assets/businessImg.jpeg"; // Fallback image
 
-const BASE_URL = "https://mbo.bookbank.com.ng";
-
 const CreateProfile = () => {
   const location = useLocation();
   const { token } = useSelector((state) => state.auth);
@@ -33,7 +31,7 @@ const CreateProfile = () => {
 
     const fetchProfile = async () => {
       try {
-        const API_URL = `${BASE_URL}/member/my-profile`;
+        const API_URL = `${import.meta.env.VITE_BASE_URL}/member/my-profile`;
         const response = await axios.get(API_URL, {
           headers: { Authorization: `Bearer ${token}` },
         });

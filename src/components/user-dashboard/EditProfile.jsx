@@ -52,7 +52,6 @@ const EditProfile = () => {
   const [showShareOptions, setShowShareOptions] = useState(false);
 
   const { isAuthenticated, token } = useSelector((state) => state.auth);
-  const BASE_URL = "https://mbo.bookbank.com.ng";
 
   // Fetch profile data and populate selectedCategory
   useEffect(() => {
@@ -64,7 +63,7 @@ const EditProfile = () => {
 
     const fetchProfile = async () => {
       try {
-        const API_URL = `${BASE_URL}/member/my-profile`;
+        const API_URL = `${import.meta.env.VITE_BASE_URL}/member/my-profile`;
         const response = await axios.get(API_URL, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -118,9 +117,12 @@ const EditProfile = () => {
 
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/member/all-category`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/member/all-category`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         setCategories(response.data.category || response.data.categories || []);
         setIsLoadingCategories(false);
       } catch (error) {
@@ -140,9 +142,12 @@ const EditProfile = () => {
 
     const fetchShareableLink = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/member/share`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/member/share`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         if (
           response.data &&
           response.data.message === "Shareable link generated successfully"
@@ -249,13 +254,13 @@ const EditProfile = () => {
     try {
       let API_URL, payload;
       if (formType === "personal") {
-        API_URL = `${BASE_URL}/member/edit-member`;
+        API_URL = `${import.meta.env.VITE_BASE_URL}/member/edit-member`;
         payload = {
           firstName: profileData.firstName,
           lastName: profileData.lastName,
         };
       } else {
-        API_URL = `${BASE_URL}/member/edit-profile`;
+        API_URL = `${import.meta.env.VITE_BASE_URL}/member/edit-profile`;
         payload = {
           businessName: profileData.businessName,
           contactNo: profileData.contactNo,

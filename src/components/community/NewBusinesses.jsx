@@ -11,10 +11,9 @@ import {
   FaFacebook,
   FaInstagram,
 } from "react-icons/fa";
+import NetworkError from "../NetworkError"; // Import the new component
 
-const BASE_URL = "https://mbo.bookbank.com.ng";
-
-// Contact Dropdown Component
+// Contact Dropdown Component (unchanged)
 const ContactDropdown = ({ socialLinks, onClose }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -42,9 +41,9 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }} // Removed maxHeight
+            animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="absolute w-full bg-white border-[1px] border-[#6A7368] rounded-[11px] shadow-lg mt-2 pb-8 overflow-y-auto" // Kept overflow-y-auto
+            className="absolute w-full bg-white border-[1px] border-[#6A7368] rounded-[11px] shadow-lg mt-2 pb-8 overflow-y-auto"
             style={{ zIndex: 50 }}
           >
             {Object.entries(socialLinks).map(([platform, url]) => {
@@ -74,7 +73,7 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
   );
 };
 
-// Modal Component
+// Modal Component (unchanged)
 const Modal = ({ profile, onClose }) => {
   if (!profile) return null;
 
@@ -95,7 +94,7 @@ const Modal = ({ profile, onClose }) => {
         onClick={onClose}
       >
         <motion.div
-          className="bg-white px-6 py-8 rounded-lg shadow-lg w-[90%] max-w-3xl flex flex-col md:flex-row gap-6 items-start overflow-y-auto max-h-[90vh] relative" // Made scrollable
+          className="bg-white px-6 py-8 rounded-lg shadow-lg w-[90%] max-w-3xl flex flex-col md:flex-row gap-6 items-start overflow-y-auto max-h-[90vh] relative"
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
           exit={{ scale: 0.8 }}
@@ -107,7 +106,6 @@ const Modal = ({ profile, onClose }) => {
           >
             <FaTimes />
           </button>
-
           <motion.img
             src={
               profile.productImages?.[0]?.imageUrl ||
@@ -159,7 +157,7 @@ const Modal = ({ profile, onClose }) => {
   );
 };
 
-// Main Component (unchanged)
+// Main Component with Enhanced Error Handling
 const NewBusinesses = () => {
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [newProfiles, setNewProfiles] = useState([]);
@@ -171,42 +169,45 @@ const NewBusinesses = () => {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchProfiles = async () => {
-      try {
-        const newURL = `${BASE_URL}/member/all-profiles`;
-        const newResponse = await axios.get(newURL);
-        if (
-          newResponse.data &&
-          newResponse.data.success &&
-          newResponse.data.profiles
-        ) {
-          setNewProfiles(newResponse.data.profiles);
-        } else {
-          throw new Error("No newly added profiles found in the response.");
-        }
-
-        const trendingURL = `${BASE_URL}/member/all-trending`;
-        const trendingResponse = await axios.get(trendingURL);
-        if (
-          trendingResponse.data &&
-          trendingResponse.data.success &&
-          trendingResponse.data.profiles
-        ) {
-          setTrendingProfiles(trendingResponse.data.profiles);
-        } else {
-          throw new Error("No trending profiles found in the response.");
-        }
-      } catch (error) {
-        console.error("❌ Error Fetching Profiles:", error);
-        setError(
-          error.response?.data?.message || "Failed to fetch profiles data."
-        );
-      } finally {
-        setLoading(false);
+  const fetchProfiles = async () => {
+    setLoading(true);
+    setError(null); // Reset error before fetching
+    try {
+      const newURL = `${import.meta.env.VITE_BASE_URL}/member/all-profiles`; // Replace BASE_URL
+      const newResponse = await axios.get(newURL);
+      if (
+        newResponse.data &&
+        newResponse.data.success &&
+        newResponse.data.profiles
+      ) {
+        setNewProfiles(newResponse.data.profiles);
+      } else {
+        throw new Error("No newly added profiles found in the response.");
       }
-    };
+      const trendingURL = `${
+        import.meta.env.VITE_BASE_URL
+      }/member/all-trending`; // Replace BASE_URL
+      const trendingResponse = await axios.get(trendingURL);
+      if (
+        trendingResponse.data &&
+        trendingResponse.data.success &&
+        trendingResponse.data.profiles
+      ) {
+        setTrendingProfiles(trendingResponse.data.profiles);
+      } else {
+        throw new Error("No trending profiles found in the response.");
+      }
+    } catch (error) {
+      console.error("❌ Error Fetching Profiles:", error);
+      setError(
+        error.response?.data?.message || "Failed to fetch profiles data."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchProfiles();
   }, []);
 
@@ -259,11 +260,7 @@ const NewBusinesses = () => {
   }
 
   if (error) {
-    return (
-      <div className="text-red-600 p-4 text-center">
-        <p>{error}</p>
-      </div>
-    );
+    return <NetworkError message={error} onRetry={fetchProfiles} />;
   }
 
   const toggleCategory = () => {
@@ -315,7 +312,6 @@ const NewBusinesses = () => {
               )}
             </AnimatePresence>
           </div>
-
           <div className="relative w-1/2">
             <button
               onClick={toggleLocation}

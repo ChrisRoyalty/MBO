@@ -5,8 +5,6 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
-const BASE_URL = "https://mbo.bookbank.com.ng";
-
 const Password = () => {
   const [formData, setFormData] = useState({
     oldPassword: "",
@@ -67,7 +65,7 @@ const Password = () => {
         confirmPassword: formData.confirmPassword,
       };
       const response = await axios.patch(
-        `${BASE_URL}/member/change-password`,
+        `${import.meta.env.VITE_BASE_URL}/member/change-password`,
         payload,
         {
           headers: {

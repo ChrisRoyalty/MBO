@@ -13,8 +13,6 @@ import { useSelector } from "react-redux";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const BASE_URL = "https://mbo.bookbank.com.ng";
-
 const ContactAndSocials = () => {
   const [profileData, setProfileData] = useState({
     contactNo: [],
@@ -42,9 +40,12 @@ const ContactAndSocials = () => {
 
     const fetchProfile = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/member/my-profile`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/member/my-profile`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
         if (response.data && response.data.success && response.data.data) {
           const profile = response.data.data;
@@ -97,7 +98,7 @@ const ContactAndSocials = () => {
         contactNo: formData.contactNo.filter(Boolean), // Remove empty strings
       };
       const response = await axios.patch(
-        `${BASE_URL}/member/edit-profile`,
+        `${import.meta.env.VITE_BASE_URL}/member/edit-profile`,
         payload,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -154,7 +155,7 @@ const ContactAndSocials = () => {
         [platform]: socialInput,
       };
       const response = await axios.patch(
-        `${BASE_URL}/member/edit-profile`,
+        `${import.meta.env.VITE_BASE_URL}/member/edit-profile`,
         { socialLinks: updatedSocialLinks },
         {
           headers: { Authorization: `Bearer ${token}` },

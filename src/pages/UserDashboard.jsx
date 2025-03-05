@@ -46,24 +46,21 @@ const navItems = [
   },
 ];
 
-const BASE_URL = "https://mbo.bookbank.com.ng";
-
 const UserDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { isAuthenticated, token } = useSelector((state) => state.auth);
 
-  // Set initial state of isSidebarOpen to true for large screens
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     try {
-      const isLargeScreen = window.innerWidth >= 1024; // 1024px is typically the lg breakpoint
+      const isLargeScreen = window.innerWidth >= 1024;
       return (
         JSON.parse(sessionStorage.getItem("sidebarState")) || isLargeScreen
       );
     } catch (e) {
       console.warn("Cannot access sessionStorage for sidebarState:", e.message);
-      return window.innerWidth >= 1024; // Default to true for large screens
+      return window.innerWidth >= 1024;
     }
   });
 
@@ -85,9 +82,12 @@ const UserDashboard = () => {
 
     const fetchProfile = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/member/my-profile`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/member/my-profile`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         if (response.data && response.data.success && response.data.data) {
           const profile = response.data.data;
           setProfileData({
@@ -109,9 +109,12 @@ const UserDashboard = () => {
 
     const fetchShareableLink = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/member/share`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/member/share`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         if (
           response.data &&
           response.data.message === "Shareable link generated successfully"
@@ -151,7 +154,7 @@ const UserDashboard = () => {
 
   const handleShareClick = () => {
     setShowShareOptions((prev) => !prev);
-    setCopied(false); // Reset copied state when toggling
+    setCopied(false);
   };
 
   const shareToSocialMedia = (platform) => {
@@ -189,7 +192,7 @@ const UserDashboard = () => {
         return;
     }
 
-    window.open(url, "_blank");
+    window.open(url, "_blank", "noopener,noreferrer");
     setShowShareOptions(false);
   };
 
@@ -200,18 +203,13 @@ const UserDashboard = () => {
     }
     navigator.clipboard.writeText(shareableLink);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const shareVariants = {
     hidden: { opacity: 0, scale: 0, y: 20 },
     visible: { opacity: 1, scale: 1, y: 0 },
     exit: { opacity: 0, scale: 0, y: 20 },
-  };
-
-  const rippleVariants = {
-    initial: { scale: 0, opacity: 0.5 },
-    animate: { scale: 2, opacity: 0 },
   };
 
   return (
@@ -227,22 +225,20 @@ const UserDashboard = () => {
         draggable
         pauseOnHover
       />
-      {/* Sidebar */}
       <motion.aside
         initial={{ x: "-100%" }}
         animate={{
           x: isSidebarOpen || window.innerWidth >= 1024 ? "0%" : "-100%",
         }}
         transition={{ duration: 0.5, ease: "easeInOut" }}
-        className={`fixed lg:static z-50 top-0 left-0 lg:w-[25%] max-md:h-screen py-14 px-10 md:h-full h-auto overflow-y-auto bg-white border-r border-black shadow-2xl 
-          ${isSidebarOpen ? "absolute md:relative" : "absolute"}`}
+        className={`fixed lg:static z-50 top-0 left-0 lg:w-[25%] max-md:h-screen py-14 px-10 md:h-full h-auto overflow-y-auto bg-white border-r border-black shadow-2xl ${
+          isSidebarOpen ? "absolute md:relative" : "absolute"
+        }`}
       >
-        {/* Close button (hidden on large screens) */}
         <MdOutlineCancelPresentation
           onClick={toggleSidebar}
           className="text-[#043D12] text-[35px] absolute top-4 right-4 cursor-pointer transition-transform hover:scale-110 lg:hidden"
         />
-        {/* Sidebar content */}
         <div className="flex flex-col gap-10">
           <motion.strong
             initial={{ opacity: 0, scale: 0.8 }}
@@ -325,9 +321,69 @@ const UserDashboard = () => {
                   animate="visible"
                   exit="exit"
                   transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white border border-[#6A7368] rounded-lg shadow-xl p-3 flex gap-3 z-20 relative"
+                  className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white border border-[#6A7368] rounded-lg shadow-xl p-3 flex gap-3 z-20"
                 >
-                  {/* Share buttons */}
+                  <motion.button
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => shareToSocialMedia("whatsapp")}
+                    className="text-[#25D366] p-1"
+                    title="Share on WhatsApp"
+                  >
+                    <FaWhatsapp size={20} />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => shareToSocialMedia("facebook")}
+                    className="text-[#3b5998] p-1"
+                    title="Share on Facebook"
+                  >
+                    <FaFacebook size={20} />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => shareToSocialMedia("instagram")}
+                    className="text-[#E1306C] p-1"
+                    title="Copy link for Instagram"
+                  >
+                    <FaInstagram size={20} />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => shareToSocialMedia("linkedin")}
+                    className="text-[#0077B5] p-1"
+                    title="Share on LinkedIn"
+                  >
+                    <FaLinkedin size={20} />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => shareToSocialMedia("twitter")}
+                    className="text-[#1DA1F2] p-1"
+                    title="Share on Twitter"
+                  >
+                    <FaTwitter size={20} />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={handleCopyLink}
+                    className={`p-1 ${
+                      copied ? "text-green-500" : "text-[#6A7368]"
+                    }`}
+                    title={copied ? "Copied!" : "Copy Link"}
+                  >
+                    <FaCopy size={20} />
+                    {copied && (
+                      <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs rounded px-2 py-1">
+                        Copied!
+                      </span>
+                    )}
+                  </motion.button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -348,13 +404,11 @@ const UserDashboard = () => {
           </button>
         </motion.div>
       </motion.aside>
-      {/* Main content */}
       <main
         className={`transition-all duration-500 ${
           isSidebarOpen ? "md:w-[calc(100%-16rem)] ml-auto" : "w-full"
         } h-screen overflow-y-scroll`}
       >
-        {/* Menu toggle button (hidden on large screens) */}
         {!isSidebarOpen && (
           <motion.div
             initial={{ opacity: 0 }}
