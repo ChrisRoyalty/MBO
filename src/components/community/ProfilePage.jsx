@@ -38,14 +38,14 @@ const Modal = ({ business, onClose }) => {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black/75 bg-opacity-50 flex justify-center items-center z-50"
+        className="fixed container mx-auto px-[5vh] inset-0 bg-black/75 bg-opacity-50 flex justify-center items-center z-50"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       >
         <motion.div
-          className="bg-white px-8 py-10 rounded-lg shadow-lg w-[90%] md:w-[60%] flex flex-col md:flex-row gap-6 items-center"
+          className="bg-white px-8 py-10 rounded-lg shadow-lg md:w-[60%] flex flex-col md:flex-row gap-6 items-center"
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
           exit={{ scale: 0.8 }}

@@ -52,7 +52,7 @@ const Search = () => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: false }}
     >
-      <div className="w-[85%] flex flex-col gap-12">
+      <div className="container mx-auto px-[5vh] flex flex-col gap-12">
         {/* Search Button */}
         <motion.button
           ref={searchButtonRef}

@@ -56,7 +56,7 @@ const Subscribe = () => {
 
     // Ensure email and name are valid strings
     const email = user.email || "";
-    const fullName = `${user.firstname || ""} ${user.lastname || ""}`.trim();
+    const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim();
 
     if (!email) {
       toast.error("Email is required for payment. Please update your profile.");
@@ -71,7 +71,7 @@ const Subscribe = () => {
       payment_options: "card, banktransfer, ussd",
       customer: {
         email: user?.email,
-        name: `${user?.firstname} ${user?.lastname}`,
+        name: fullName,
       },
       customizations: {
         title: "MBO Subscription",
@@ -92,7 +92,7 @@ const Subscribe = () => {
               currency: "NGN",
               customer: {
                 email: user.email,
-                name: `${user.firstname} ${user.lastname}`,
+                name: fullName,
               },
             });
 

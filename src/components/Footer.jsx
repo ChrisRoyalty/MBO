@@ -26,7 +26,7 @@ const Footer = () => {
     >
       <motion.div
         variants={fadeInUp}
-        className="w-[85%] h-fit flex max-lg:flex-col max-lg:text-center justify-between py-8 gap-8"
+        className="container mx-auto px-[5vh] h-fit flex max-lg:flex-col max-lg:text-center justify-between py-8 gap-8"
       >
         <motion.div
           variants={fadeInUp}

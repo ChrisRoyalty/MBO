@@ -278,7 +278,7 @@ const NewBusinesses = () => {
 
   return (
     <div className="w-full h-fit pb-8 flex justify-center bg-[#FFFDF2]">
-      <div className="w-[85%] h-fit flex flex-col gap-8">
+      <div className="container mx-auto px-[5vh] h-fit flex flex-col gap-8">
         <div className="flex gap-4">
           <div className="relative w-1/2">
             <button

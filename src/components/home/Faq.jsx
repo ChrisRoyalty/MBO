@@ -98,8 +98,8 @@ const Faq = () => {
   }, []);
 
   return (
-    <div className="w-full flex justify-center items-center bg-[#FAFEF4] py-18">
-      <div className="w-[85%] flex flex-col gap-10">
+    <div className="w-full bg-[#FAFEF4] md:py-18 py-10">
+      <div className="container mx-auto px-[5vh] flex flex-col gap-10">
         <div className="intro text-center">
           <h1 className="lg:text-[40px] text-[32px] text-[#6A7368]">
             Frequently Asked Questions
@@ -111,7 +111,7 @@ const Faq = () => {
         <div className="w-full flex flex-col lg:gap-4 gap-16 ">
           <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-12 ">
             {/* FAQ Questions */}
-            <div className="lg:order-2 lg:h-[60vh] lg:overflow-y-auto">
+            <div className="lg:order-2 lg:h-[500px] lg:overflow-y-auto">
               {faqItems.map((item, index) => (
                 <figure
                   key={index}
@@ -130,7 +130,7 @@ const Faq = () => {
                         activeIndex === index
                           ? "bg-[#043D12] text-white"
                           : "bg-[#B5BBB4] text-[#043D12]"
-                      } rounded-[26px] px-6 py-4 gap-4 w-full text-[24px]`}
+                      } rounded-[26px] px-6 py-4 gap-4 w-full md:text-[24px] text-[18px]`}
                       onClick={() => handleToggle(index)}
                     >
                       {item.question}
@@ -149,7 +149,7 @@ const Faq = () => {
                     }`}
                   >
                     {Array.isArray(item.answer) ? (
-                      <ul className="list-disc pl-6 text-[20px] text-[#043D12]">
+                      <ul className="list-disc pl-6 md:text-[20px] text-[16px] text-[#043D12]">
                         {item.answer.map((listItem, liIndex) => (
                           <li key={liIndex}>{listItem}</li>
                         ))}

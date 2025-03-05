@@ -107,7 +107,7 @@ const Login = () => {
       <div className="w-full h-screen flex justify-center lg:grid grid-cols-2">
         <div className="max-lg:hidden w-full h-full flex justify-center items-center bg-[url('/Group2.svg')] bg-cover bg-center bg-green-800">
           <div className="w-full h-[90%] flex flex-col items-center">
-            <div className="w-[90%] text-[#FFFDF2] mt-12">
+            <div className="container mx-auto px-[5vw] text-[#FFFDF2] mt-12">
               <Link to="/" className="lg:text-[50px] text-[32px] font-medium">
                 Welcome to <br /> MBO
               </Link>
@@ -119,7 +119,7 @@ const Login = () => {
           </div>
         </div>
         <div className="relative max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
-          <div className="w-[80%] h-fit max-lg:mt-16">
+          <div className="container mx-auto px-[5vw] h-fit max-lg:mt-16">
             <Link
               to="/"
               className="lg:text-[50px] text-[32px] font-bold text-[#363636]"

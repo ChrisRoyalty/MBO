@@ -24,7 +24,7 @@ const Benefits = () => {
   return (
     <div className="w-full flex justify-center items-center py-18 lg:bg-[#FFFFFF] bg-[#FAFEF4] overflow-hidden">
       <motion.div
-        className="w-full max-w-[85%] flex flex-col gap-14 text-[#043D12] mx-auto"
+        className="container mx-auto px-[5vh] flex flex-col gap-14 text-[#043D12]"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: false }}
