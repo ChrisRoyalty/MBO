@@ -1,4 +1,3 @@
-// src/components/Header.jsx
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,8 +25,8 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { id } = useParams(); // Get the profile ID from the URL for profile routes
-  const [profile, setProfile] = useState(null); // State to store profile data
+  const { id } = useParams();
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -35,7 +34,6 @@ const Header = () => {
   const dispatch = useDispatch();
   const isAuthenticated = auth.isAuthenticated;
 
-  // Fetch profile data when on /community/profile/:id
   useEffect(() => {
     if (location.pathname.startsWith("/community/profile/")) {
       setLoading(true);
@@ -61,11 +59,10 @@ const Header = () => {
 
       fetchProfile();
     } else {
-      setProfile(null); // Reset profile data when not on a profile page
+      setProfile(null);
     }
   }, [location.pathname, id]);
 
-  // Debug logo rendering on route change
   useEffect(() => {
     console.log("Header rendered, current path:", location.pathname);
     console.log("Profile data:", profile);
@@ -98,8 +95,11 @@ const Header = () => {
   ];
 
   return (
-    <div className="w-full h-fit flex flex-col justify-center items-center transition-all duration-500 relative bg-[#FFFDF2] py-[5vh] lg:py-[6vh]">
-      {/* Profile background image only on /community/profile/:id */}
+    <div
+      className={`w-full h-fit flex flex-col justify-center items-center transition-all duration-500 relative bg-[#FFFDF2] py-[5vh] lg:py-[6vh] ${
+        location.pathname.startsWith("/community/profile/") ? "mb-[50px]" : ""
+      }`}
+    >
       {location.pathname.startsWith("/community/profile/") &&
         profile?.backgroundImg && (
           <div
@@ -114,11 +114,16 @@ const Header = () => {
           src={profile?.businesImg || ProfilePic}
           alt="Profile_Picture"
           className="absolute bottom-[-60px] w-[120px] h-[120px] rounded-full border-4 border-[#FFCF00] shadow-lg lg:left-[12%] z-20"
-          onError={(e) => (e.target.src = ProfilePic)} // Fallback if businesImg fails
+          onError={(e) => (e.target.src = ProfilePic)}
         />
       )}
 
-      <div className="w-[85%] h-[8vh] md:h-[10vh] bg-[#043D12] px-[20px] md:px-[50px] lg:py-10 flex justify-between items-center rounded-[48px] shadow-lg relative z-30 mb-[50px]">
+      <div
+        className={`main-header w-[85%] h-[8vh] md:h-[10vh] bg-[#043D12] px-[20px] md:px-[50px] lg:py-10 flex justify-between items-center rounded-[48px] shadow-lg relative z-30 ${
+          location.pathname.startsWith("/community/profile/") ? "mb-[50px]" : ""
+        }`}
+      >
+        {" "}
         <Link to="/">
           <img
             src={MindPowerLogo}
@@ -126,7 +131,6 @@ const Header = () => {
             className="md:w-[47px] md:h-[55px] w-[33px] h-[39px] object-contain brightness-100"
           />
         </Link>
-
         <AnimatePresence>
           {isOpen && (
             <motion.div
@@ -179,7 +183,6 @@ const Header = () => {
             </motion.div>
           )}
         </AnimatePresence>
-
         <div className="hidden md:flex gap-8 items-center text-white">
           {navItems.map((item) => (
             <motion.div key={item.path} className="relative group">
@@ -220,7 +223,6 @@ const Header = () => {
             </motion.div>
           ))}
         </div>
-
         <button className="md:hidden" onClick={() => setIsOpen(!isOpen)}>
           <img src={MenuIcon} alt="Hamburger_Icon" className="w-8 h-8" />
         </button>

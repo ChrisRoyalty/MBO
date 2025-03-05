@@ -11,18 +11,18 @@ import {
   RiArrowDropUpLine,
 } from "react-icons/ri";
 import { Link, useNavigate } from "react-router-dom";
-import BusinessImg from "../assets/businessImg.jpeg"; // Fallback business image
+import BusinessImg from "../assets/businessImg.jpeg";
 import {
   FaTimes,
   FaWhatsapp,
   FaTwitter,
   FaFacebook,
   FaInstagram,
-} from "react-icons/fa"; // Icons for social media
+} from "react-icons/fa";
 
 const BASE_URL = "https://mbo.bookbank.com.ng";
 
-// Contact Dropdown Component (identical to NewBusinesses)
+// Contact Dropdown Component
 const ContactDropdown = ({ socialLinks, onClose }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -35,15 +35,15 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
     twitter: { icon: FaTwitter, label: "Twitter" },
     facebook: { icon: FaFacebook, label: "Facebook" },
     instagram: { icon: FaInstagram, label: "Instagram" },
-    tiktok: { icon: FaInstagram, label: "TikTok" }, // Added TikTok as per sample response
-    linkedin: { icon: FaInstagram, label: "LinkedIn" }, // Added LinkedIn as per sample response
+    tiktok: { icon: FaInstagram, label: "TikTok" },
+    linkedin: { icon: FaInstagram, label: "LinkedIn" },
   };
 
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-fit border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-4 py-2 shadow-lg hover:bg-[#043D12] hover:text-white text-center flex items-center gap-2"
+        className="w-fit border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-4 py-2 shadow-sm hover:bg-[#043D12] hover:text-white transition-all duration-300 flex items-center gap-2"
       >
         Contact Us
         <span>{isOpen ? "▲" : "▼"}</span>
@@ -51,15 +51,14 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="absolute w-full bg-white border-[1px] border-[#6A7368] rounded-[11px] shadow-lg mt-2 overflow-hidden"
-            style={{ zIndex: 50 }} // Ensure dropdown stays above other content
+            initial={{ opacity: 0, height: 0, y: -10 }}
+            animate={{ opacity: 1, height: "auto", y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -10 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="absolute min-w-max w-full bg-white border-[1px] border-[#6A7368] rounded-[11px] shadow-md mt-2 z-50"
           >
             {Object.entries(socialLinks).map(([platform, url]) => {
               const Icon = socialIcons[platform.toLowerCase()]?.icon;
-              // Skip empty or invalid URLs
               if (!url || url.trim() === "") return null;
               return Icon ? (
                 <a
@@ -70,9 +69,9 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsOpen(false);
-                    onClose(); // Close the modal after clicking a contact link
+                    onClose();
                   }}
-                  className="flex items-center gap-2 w-full text-left px-4 py-2 text-[15px] text-[#043D12] hover:bg-[#F5F7F5] transition-colors duration-300"
+                  className="flex items-center gap-2 w-full text-left px-4 py-2 text-[15px] text-[#043D12] hover:bg-[#F5F7F5] transition-colors duration-200"
                 >
                   <Icon className="text-[#043D12]" />
                   {socialIcons[platform.toLowerCase()].label}
@@ -86,15 +85,15 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
   );
 };
 
-// Modal Component (matching NewBusinesses exactly)
+// Modal Component
 const Modal = ({ profile, onClose }) => {
   if (!profile) return null;
 
   const navigate = useNavigate();
 
   const handleViewProfile = () => {
-    navigate(`/community/profile/${profile.id}`); // Navigate to profile page with profile.id
-    onClose(); // Close the modal after navigation
+    navigate(`/community/profile/${profile.id}`);
+    onClose();
   };
 
   return (
@@ -107,13 +106,12 @@ const Modal = ({ profile, onClose }) => {
         onClick={onClose}
       >
         <motion.div
-          className="bg-white px-6 py-8 rounded-lg shadow-lg w-[90%] max-w-3xl flex flex-col md:flex-row gap-6 items-start overflow-hidden relative"
+          className="bg-white px-6 py-8 rounded-lg shadow-lg w-[90%] max-w-3xl flex flex-col md:flex-row gap-6 items-start overflow-y-auto max-h-[90vh] relative"
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
           exit={{ scale: 0.8 }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* X Icon in Top-Right */}
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-[#6A7368] hover:text-[#043D12] text-xl"
@@ -149,20 +147,17 @@ const Modal = ({ profile, onClose }) => {
             <p className="text-gray-700">
               <strong>Location:</strong> {profile.location || "Not specified"}
             </p>
-            {/* Description */}
             <p className="text-gray-700">
               <strong>Description:</strong>{" "}
               {profile.description || "No description available"}
             </p>
             <div className="flex gap-4 items-center mt-4">
-              {/* View Profile Button */}
               <button
                 onClick={handleViewProfile}
-                className="w-fit border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-4 py-2 shadow-lg hover:bg-[#043D12] hover:text-white text-center"
+                className="w-fit border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-4 py-2 shadow-sm hover:bg-[#043D12] hover:text-white transition-all duration-300"
               >
                 View Profile
               </button>
-              {/* Contact Us Dropdown */}
               <ContactDropdown
                 socialLinks={profile.socialLinks}
                 onClose={onClose}
@@ -182,7 +177,7 @@ const SearchPage = () => {
   const [error, setError] = useState(null);
   const [filterCategory, setFilterCategory] = useState("");
   const [filterLocation, setFilterLocation] = useState("");
-  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+  const [searchQuery, setSearchQuery] = useState("");
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
 
@@ -191,7 +186,6 @@ const SearchPage = () => {
       try {
         const API_URL = `${BASE_URL}/member/random-profiles`;
         const response = await axios.get(API_URL);
-
         if (response.data && response.data.success && response.data.profiles) {
           setProfiles(response.data.profiles);
         } else {
@@ -206,11 +200,9 @@ const SearchPage = () => {
         setLoading(false);
       }
     };
-
     fetchProfiles();
   }, []);
 
-  // Extract unique categories and locations from profiles
   const getUniqueCategories = () => {
     const categories = profiles
       .flatMap((profile) => profile.categories?.map((cat) => cat.name) || [])
@@ -233,7 +225,6 @@ const SearchPage = () => {
     return ["All Locations", ...locations];
   };
 
-  // Filter profiles based on category, location, and search query
   const filterProfiles = (profiles) => {
     return profiles.filter((profile) => {
       const matchesCategory =
@@ -255,7 +246,6 @@ const SearchPage = () => {
         profile.categories?.some((cat) =>
           cat.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
-
       return matchesCategory && matchesLocation && matchesSearch;
     });
   };
@@ -284,23 +274,22 @@ const SearchPage = () => {
 
   const toggleCategory = () => {
     setIsCategoryOpen(!isCategoryOpen);
-    setIsLocationOpen(false); // Close location dropdown if opening category
+    setIsLocationOpen(false);
   };
 
   const toggleLocation = () => {
     setIsLocationOpen(!isLocationOpen);
-    setIsCategoryOpen(false); // Close category dropdown if opening location
+    setIsCategoryOpen(false);
   };
 
   return (
     <div className="w-full bg-[#FFFDF2] flex flex-col items-center">
       <div className="w-[80%]">
         <header className="h-[20vh] flex max-md:flex-col max-md:my-8 justify-between items-center max-md:gap-8">
-          {/* Search Section */}
           <div className="md:w-[50%] w-full bg-[#D6E2D98C] text-[16px] px-8 rounded-[39px] shadow-lg h-[70px] text-[#043D12] flex gap-2 items-center justify-between">
             <input
               type="text"
-              className="h-full outline-0 w-full"
+              className="h-full outline-0 w-full bg-transparent"
               placeholder="Search Businesses or services"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -309,7 +298,7 @@ const SearchPage = () => {
           </div>
           <Link
             to="/community/all-businesses"
-            className="w-fit h-[70px] px-8 rounded-[39px] shadow-lg bg-[#043D12] text-[#FFFDF2] flex items-center justify-center"
+            className="w-fit h-[70px] px-8 rounded-[39px] shadow-lg bg-[#043D12] text-[#FFFDF2] flex items-center justify-center hover:bg-[#02530c] transition-all duration-300"
           >
             Explore all Businesses
           </Link>
@@ -317,38 +306,38 @@ const SearchPage = () => {
 
         <div className="w-full h-[80vh] text-[#043D12] flex max-sm:flex-col overflow-y-scroll">
           {/* Sidebar for Filters */}
-          <aside className="max-sm:hidden sm:w-[25%] h-full overflow-y-auto flex flex-col gap-8">
-            {/* Filter Heading */}
+          <aside className="max-lg:hidden sm:w-[25%] h-full overflow-y-auto flex flex-col gap-8 p-4">
             <div className="intro text-[#043D12] flex items-center gap-4">
               <RiEqualizerLine className="text-[22px]" />
-              <h4 className="text-[#043D12] text-[20px]">Filter</h4>
+              <h4 className="text-[#043D12] text-[20px] font-medium">Filter</h4>
             </div>
 
             {/* Category Dropdown */}
-            <div className="w-full flex flex-col gap-4">
+            <div className="w-full flex flex-col gap-2">
               <div
-                className="flex items-center justify-between"
+                className="flex items-center justify-between cursor-pointer p-2 hover:bg-[#F5F7F5] rounded-lg transition-all duration-200"
                 onClick={toggleCategory}
               >
-                <p className="flex items-center gap-2">
+                <p className="flex items-center gap-2 text-[16px]">
                   <MdOutlineCategory />
                   Category
                 </p>
                 {isCategoryOpen ? (
-                  <RiArrowDropUpLine className="cursor-pointer text-[20px]" />
+                  <RiArrowDropUpLine className="text-[20px]" />
                 ) : (
-                  <RiArrowDropDownLine className="cursor-pointer text-[20px]" />
+                  <RiArrowDropDownLine className="text-[20px]" />
                 )}
               </div>
               <AnimatePresence>
                 {isCategoryOpen && (
                   <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="dropdown-content w-full bg-white border-[1px] border-[#6A7368] rounded-[11px] shadow-lg overflow-hidden"
+                    initial={{ opacity: 0, height: 0, y: -10 }}
+                    animate={{ opacity: 1, height: "auto", y: 0 }}
+                    exit={{ opacity: 0, height: 0, y: -10 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="w-full bg-transparent py-2"
                   >
-                    <div className="flex flex-wrap justify-between gap-4 p-2">
+                    <div className="flex flex-col lg:flex-wrap gap-2.5 p-3">
                       {getUniqueCategories().map((category) => (
                         <button
                           key={category}
@@ -358,7 +347,7 @@ const SearchPage = () => {
                             );
                             setIsCategoryOpen(false);
                           }}
-                          className="w-fit h-[40px] px-6 rounded-[11px] shadow-lg hover:bg-[#043D12] hover:text-[#FFFDF2] border-[1px] border-[#043D12] text-[#043D12]"
+                          className="w-full lg:w-fit h-fit px-4 rounded-[11px] shadow-sm hover:bg-[#043D12] hover:text-[#FFFDF2] border-[1px] border-[#043D12] text-[#043D12] text-[14px] transition-all duration-200 py-1"
                         >
                           {category}
                         </button>
@@ -370,30 +359,31 @@ const SearchPage = () => {
             </div>
 
             {/* Location Dropdown */}
-            <div className="w-full flex flex-col gap-4">
+            <div className="w-full flex flex-col gap-2">
               <div
-                className="flex items-center justify-between"
+                className="flex items-center justify-between cursor-pointer p-2 hover:bg-[#F5F7F5] rounded-lg transition-all duration-200"
                 onClick={toggleLocation}
               >
-                <p className="flex items-center gap-2">
+                <p className="flex items-center gap-2 text-[16px]">
                   <IoLocationOutline />
                   Location
                 </p>
                 {isLocationOpen ? (
-                  <RiArrowDropUpLine className="cursor-pointer text-[20px]" />
+                  <RiArrowDropUpLine className="text-[20px]" />
                 ) : (
-                  <RiArrowDropDownLine className="cursor-pointer text-[20px]" />
+                  <RiArrowDropDownLine className="text-[20px]" />
                 )}
               </div>
               <AnimatePresence>
                 {isLocationOpen && (
                   <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="dropdown-content w-full bg-white border-[1px] border-[#6A7368] rounded-[11px] shadow-lg overflow-hidden"
+                    initial={{ opacity: 0, height: 0, y: -10 }}
+                    animate={{ opacity: 1, height: "auto", y: 0 }}
+                    exit={{ opacity: 0, height: 0, y: -10 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="w-full bg-transparent py-2"
                   >
-                    <div className="flex flex-wrap justify-between gap-4 p-2">
+                    <div className="flex flex-col lg:flex-wrap gap-2 p-3">
                       {getUniqueLocations().map((location) => (
                         <button
                           key={location}
@@ -403,7 +393,7 @@ const SearchPage = () => {
                             );
                             setIsLocationOpen(false);
                           }}
-                          className="w-fit h-[40px] px-6 rounded-[11px] shadow-lg hover:bg-[#043D12] hover:text-[#FFFDF2] border-[1px] border-[#043D12] text-[#043D12]"
+                          className="w-full lg:w-fit h-fit py-1 px-4 rounded-[11px] shadow-sm hover:bg-[#043D12] hover:text-[#FFFDF2] border-[1px] border-[#043D12] text-[#043D12] text-[14px] transition-all duration-200"
                         >
                           {location}
                         </button>
@@ -416,10 +406,9 @@ const SearchPage = () => {
           </aside>
 
           {/* Businesses Section */}
-          <div className="sm:w-[75%] h-full overflow-y-auto">
+          <div className="h-full overflow-y-auto flex-1">
             <div className="w-full h-fit py-16 flex justify-center bg-[#FFFDF2]">
-              <div className="w-[85%] h-fit flex flex-col gap-8">
-                {/* Removed the category buttons row to maintain focus on endpoint data */}
+              <div className="w-[85%] max-sm:w-full h-fit flex flex-col gap-8">
                 <div className="w-full grid lg:grid-cols-3 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
                   {filteredProfiles.map((profile, index) => (
                     <motion.div
