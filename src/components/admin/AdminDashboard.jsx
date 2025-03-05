@@ -34,9 +34,19 @@ const navItems = [
 
 const AdminDashboard = () => {
   const location = useLocation();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(
-    JSON.parse(sessionStorage.getItem("sidebarState")) || false
-  );
+
+  // Set initial state of isSidebarOpen to true for large screens
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    try {
+      const isLargeScreen = window.innerWidth >= 1024; // 1024px is typically the lg breakpoint
+      return (
+        JSON.parse(sessionStorage.getItem("sidebarState")) || isLargeScreen
+      );
+    } catch (e) {
+      console.warn("Cannot access sessionStorage for sidebarState:", e.message);
+      return window.innerWidth >= 1024; // Default to true for large screens
+    }
+  });
 
   useEffect(() => {
     sessionStorage.setItem("sidebarState", JSON.stringify(isSidebarOpen));
@@ -56,15 +66,17 @@ const AdminDashboard = () => {
       {/* Sidebar */}
       <motion.aside
         initial={{ x: "-100%" }}
-        animate={{ x: isSidebarOpen ? "0%" : "-100%" }}
+        animate={{
+          x: isSidebarOpen || window.innerWidth >= 1024 ? "0%" : "-100%",
+        }}
         transition={{ duration: 0.5, ease: "easeInOut" }}
-        className={`max-md:fixed z-50 top-0 left-0 lg:w-[25%] max-md:h-screen py-14 px-10 md:h-full h-auto overflow-y-auto bg-white border-r border-black shadow-2xl 
-  ${isSidebarOpen ? "absolute md:relative" : "absolute"}`}
+        className={`fixed lg:static z-50 top-0 left-0 lg:w-[25%] max-md:h-screen py-14 px-10 md:h-full h-auto overflow-y-auto bg-white border-r border-black shadow-2xl 
+          ${isSidebarOpen ? "absolute md:relative" : "absolute"}`}
       >
-        {/* Close Sidebar Button */}
+        {/* Close Sidebar Button (hidden on large screens) */}
         <MdOutlineCancelPresentation
           onClick={toggleSidebar}
-          className="text-[#043D12] text-[35px] absolute top-4 right-4 cursor-pointer transition-transform hover:scale-110"
+          className="text-[#043D12] text-[35px] absolute top-4 right-4 cursor-pointer transition-transform hover:scale-110 lg:hidden"
         />
 
         <div className="flex flex-col gap-10">
@@ -163,12 +175,13 @@ const AdminDashboard = () => {
           isSidebarOpen ? "md:w-[calc(100%-16rem)] ml-auto" : "w-full"
         } h-screen overflow-y-scroll`}
       >
+        {/* Menu Toggle Button (hidden on large screens) */}
         {!isSidebarOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="absolute z-50 top-6 lg:left-4 right-4 cursor-pointer border w-fit rounded shadow p-1 bg-white"
+            className="absolute z-50 top-6 lg:left-4 right-4 cursor-pointer border w-fit rounded shadow p-1 bg-white lg:hidden"
           >
             <CgMenuLeftAlt
               onClick={toggleSidebar}

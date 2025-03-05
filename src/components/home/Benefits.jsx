@@ -1,10 +1,10 @@
 import React from "react";
 import { motion } from "framer-motion";
 import DemoImg from "../../assets/demo.svg";
-import BenefitIcon01 from "../../assets/benefit01.svg";
-import BenefitIcon02 from "../../assets/benefit02.svg";
-import BenefitIcon03 from "../../assets/benefit03.svg";
-import BenefitIcon04 from "../../assets/benefit04.svg";
+import BenefitIcon01 from "../../assets/benefit01.gif";
+import BenefitIcon02 from "../../assets/benefit02.gif";
+import BenefitIcon03 from "../../assets/benefit03.gif";
+import BenefitIcon04 from "../../assets/benefit04.gif";
 
 import VectorIcon1 from "../../assets/vector1.svg";
 import VectorIcon2 from "../../assets/vector2.svg";
@@ -97,7 +97,7 @@ const Benefits = () => {
                   {title}
                 </motion.h1>
                 <motion.p
-                  className="md:text-[20px] text-[18px]"
+                  className="md:text-[20px] text-[18px] text-[#6A7368]"
                   variants={fadeInVariants}
                 >
                   {text}

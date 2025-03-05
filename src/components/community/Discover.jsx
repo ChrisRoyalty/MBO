@@ -30,9 +30,9 @@ const Discover = () => {
     <motion.div
       whileInView="visible"
       viewport={{ once: false }}
-      className="w-full lg:h-[80vh] h-fit flex flex-col items-center bg-[#043D12] overflow-hidden justify-center"
+      className="w-full pt-[10vh] h-fit flex flex-col items-center bg-[#043D12] overflow-hidden justify-center"
     >
-      <div className="h-full w-[80%] text-[#043D12] grid grid-cols-1 lg:grid-cols-2 mx-auto items-center max-lg:gap-8 max-lg:items-baseline max-lg:pt-10">
+      <div className="h-full w-[80%] text-[#043D12] grid grid-cols-1 lg:grid-cols-2 mx-auto min-2xl:items-center max-lg:gap-8 max-lg:items-baseline max-lg:pt-10">
         {/* Animated Text Section */}
         <motion.div
           initial="hidden"
@@ -41,8 +41,9 @@ const Discover = () => {
           variants={animations.slideLeft}
           className="details flex flex-col md:gap-10 gap-8 text-center md:text-left max-lg:items-center"
         >
-          <h1 className=" text-[#FFFDF2] lg:leading-[65px] max-w-full mt-8 font-medium max-lg:mx-auto max-lg:text-center md:text-[45px] text-[32px]">
-            Discover Businesses Near You Within the MindPower Network
+          <h1 className=" text-[#FFFDF2] max-w-full mt-8 font-medium max-lg:mx-auto max-lg:text-center md:text-[40px] max-md:text-[32px] min-2xl:text-[40px] text-[100px]">
+            Discover Businesses Near <br className="max-md:hidden" />
+            You Within the MindPower Network
           </h1>
 
           <div className="btns flex  justify-center md:justify-start mt-4">
@@ -65,11 +66,11 @@ const Discover = () => {
           variants={animations.slideRight}
           className="visual h-full overflow-hidden max-lg:mt-8 "
         >
-          <div className="w-full md:h-[100vh] flex items-center">
+          <div className="w-full flex items-center">
             <img
               src={HeroImg}
               alt="Hero-Page-img"
-              className="max-w-full h-auto object-contain mx-auto"
+              className="max-w-full lg:h-[72vh] object-center object-fill mx-auto min-2xl:h-[80vh] min-[1600px]:h-[40vh]"
             />
           </div>
         </motion.div>

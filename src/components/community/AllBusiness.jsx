@@ -5,19 +5,18 @@ import axios from "axios";
 import { CiSearch } from "react-icons/ci";
 import { CiLocationOn } from "react-icons/ci";
 import { Link, useNavigate } from "react-router-dom";
-import BusinessImg from "../../assets/businessImg.jpeg"; // Fallback business image
+import BusinessImg from "../../assets/businessImg.jpeg";
 import {
   FaTimes,
   FaWhatsapp,
   FaTwitter,
   FaFacebook,
   FaInstagram,
-} from "react-icons/fa"; // Icons for social media
-import ProfilePic from "../../assets/profilepic.svg"; // Profile picture for fallback
+} from "react-icons/fa";
+import ProfilePic from "../../assets/profilepic.svg";
 
 const BASE_URL = "https://mbo.bookbank.com.ng";
 
-// Contact Dropdown Component (identical to previous implementation)
 const ContactDropdown = ({ socialLinks, onClose }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -30,8 +29,8 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
     twitter: { icon: FaTwitter, label: "Twitter" },
     facebook: { icon: FaFacebook, label: "Facebook" },
     instagram: { icon: FaInstagram, label: "Instagram" },
-    tiktok: { icon: FaInstagram, label: "TikTok" }, // Added TikTok as per sample response
-    linkedin: { icon: FaInstagram, label: "LinkedIn" }, // Added LinkedIn as per sample response
+    tiktok: { icon: FaInstagram, label: "TikTok" },
+    linkedin: { icon: FaInstagram, label: "LinkedIn" },
   };
 
   return (
@@ -50,11 +49,10 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             className="absolute w-full bg-white border-[1px] border-[#6A7368] rounded-[11px] shadow-lg mt-2 overflow-hidden"
-            style={{ zIndex: 50 }} // Ensure dropdown stays above other content
+            style={{ zIndex: 50 }}
           >
             {Object.entries(socialLinks).map(([platform, url]) => {
               const Icon = socialIcons[platform.toLowerCase()]?.icon;
-              // Skip empty or invalid URLs
               if (!url || url.trim() === "") return null;
               return Icon ? (
                 <a
@@ -65,7 +63,7 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsOpen(false);
-                    onClose(); // Close the modal after clicking a contact link
+                    onClose();
                   }}
                   className="flex items-center gap-2 w-full text-left px-4 py-2 text-[15px] text-[#043D12] hover:bg-[#F5F7F5] transition-colors duration-300"
                 >
@@ -81,15 +79,14 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
   );
 };
 
-// Modal Component (matching NewBusinesses/SearchPage exactly)
 const Modal = ({ profile, onClose }) => {
   if (!profile) return null;
 
   const navigate = useNavigate();
 
   const handleViewProfile = () => {
-    navigate(`/community/profile/${profile.id}`); // Navigate to profile page with profile.id
-    onClose(); // Close the modal after navigation
+    navigate(`/community/profile/${profile.id}`);
+    onClose();
   };
 
   return (
@@ -102,13 +99,12 @@ const Modal = ({ profile, onClose }) => {
         onClick={onClose}
       >
         <motion.div
-          className="bg-white px-6 py-8 rounded-lg shadow-lg w-[90%] max-w-3xl flex flex-col md:flex-row gap-6 items-start overflow-hidden relative"
+          className="bg-white px-6 py-8 rounded-lg shadow-lg w-[90%] max-w-3xl flex flex-col md:flex-row gap-6 items-start overflow-y-auto max-h-[90vh] relative" // Updated
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
           exit={{ scale: 0.8 }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* X Icon in Top-Right */}
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-[#6A7368] hover:text-[#043D12] text-xl"
@@ -144,20 +140,17 @@ const Modal = ({ profile, onClose }) => {
             <p className="text-gray-700">
               <strong>Location:</strong> {profile.location || "Not specified"}
             </p>
-            {/* Description */}
             <p className="text-gray-700">
               <strong>Description:</strong>{" "}
               {profile.description || "No description available"}
             </p>
             <div className="flex gap-4 items-center mt-4">
-              {/* View Profile Button */}
               <button
                 onClick={handleViewProfile}
                 className="w-fit border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-4 py-2 shadow-lg hover:bg-[#043D12] hover:text-white text-center"
               >
                 View Profile
               </button>
-              {/* Contact Us Dropdown */}
               <ContactDropdown
                 socialLinks={profile.socialLinks}
                 onClose={onClose}
@@ -175,7 +168,7 @@ const AllBusiness = () => {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const fetchProfiles = async () => {
@@ -201,7 +194,6 @@ const AllBusiness = () => {
     fetchProfiles();
   }, []);
 
-  // Filter profiles based on search query only (no category/location filters)
   const filterProfiles = (profiles) => {
     return profiles.filter((profile) => {
       const matchesSearch =
@@ -245,11 +237,9 @@ const AllBusiness = () => {
     <div className="w-full bg-[#FFFDF2] flex flex-col items-center">
       <div className="w-[80%] max-w-[1440px] mx-auto">
         <header className="h-[20vh] flex flex-col md:flex-row max-md:my-8 md:justify-between lg:items-center max-md:gap-6">
-          {/* Title */}
           <h1 className="w-fit text-[#043D12] text-[32px] max-lg:text-[20px] font-bold mb-4 md:mb-0">
             Explore all Businesses
           </h1>
-          {/* Search Section */}
           <div className="md:w-[50%] w-full bg-[#D6E2D98C] text-[16px] px-4 md:px-8 rounded-[39px] shadow-lg lg:h-[70px] h-[50px] text-[#043D12] flex gap-2 items-center justify-between">
             <input
               type="text"
@@ -349,7 +339,6 @@ const AllBusiness = () => {
                       <p className="text-[8px] text-[#6A7368]">Followers</p>
                     </div>
                   </div>
-                  {/* Message Button now links directly to WhatsApp */}
                   {profile.socialLinks?.whatsapp ? (
                     <a
                       href={profile.socialLinks.whatsapp}
