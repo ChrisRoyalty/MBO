@@ -32,7 +32,7 @@ const HeroSection = () => {
       viewport={{ once: false }}
       className="w-full flex flex-col justify-center items-center bg-[#FFFDF2] overflow-hidden"
     >
-      <div className="h-full container mx-auto px-[5vh] text-[#043D12] grid md:grid-cols-2 grid-cols-1 justify-center">
+      <div className="h-full container mx-auto px-[5vw] text-[#043D12] grid md:grid-cols-2 grid-cols-1 justify-center">
         {/* Animated Text Section */}
         <motion.div
           initial="hidden"
@@ -41,17 +41,17 @@ const HeroSection = () => {
           variants={animations.slideLeft}
           className=" details flex flex-col md:gap-4 gap-4 md:text-left md:py-12"
         >
-          <h1 className="text-[#043D12] lg:text-[50px] lg:leading-[45px] text-[32px] max-w-full lg:mt-8 font-medium max-lg:text-center">
+          <h1 className="text-[#043D12] lg:text-[45px] lg:leading-[45px] text-[32px] max-w-full lg:mt-8 font-medium max-md:text-center">
             Elevate Your Business. <br className="" />
             <strong className="lg:text-[32px] text-[20px] italic">
               Connect. Showcase. Grow.
             </strong>
           </h1>
-          <p className="lg:text-[25px] text-[14px] max-w-full mx-auto md:mx-0 text-[#6A7368] max-lg:text-center ">
+          <p className="lg:text-[22px] text-[14px] max-w-full mx-auto md:mx-0 text-[#6A7368] max-md:text-center ">
             Create a powerful online presence. Share <br /> your story, showcase
             your products, and let your customers find you.
           </p>
-          <div className="btns flex lg:gap-4 gap-8 max-sm:gap-4 items-center justify-center lg:justify-start mt-4">
+          <div className="btns flex lg:gap-4 gap-4 max-sm:gap-4 items-center justify-center md:justify-start mt-6">
             <motion.div
               variants={animations.buttonHover}
               whileHover="hover"
@@ -59,7 +59,7 @@ const HeroSection = () => {
             >
               <Link
                 to="/create-account"
-                className="w-fit bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[10px] md:px-8 font-bold  px-4 py-4 md:py-5  "
+                className="w-fit bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] md:text-[12px]  text-[8px] md:px-6 font-bold  px-[12px] py-4 md:py-5  "
               >
                 Create my profile
               </Link>
@@ -67,7 +67,7 @@ const HeroSection = () => {
             <motion.div variants={animations.buttonHover} whileHover="hover">
               <Link
                 to="/community/all-businesses"
-                className="w-fit bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] text-[10px] md:px-8 font-bold  px-4 py-4 md:py-5  "
+                className="w-fit bg-[#043D12] rounded-[48px] text-white shadow-lg lg:text-[18px] md:text-[12px] text-[8px] md:px-6 font-bold  px-[12px] py-4 md:py-5  "
               >
                 Explore Businesses
               </Link>
@@ -87,7 +87,7 @@ const HeroSection = () => {
             <img
               src={HeroImg}
               alt="Hero-Page-img"
-              className="max-w-full object-contain object-center mx-auto"
+              className="max-w-full h-[100%] object-cover object-center mx-auto"
             />
           </div>
         </motion.div>

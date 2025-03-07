@@ -24,7 +24,7 @@ const Login = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
 
   const routes = {
-    admin: "/admin/analytics",
+    admin: "/admin",
     user: {
       inactiveSubscription: "/subscribe",
       incompleteProfile: "/business-profile",

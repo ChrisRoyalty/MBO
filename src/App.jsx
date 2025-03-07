@@ -28,6 +28,12 @@ import AdminDashboard from "./components/admin/AdminDashboard";
 import CommunityMain from "./components/community/CommunityMain";
 import ProfilePage from "./components/community/ProfilePage";
 import BusinessProfile2 from "./pages/BusinessProfile2";
+import Displays from "./components/admin/Displays";
+import ManageAdmin from "./components/admin/ManageAdmin";
+import ManageUsers from "./components/admin/ManageUsers";
+import ManageSubscription from "./components/admin/ManageSubscription";
+import Support from "./components/admin/Support";
+import Notification from "./components/admin/Notification";
 
 function App() {
   return (
@@ -140,9 +146,14 @@ function App() {
             </PrivateRoute>
           }
         >
-          <Route index element={<Profile />} />
+          <Route index element={<Displays />} />
+          <Route path="manage-admins" element={<ManageAdmin />} />
+          <Route path="manage-users" element={<ManageUsers />} />
+          <Route path="manage-subscriptions" element={<ManageSubscription />} />
           <Route path="analytics" element={<Analytics />} />
-          <Route path="create-profile" element={<CreateProfile />} />
+          <Route path="manage-notifications" element={<Notification />} />
+          <Route path="support" element={<Support />} />
+          <Route path="manage-users" element={<ManageUsers />} />
         </Route>
       </Routes>
     </>
