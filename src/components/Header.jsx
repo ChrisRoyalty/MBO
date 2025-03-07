@@ -97,7 +97,7 @@ const Header = () => {
   return (
     <div
       className={`h-fit flex flex-col justify-center items-center transition-all duration-500 relative bg-[#FFFDF2] py-[5vh] lg:py-[6vh] ${
-        location.pathname.startsWith("/community/profile/") ? "mb-[50px]" : ""
+        location.pathname.startsWith("/community/profile/") ? "pb-[40px]" : ""
       }`}
     >
       {location.pathname.startsWith("/community/profile/") &&
@@ -118,7 +118,7 @@ const Header = () => {
         />
       )}
 
-      <div className="container mx-auto px-[5vh]">
+      <div className="container mx-auto px-[5vw]">
         <div
           className={`main-header  h-fit  bg-[#043D12] px-[20px] md:px-[50px] py-4 flex justify-between items-center rounded-[48px] shadow-lg relative z-30 ${
             location.pathname.startsWith("/community/profile/")

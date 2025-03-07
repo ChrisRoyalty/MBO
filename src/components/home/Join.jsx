@@ -63,7 +63,7 @@ const Join = () => {
       variants={animations.fadeIn}
       className="w-full flex justify-center items-center bg-[#FAFEF4] py-18 overflow-hidden"
     >
-      <div className="container mx-auto px-[5vh] flex flex-col gap-10 text-center  overflow-hidden">
+      <div className="container mx-auto px-[5vw] flex flex-col gap-10 text-center  overflow-hidden">
         {/* Title Section */}
         <motion.h1
           initial="hidden"

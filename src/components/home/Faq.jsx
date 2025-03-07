@@ -99,7 +99,7 @@ const Faq = () => {
 
   return (
     <div className="w-full bg-[#FAFEF4] md:py-18 py-10">
-      <div className="container mx-auto px-[5vh] flex flex-col gap-10">
+      <div className="container mx-auto px-[5vw] flex flex-col gap-10">
         <div className="intro text-center">
           <h1 className="lg:text-[40px] text-[32px] text-[#6A7368]">
             Frequently Asked Questions

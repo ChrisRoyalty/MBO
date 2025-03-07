@@ -175,8 +175,8 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="w-full h-fit bg-[#FFFDF2] flex flex-col items-center pt-[12vh]">
-      <div className="w-[80%] max-w-[1440px] mx-auto">
+    <div className="w-full h-fit bg-[#FFFDF2] flex flex-col items-center pt-[10vh]">
+      <div className="container px-[5vw] mx-auto">
         <div className="w-full text-[#043D12] flex max-sm:flex-col overflow-y-scroll">
           <aside className="sm:w-[25%] h-[80vh] overflow-y-auto flex flex-col gap-8 text-[#6A7368]">
             <h3 className="lg:text-[32px] text-[#043D12] max-sm:text-center text-[24px] md:text-[28px] font-bold">

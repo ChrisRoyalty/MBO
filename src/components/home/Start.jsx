@@ -73,7 +73,7 @@ const Start = () => {
         whileInView="visible"
         viewport={{ once: false }}
         variants={animations.fadeIn}
-        className="container mx-auto px-[5vh] h-fit flex flex-col gap-10 text-[#FFFDF2] text-center lg:leading-6"
+        className="container mx-auto px-[5vw] h-fit flex flex-col gap-10 text-[#FFFDF2] text-center lg:leading-6"
       >
         <motion.h1
           initial="hidden"

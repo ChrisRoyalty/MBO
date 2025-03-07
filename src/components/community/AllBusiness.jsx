@@ -234,7 +234,7 @@ const AllBusiness = () => {
 
   return (
     <div className="w-full bg-[#FFFDF2] flex flex-col items-center">
-      <div className="container mx-auto px-[5vh]">
+      <div className="container mx-auto px-[5vw]">
         <header className="h-[20vh] flex flex-col md:flex-row max-md:my-8 md:justify-between lg:items-center max-md:gap-6">
           <h1 className="w-fit text-[#043D12] text-[32px] max-lg:text-[20px] font-bold mb-4 md:mb-0">
             Explore all Businesses

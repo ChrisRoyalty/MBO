@@ -32,7 +32,7 @@ const Discover = () => {
       viewport={{ once: false }}
       className="w-full h-fit flex flex-col items-center bg-[#043D12] overflow-hidden justify-center lg:pt-16"
     >
-      <div className="container mx-auto px-[5vh] text-[#043D12] grid grid-cols-1 lg:grid-cols-2 max-lg:gap-8 max-lg:items-baseline max-lg:pt-10">
+      <div className="container mx-auto px-[5vw] text-[#043D12] grid grid-cols-1 lg:grid-cols-2 max-lg:gap-8 max-lg:items-baseline max-lg:pt-10">
         {/* Animated Text Section */}
         <motion.div
           initial="hidden"
