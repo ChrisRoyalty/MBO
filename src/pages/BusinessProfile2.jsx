@@ -1,7 +1,7 @@
 // src/components/BusinessProfile2.jsx
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { loginSuccess } from "../redux/authSlice";
+import { login } from "../redux/authSlice"; // Change from loginSuccess to login
 import { Link, useNavigate } from "react-router-dom";
 import { BsPerson } from "react-icons/bs";
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
@@ -25,11 +25,11 @@ const BusinessProfile2 = () => {
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
-  const [showLinkPreview, setShowLinkPreview] = useState(false); // New state for link visibility
+  const [showLinkPreview, setShowLinkPreview] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const token = useSelector((state) => state.auth.token);
+  const { token, user } = useSelector((state) => state.auth); // Get user from state
 
   useEffect(() => {
     if (!token) {
@@ -81,7 +81,7 @@ const BusinessProfile2 = () => {
     setShowCountryDropdown(false);
     setWhatsappNumber("");
     setWhatsappLink("");
-    setShowLinkPreview(false); // Reset preview visibility
+    setShowLinkPreview(false);
   };
 
   const handleSubmit = async (e) => {
@@ -157,8 +157,13 @@ const BusinessProfile2 = () => {
 
       const newToken = response.data.token;
       if (newToken) {
-        sessionStorage.setItem("token", newToken);
-        dispatch(loginSuccess(newToken));
+        // Update Redux with the new token and updated user data
+        const updatedUser = {
+          ...user, // Keep existing user data
+          profileStatus: true, // Assume profile is now complete
+        };
+        dispatch(login({ token: newToken, user: updatedUser }));
+        localStorage.setItem("token", newToken); // Sync with localStorage
       }
 
       toast.success("Business profile created successfully!", {

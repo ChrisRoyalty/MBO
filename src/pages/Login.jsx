@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { loginSuccess } from "../redux/authSlice";
+import { login } from "../redux/authSlice"; // Change from loginSuccess to login
 import { FaRegEnvelope } from "react-icons/fa";
 import { CiLock } from "react-icons/ci";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
@@ -50,7 +50,7 @@ const Login = () => {
       const { id, role, subscriptionStatus, profileStatus } = decodedToken;
 
       const user = {
-        id, // memberId: "da8bdc1d-d8ab-436f-99dc-a20f78aee6a9"
+        id,
         role,
         subscriptionStatus,
         profileStatus,
@@ -59,7 +59,7 @@ const Login = () => {
         email: member.email,
       };
 
-      dispatch(loginSuccess({ token, user }));
+      dispatch(login({ token, user })); // Change loginSuccess to login
       toast.success(response.data.message || "Login successful!");
     } catch (error) {
       const errorResponse = error.response?.data || {};

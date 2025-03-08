@@ -1,7 +1,7 @@
 // src/components/BusinessProfile.jsx
 import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { loginSuccess } from "../redux/authSlice";
+import { useDispatch, useSelector } from "react-redux"; // Keep useDispatch for potential future use
+// Remove: import { loginSuccess } from "../redux/authSlice";
 import { Link, useNavigate } from "react-router-dom";
 import { BsPerson } from "react-icons/bs";
 import { MdOutlineCategory } from "react-icons/md";
@@ -13,6 +13,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Hand from "../components/svgs/Hand";
 
+// Rest of the code remains unchanged
 const BusinessProfile = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState({
@@ -89,7 +90,6 @@ const BusinessProfile = () => {
       return;
     }
 
-    // Instead of API call, store data in sessionStorage and navigate to Step 2
     setLoading(true);
     const step1Data = {
       businessName,
@@ -102,7 +102,7 @@ const BusinessProfile = () => {
     setTimeout(() => {
       setLoading(false);
       navigate("/business-profile2");
-    }, 500); // Small delay for UX feedback
+    }, 500);
   };
 
   return (

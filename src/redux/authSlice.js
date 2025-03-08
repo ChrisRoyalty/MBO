@@ -1,32 +1,39 @@
-// redux/authSlice.js
+// src/redux/authSlice.js
 import { createSlice } from "@reduxjs/toolkit";
-
-const initialState = {
-  user: null,
-  token: null,
-  isAuthenticated: false,
-};
 
 const authSlice = createSlice({
   name: "auth",
-  initialState,
+  initialState: {
+    isAuthenticated: false,
+    token: null,
+    user: null,
+    lastDashboard: null,
+  },
   reducers: {
-    loginSuccess: (state, action) => {
-      state.user = action.payload.user;
-      state.token = action.payload.token;
+    login: (state, action) => {
+      const { token, user } = action.payload;
       state.isAuthenticated = true;
-      // No need for sessionStorage here; redux-persist handles it
+      state.token = token;
+      state.user = user;
+      state.lastDashboard =
+        user.role === "admin" ? "/admin" : "/user-dashboard";
+      console.log("Login action - State:", state); // Debug
+      localStorage.setItem("token", token); // Sync with localStorage if needed
     },
     logout: (state) => {
-      state.user = null;
-      state.token = null;
       state.isAuthenticated = false;
-      // No need to clear sessionStorage; redux-persist updates it
+      state.token = null;
+      state.user = null;
+      state.lastDashboard = null;
+      localStorage.removeItem("token");
+    },
+    setLastDashboard: (state, action) => {
+      state.lastDashboard = action.payload;
+      console.log("setLastDashboard - New value:", state.lastDashboard); // Debug
     },
   },
 });
 
-export const { loginSuccess, logout } = authSlice.actions;
+export const { login, logout, setLastDashboard } = authSlice.actions;
 export const selectAuth = (state) => state.auth;
-
 export default authSlice.reducer;

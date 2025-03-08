@@ -7,7 +7,7 @@ import MenuIcon from "../assets/menu.svg";
 import ProfilePic from "../assets/profilepic.svg";
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
-import { logout, selectAuth } from "../redux/authSlice";
+import { logout, selectAuth, setLastDashboard } from "../redux/authSlice";
 
 const navItemVariants = {
   hidden: { opacity: 0, scale: 0.5, y: -20 },
@@ -31,8 +31,22 @@ const Header = () => {
   const auth = useSelector(selectAuth);
   const dispatch = useDispatch();
   const isAuthenticated = auth.isAuthenticated;
+  const userRole = auth.user?.role; // Access role from user object
+  const lastDashboard = auth.lastDashboard;
+
+  // Debug logs to trace state and routing
+  console.log("Header - Full auth state:", auth);
+  console.log("Header - userRole:", userRole);
+  console.log("Header - lastDashboard:", lastDashboard);
 
   useEffect(() => {
+    // Update lastDashboard when navigating to a dashboard
+    if (location.pathname === "/admin") {
+      dispatch(setLastDashboard("/admin"));
+    } else if (location.pathname === "/user-dashboard") {
+      dispatch(setLastDashboard("/user-dashboard"));
+    }
+
     if (location.pathname.startsWith("/community/profile/")) {
       setLoading(true);
       const fetchProfile = async () => {
@@ -61,7 +75,7 @@ const Header = () => {
     } else {
       setProfile(null);
     }
-  }, [location.pathname, id]);
+  }, [location.pathname, id, dispatch]);
 
   useEffect(() => {
     console.log("Header rendered, current path:", location.pathname);
@@ -70,21 +84,27 @@ const Header = () => {
 
   const handleLogout = () => {
     dispatch(logout());
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     toast.success("Logged out successfully!");
     navigate("/login");
     setIsOpen(false);
   };
+
+  // Determine dashboard route, prioritizing lastDashboard
+  const dashboardRoute =
+    lastDashboard || (userRole === "admin" ? "/admin" : "/user-dashboard");
+  console.log("Header - Final dashboardRoute:", dashboardRoute); // Debug final route
 
   const navItems = [
     { name: "Home", path: "/" },
     { name: "Community", path: "/community" },
     isAuthenticated
       ? {
-          name: "Log Out",
-          path: "#",
+          name: "Dashboard",
+          path: dashboardRoute,
           className:
-            "border-[1px] border-[#FFFFFF] rounded-[39px] lg:ml-8 px-8 py-2 hover:bg-red-500 hover:text-white active:bg-red-600 active:text-white",
-          onClick: handleLogout,
+            "border-[1px] border-[#FFFFFF] rounded-[39px] lg:ml-8 px-8 py-2 hover:bg-white hover:text-[#02530c] active:bg-white active:text-[#02530c]",
         }
       : {
           name: "Log In",
@@ -120,13 +140,12 @@ const Header = () => {
 
       <div className="container mx-auto px-[5vw]">
         <div
-          className={`main-header  h-fit  bg-[#043D12] px-[20px] md:px-[50px] py-4 flex justify-between items-center rounded-[48px] shadow-lg relative z-30 ${
+          className={`main-header h-fit bg-[#043D12] px-[20px] md:px-[50px] py-4 flex justify-between items-center rounded-[48px] shadow-lg relative z-30 ${
             location.pathname.startsWith("/community/profile/")
               ? "mb-[50px]"
               : ""
           }`}
         >
-          {" "}
           <Link to="/">
             <img
               src={MindPowerLogo}
