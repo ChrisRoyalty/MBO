@@ -54,10 +54,11 @@ const ManageAdmin = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [passwordValidation, setPasswordValidation] = useState("");
+  // Define profileData state
   const [profileData, setProfileData] = useState({
     firstname: "",
     lastname: "",
-  }); // Ensure profileData is defined here
+  });
 
   const navigate = useNavigate();
   const { isAuthenticated, user, token } = useSelector((state) => state.auth);
@@ -74,6 +75,7 @@ const ManageAdmin = () => {
       setError("Not authenticated or missing token!");
       setLoading(false);
       navigate("/login", { replace: true });
+      toast.error("Not authenticated or missing token!");
       return;
     }
 
@@ -99,10 +101,10 @@ const ManageAdmin = () => {
           }
         );
 
-        console.log("Admins Response:", response.data);
         if (response.data && Array.isArray(response.data.members)) {
           setAdmins(response.data.members);
           setFilteredAdmins(response.data.members);
+          toast.success("Admins fetched successfully!");
         } else {
           throw new Error("No admin data found in the response.");
         }
@@ -113,8 +115,12 @@ const ManageAdmin = () => {
           error.response?.data?.message?.includes("not found")
         ) {
           setError("No admins found.");
+          toast.error("No admins found.");
         } else {
           setError(
+            error.response?.data?.message || "Failed to fetch admin data."
+          );
+          toast.error(
             error.response?.data?.message || "Failed to fetch admin data."
           );
         }
@@ -231,15 +237,14 @@ const ManageAdmin = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("Delete Admin Response:", response.data);
-      toast.success(response.data.message);
+      toast.success(response.data.message || "Admin removed successfully!");
       setAdmins((prev) => prev.filter((a) => a.id !== deleteAdmin.id));
       setFilteredAdmins((prev) => prev.filter((a) => a.id !== deleteAdmin.id));
       setIsDeleteModalOpen(false);
       setDeleteAdmin(null);
     } catch (error) {
       console.error("❌ Error Deleting Admin:", error);
-      toast.error(error.response?.data?.message || "Failed to delete admin.");
+      toast.error(error.response?.data?.message || "Failed to remove admin.");
     }
   };
 
@@ -306,9 +311,7 @@ const ManageAdmin = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("Add Admin Response:", response.data);
-      toast.success(response.data.message);
-
+      toast.success(response.data.message || "Admin added successfully!");
       const newAdmin = {
         ...response.data.newMember,
         firstname: response.data.newMember.firstName,
@@ -335,7 +338,6 @@ const ManageAdmin = () => {
       return;
     }
     try {
-      console.log("Token being used:", token);
       const response = await axios.patch(
         `${import.meta.env.VITE_BASE_URL}/member/change-password`,
         {
@@ -346,8 +348,7 @@ const ManageAdmin = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("Change Password Response:", response.data);
-      toast.success("Password changed successfully.");
+      toast.success("Password changed successfully!");
       setIsResetModalOpen(false);
       setResetUser(null);
       setResetFormData({
