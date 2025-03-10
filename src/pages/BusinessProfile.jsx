@@ -34,10 +34,6 @@ const BusinessProfile = () => {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   useEffect(() => {
-    toast.success("Toast is working!");
-  }, []);
-
-  useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await axios.get(
