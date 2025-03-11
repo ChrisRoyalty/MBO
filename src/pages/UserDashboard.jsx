@@ -4,7 +4,6 @@ import { useSelector, useDispatch } from "react-redux";
 import { logout as reduxLogout } from "../redux/authSlice";
 import { LuLayoutGrid } from "react-icons/lu";
 import { PiUserCircle } from "react-icons/pi";
-import { MdOutlineAnalytics } from "react-icons/md";
 import { IoIosLogOut } from "react-icons/io";
 import { CgMenuLeftAlt } from "react-icons/cg";
 import { MdOutlineCancelPresentation } from "react-icons/md";
@@ -34,17 +33,13 @@ const navItems = [
     icon: <PiUserCircle className="text-[25px]" />,
     label: "Community",
   },
-  {
-    to: "/user-dashboard/analytics",
-    icon: <MdOutlineAnalytics className="text-[25px]" />,
-    label: "Analytics",
-  },
-  {
-    to: "/user-dashboard/contact",
-    icon: <PiUserCircle className="text-[25px]" />,
-    label: "Contact Us",
-  },
 ];
+
+const helpItem = {
+  to: "/user-dashboard/help",
+  icon: <PiUserCircle className="text-[25px]" />,
+  label: "Help & Support",
+};
 
 const UserDashboard = () => {
   const location = useLocation();
@@ -231,23 +226,27 @@ const UserDashboard = () => {
           x: isSidebarOpen || window.innerWidth >= 1024 ? "0%" : "-100%",
         }}
         transition={{ duration: 0.5, ease: "easeInOut" }}
-        className={`fixed lg:static z-50 top-0 left-0 lg:w-[25%] max-md:h-screen py-14 px-10 md:h-full h-auto overflow-y-auto bg-white border-r border-black shadow-2xl ${
+        className={`fixed lg:static z-50 top-0 left-0 lg:w-[25%] max-md:h-screen py-14 px-10 md:h-full h-auto bg-white border-r border-black shadow-2xl ${
           isSidebarOpen ? "absolute md:relative" : "absolute"
-        }`}
+        } flex flex-col`}
       >
         <MdOutlineCancelPresentation
           onClick={toggleSidebar}
           className="text-[#043D12] text-[35px] absolute top-4 right-4 cursor-pointer transition-transform hover:scale-110 lg:hidden"
         />
-        <div className="flex flex-col gap-10">
-          <motion.strong
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="logo text-[32px] text-[#043D12]"
-          >
-            MBO
-          </motion.strong>
+        {/* MBO Header */}
+        <motion.strong
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="logo text-[32px] text-[#043D12] mb-6"
+        >
+          MBO
+        </motion.strong>
+
+        {/* Full-Height Container with Two Sub-Containers */}
+        <div className="flex-1 flex flex-col justify-between">
+          {/* First Container: Home and Community */}
           <nav className="flex flex-col gap-4">
             {navItems.map((item, index) => (
               <motion.div
@@ -279,130 +278,171 @@ const UserDashboard = () => {
               </motion.div>
             ))}
           </nav>
-        </div>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="flex flex-col gap-10 mt-8 relative"
-        >
-          <div className="rounded-[16px] border border-[#6A7368] px-4 py-4 flex flex-col gap-6">
-            <figure className="flex flex-col items-center">
-              <motion.img
-                src={profileData.businesImg}
-                alt="Business-img"
-                className="rounded-full w-[77px] h-[77px] object-cover"
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                transition={{ duration: 0.3 }}
-                onError={(e) => (e.target.src = BusinessImg)}
-              />
-              <figcaption className="text-center text-[#6A7368]">
-                <h3 className="text-[12px]">{profileData.businessName}</h3>
-                <p className="text-[8px]">{profileData.category}</p>
-              </figcaption>
-            </figure>
-            <motion.button
-              className="relative text-white text-[14px] rounded-[14px] bg-[#043D12] py-3 px-4 shadow-lg overflow-hidden group"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleShareClick}
+
+          {/* Second Container: Profile, Help, Logout */}
+          <div className="flex flex-col gap-6">
+            {/* Profile Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="rounded-[16px] border border-[#6A7368] px-4 py-4 flex flex-col gap-6 relative"
             >
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                <FaShareAlt className="text-[16px]" />
-                Share Profile
-              </span>
-              <span className="absolute inset-0 bg-[#03500F] transform scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-out"></span>
-            </motion.button>
-            <AnimatePresence>
-              {showShareOptions && (
-                <motion.div
-                  variants={shareVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white border border-[#6A7368] rounded-lg shadow-xl p-3 flex gap-3 z-20"
+              <figure className="flex flex-col items-center">
+                <motion.img
+                  src={profileData.businesImg}
+                  alt="Business-img"
+                  className="rounded-full w-[77px] h-[77px] object-cover"
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  transition={{ duration: 0.3 }}
+                  onError={(e) => (e.target.src = BusinessImg)}
+                />
+                <figcaption className="text-center text-[#6A7368]">
+                  <h3 className="text-[12px]">{profileData.businessName}</h3>
+                  <p className="text-[8px]">{profileData.category}</p>
+                </figcaption>
+              </figure>
+              <motion.button
+                className="relative text-white text-[14px] rounded-[14px] bg-[#043D12] py-3 px-4 shadow-lg overflow-hidden group"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleShareClick}
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  <FaShareAlt className="text-[16px]" />
+                  Share Profile
+                </span>
+                <span className="absolute inset-0 bg-[#03500F] transform scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-out"></span>
+              </motion.button>
+              <AnimatePresence>
+                {showShareOptions && (
+                  <motion.div
+                    variants={shareVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white border border-[#6A7368] rounded-lg shadow-xl p-3 flex gap-3 z-20"
+                  >
+                    <motion.button
+                      whileHover={{ scale: 1.2 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => shareToSocialMedia("whatsapp")}
+                      className="text-[#25D366] p-1"
+                      title="Share on WhatsApp"
+                    >
+                      <FaWhatsapp size={20} />
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.2 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => shareToSocialMedia("facebook")}
+                      className="text-[#3b5998] p-1"
+                      title="Share on Facebook"
+                    >
+                      <FaFacebook size={20} />
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.2 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => shareToSocialMedia("instagram")}
+                      className="text-[#E1306C] p-1"
+                      title="Copy link for Instagram"
+                    >
+                      <FaInstagram size={20} />
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.2 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => shareToSocialMedia("linkedin")}
+                      className="text-[#0077B5] p-1"
+                      title="Share on LinkedIn"
+                    >
+                      <FaLinkedin size={20} />
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.2 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => shareToSocialMedia("twitter")}
+                      className="text-[#1DA1F2] p-1"
+                      title="Share on Twitter"
+                    >
+                      <FaTwitter size={20} />
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.2 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={handleCopyLink}
+                      className={`p-1 ${
+                        copied ? "text-green-500" : "text-[#6A7368]"
+                      }`}
+                      title={copied ? "Copied!" : "Copy Link"}
+                    >
+                      <FaCopy size={20} />
+                      {copied && (
+                        <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs rounded px-2 py-1">
+                          Copied!
+                        </span>
+                      )}
+                    </motion.button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Help & Support */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            >
+              <Link
+                to={helpItem.to}
+                className={`text-[15px] flex items-center gap-4 px-6 py-2 rounded-[11px] transition-all duration-300 relative overflow-hidden ${
+                  location.pathname === helpItem.to
+                    ? "bg-[#043D12] text-white shadow-lg"
+                    : "text-[#043D12] hover:bg-gray-200"
+                }`}
+              >
+                {helpItem.icon}
+                <motion.span
+                  whileHover={{
+                    scale: 1.1,
+                    x: 5,
+                    transition: { type: "spring", stiffness: 300 },
+                  }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <motion.button
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => shareToSocialMedia("whatsapp")}
-                    className="text-[#25D366] p-1"
-                    title="Share on WhatsApp"
-                  >
-                    <FaWhatsapp size={20} />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => shareToSocialMedia("facebook")}
-                    className="text-[#3b5998] p-1"
-                    title="Share on Facebook"
-                  >
-                    <FaFacebook size={20} />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => shareToSocialMedia("instagram")}
-                    className="text-[#E1306C] p-1"
-                    title="Copy link for Instagram"
-                  >
-                    <FaInstagram size={20} />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => shareToSocialMedia("linkedin")}
-                    className="text-[#0077B5] p-1"
-                    title="Share on LinkedIn"
-                  >
-                    <FaLinkedin size={20} />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => shareToSocialMedia("twitter")}
-                    className="text-[#1DA1F2] p-1"
-                    title="Share on Twitter"
-                  >
-                    <FaTwitter size={20} />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={handleCopyLink}
-                    className={`p-1 ${
-                      copied ? "text-green-500" : "text-[#6A7368]"
-                    }`}
-                    title={copied ? "Copied!" : "Copy Link"}
-                  >
-                    <FaCopy size={20} />
-                    {copied && (
-                      <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs rounded px-2 py-1">
-                        Copied!
-                      </span>
-                    )}
-                  </motion.button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  {helpItem.label}
+                </motion.span>
+              </Link>
+            </motion.div>
+
+            {/* Logout */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            >
+              <button
+                onClick={handleLogout}
+                className="text-[15px] flex items-center gap-4 px-6 py-2 rounded-[11px] transition-all duration-300 relative overflow-hidden text-[#043D12] hover:bg-gray-200 w-full text-left"
+              >
+                <IoIosLogOut className="text-[25px]" />
+                <motion.span
+                  whileHover={{
+                    scale: 1.1,
+                    x: 5,
+                    transition: { type: "spring", stiffness: 300 },
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Logout
+                </motion.span>
+              </button>
+            </motion.div>
           </div>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="mt-8"
-        >
-          <button
-            onClick={handleLogout}
-            className="text-[15px] flex items-center gap-4 px-6 py-2 rounded-[11px] transition-all duration-300 bg-red-600 text-white hover:bg-red-700 w-fit"
-          >
-            <IoIosLogOut className="text-[25px]" />
-            Logout
-          </button>
-        </motion.div>
+        </div>
       </motion.aside>
       <main
         className={`transition-all duration-500 ${

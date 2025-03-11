@@ -104,7 +104,7 @@ const Start = () => {
             variants={animations.buttonHover}
             whileHover="hover"
             whileTap="tap"
-            href="/create-account"
+            href="/business-profile"
             className="bg-[#FFFDF2] text-[#043D12] rounded-[48px] shadow-lg lg:text-[18px] text-[14px] md:px-8 px-4 py-3 md:py-4 w-fit mx-auto font-medium"
           >
             Create my Profile

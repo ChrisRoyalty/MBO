@@ -211,7 +211,7 @@ const BusinessProfile2 = () => {
     <div className="w-full h-screen flex justify-center lg:grid grid-cols-2">
       <div className="max-lg:hidden w-full h-full flex justify-center items-center bg-[url('/Group2.svg')] bg-cover bg-center bg-green-800">
         <div className="w-full h-[90%] flex flex-col items-center">
-          <div className="w-[90%] text-[#FFFDF2] mt-8">
+          <div className="container px-[5vw] mx-auto text-[#FFFDF2] mt-8">
             <Link
               to="/"
               className="lg:text-[50px] text-[32px] font-medium leading-[70px]"
@@ -226,7 +226,7 @@ const BusinessProfile2 = () => {
         </div>
       </div>
       <div className="relative max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
-        <div className="w-[80%] h-fit max-lg:mt-20">
+        <div className="container px-[5vw] mx-auto h-fit max-lg:mt-20">
           <Link
             to="/business-profile"
             className="w-fit h-fit absolute top-0 left-0"

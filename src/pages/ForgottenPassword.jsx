@@ -18,21 +18,26 @@ const ForgottenPassword = () => {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/forgot-password`, // Use the VITE_ prefixed environment variable
+        `${import.meta.env.VITE_BASE_URL}/member/forgot-password`, // Use the VITE_ prefixed environment variable
         { email }
       );
 
+      // Toast only the message field (or fallback if missing)
       toast.success(
-        response.data.message || "Password reset instructions sent!"
+        response.data.message || "Password reset instructions sent!",
+        {
+          autoClose: 5000,
+        }
       );
 
       setTimeout(() => {
         navigate("/login");
       }, 1500);
     } catch (error) {
+      // Toast only the message field from the error response (or fallback if missing)
       const errorMessage =
-        error.response?.data?.error || "Reset request failed. Try again.";
-      toast.error(errorMessage);
+        error.response?.data?.message || "Reset request failed. Try again.";
+      toast.error(errorMessage, { autoClose: 5000 });
     } finally {
       setIsLoading(false);
     }
@@ -40,7 +45,18 @@ const ForgottenPassword = () => {
 
   return (
     <div>
-      <ToastContainer />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        className="z-50"
+      />
       <div className="w-full h-screen flex justify-center lg:grid grid-cols-2">
         <div className="max-lg:hidden w-full h-full flex justify-center items-center bg-[url('/Group2.svg')] bg-cover bg-center bg-green-800">
           <div className="w-full h-[90%] flex flex-col items-center">

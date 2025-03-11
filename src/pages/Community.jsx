@@ -14,7 +14,7 @@ const Community = () => {
       <Outlet />
 
       {/* Footer Should Always Be Visible */}
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };

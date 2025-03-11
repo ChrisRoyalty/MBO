@@ -10,7 +10,7 @@ import { TiArrowForwardOutline } from "react-icons/ti";
 import { TbLayoutGrid } from "react-icons/tb";
 import { MdOutlineCategory } from "react-icons/md";
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
-import { FaWhatsapp } from "react-icons/fa"; // Only keeping WhatsApp for sharing
+import { FaWhatsapp } from "react-icons/fa";
 
 const EditProfile = () => {
   const [profileData, setProfileData] = useState({
@@ -67,6 +67,7 @@ const EditProfile = () => {
         const response = await axios.get(API_URL, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log("Initial Profile Fetch:", response.data); // Debug initial fetch
         if (response.data && response.data.success && response.data.data) {
           const profile = response.data.data;
           const member = profile.member || {};
@@ -213,6 +214,7 @@ const EditProfile = () => {
         "https://api.cloudinary.com/v1_1/drve24nad/image/upload",
         formData
       );
+      console.log("Cloudinary Upload Response:", response.data); // Debug Cloudinary response
       return response.data?.secure_url || null;
     } catch (error) {
       console.error("❌ Error Uploading Image to Cloudinary:", error);
@@ -230,10 +232,11 @@ const EditProfile = () => {
     setImageLoading((prev) => ({ ...prev, [field]: false }));
 
     if (imageUrl) {
-      setProfileData((prevData) => ({
-        ...prevData,
-        [field]: imageUrl,
-      }));
+      setProfileData((prevData) => {
+        const updatedData = { ...prevData, [field]: imageUrl };
+        console.log(`After ${field} Upload:`, updatedData); // Debug state after upload
+        return updatedData;
+      });
       toast.success("Image uploaded successfully!");
     }
   };
@@ -271,11 +274,13 @@ const EditProfile = () => {
           keyword: profileData.keyword,
           category: profileData.category,
         };
+        console.log("PATCH Payload:", payload); // Debug payload before sending
       }
 
       const response = await axios.patch(API_URL, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("PATCH Response:", response.data); // Debug response from backend
 
       toast.success(
         response.data.message ||
@@ -298,20 +303,21 @@ const EditProfile = () => {
           lastName: updatedName.slice(1).join(" ") || prev.lastName,
         }));
       } else {
-        const updatedProfile = response.data.updatedProfile;
+        const updatedProfile = response.data.updatedProfile || {};
         const syncedData = {
-          businessName: updatedProfile.businessName || "",
+          businessName: updatedProfile.businessName || profileData.businessName,
           contactNo: Array.isArray(updatedProfile.contactNo)
             ? updatedProfile.contactNo
-            : [],
-          businesImg: updatedProfile.businesImg || "",
-          backgroundImg: updatedProfile.backgroundImg || "",
-          description: updatedProfile.description || "",
-          location: updatedProfile.location || "",
+            : profileData.contactNo,
+          businesImg: updatedProfile.businesImg || profileData.businesImg,
+          backgroundImg:
+            updatedProfile.backgroundImg || profileData.backgroundImg,
+          description: updatedProfile.description || profileData.description,
+          location: updatedProfile.location || profileData.location,
           keyword: Array.isArray(updatedProfile.keyword)
             ? updatedProfile.keyword
-            : [],
-          category: updatedProfile.category || "",
+            : profileData.keyword,
+          category: updatedProfile.category || profileData.category,
           createdAt: updatedProfile.createdAt || profileData.createdAt,
           firstName: profileData.firstName,
           lastName: profileData.lastName,
@@ -319,9 +325,10 @@ const EditProfile = () => {
         setProfileData(syncedData);
         setOriginalData(syncedData);
         setSelectedCategory({
-          id: updatedProfile.categories?.[0]?.id || "",
-          name: updatedProfile.category || "",
+          id: updatedProfile.categories?.[0]?.id || selectedCategory.id,
+          name: updatedProfile.category || selectedCategory.name,
         });
+        console.log("Synced Profile Data:", syncedData); // Debug synced data
       }
     } catch (error) {
       console.error(`❌ ${formType} PATCH Error:`, error);
@@ -329,6 +336,14 @@ const EditProfile = () => {
         error.response?.data?.message ||
         `Failed to update ${formType} profile.`;
       toast.error(errorMessage);
+      if (formType === "business") {
+        // Fallback to local state if backend fails to save images
+        setProfileData((prev) => ({
+          ...prev,
+          businesImg: prev.businesImg,
+          backgroundImg: prev.backgroundImg,
+        }));
+      }
     } finally {
       setButtonActive((prev) => ({ ...prev, [submitKey]: false }));
     }
@@ -412,7 +427,7 @@ const EditProfile = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-[#FFFDF2]">
+      <div className="flex justify-center items-center h-screen bg-white">
         <Loader />
       </div>
     );

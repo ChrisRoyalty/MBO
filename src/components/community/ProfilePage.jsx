@@ -2,16 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { CiSearch } from "react-icons/ci";
-import { RiEqualizerLine } from "react-icons/ri";
 import { IoCallOutline, IoLocationOutline } from "react-icons/io5";
 import { FaFacebook, FaWhatsapp } from "react-icons/fa6";
-import {
-  IoLogoInstagram,
-  IoLogoTwitter,
-  IoLogoLinkedin,
-  IoLogoYoutube,
-} from "react-icons/io";
+import { IoLogoInstagram, IoLogoTwitter, IoLogoLinkedin } from "react-icons/io";
 import { IoLogoWhatsapp } from "react-icons/io5";
 import { MdOutlineCategory } from "react-icons/md";
 import { BsTiktok } from "react-icons/bs";
@@ -19,12 +12,12 @@ import { CiShare1 } from "react-icons/ci";
 import { BiMessage } from "react-icons/bi";
 import { useParams, useNavigate } from "react-router-dom";
 import BusinessImg from "../../assets/businessImg.jpeg";
-import ProfileImg from "../../assets/profilepic.svg";
-import NetworkError from "../NetworkError"; // Import the NetworkError component
+import NetworkError from "../NetworkError";
+import Footer from "../Footer";
 
 const BASE_URL = "https://mbo.bookbank.com.ng";
 
-// Modal Component (unchanged)
+// Modal Component (unchanged, but simplified imports)
 const Modal = ({ business, onClose }) => {
   if (!business) return null;
 
@@ -85,12 +78,12 @@ const Modal = ({ business, onClose }) => {
                 >
                   View Profile
                 </button>
-                <Link
-                  to={`/community/contact/${business.id}`}
+                <a
+                  href={`/community/contact/${business.id}`}
                   className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-2 lg:px-8 py-2 shadow-lg hover:bg-[#043D12]"
                 >
                   Contact Us
-                </Link>
+                </a>
               </div>
             </div>
             <button
@@ -116,11 +109,11 @@ const ProfilePage = () => {
 
   const fetchProfile = async () => {
     setLoading(true);
-    setError(null); // Reset error before fetching
+    setError(null);
     try {
       const API_URL = `${
         import.meta.env.VITE_BASE_URL
-      }/member/get-profile/${id}`; // Replace BASE_URL
+      }/member/get-profile/${id}`;
       const response = await axios.get(API_URL);
       if (response.data && response.data.profile) {
         setProfile(response.data.profile);
@@ -175,23 +168,24 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="w-full h-fit bg-[#FFFDF2] flex flex-col items-center pt-[10vh]">
-      <div className="container px-[5vw] mx-auto">
-        <div className="w-full text-[#043D12] flex max-sm:flex-col overflow-y-scroll">
-          <aside className="sm:w-[25%] h-[80vh] overflow-y-auto flex flex-col gap-8 text-[#6A7368]">
-            <h3 className="lg:text-[32px] text-[#043D12] max-sm:text-center text-[24px] md:text-[28px] font-bold">
+    <div className="w-full min-h-screen bg-[#FFFDF2] flex flex-col items-center pt-[10vh]">
+      <div className="container px-[5vw] mx-auto py-8">
+        <div className="w-full text-[#043D12] flex flex-col md:flex-row gap-8">
+          {/* Aside Section */}
+          <aside className="md:w-[25%] flex flex-col gap-8 text-[#6A7368]">
+            <h3 className="lg:text-[32px] text-[#043D12] text-center md:text-left text-[24px] md:text-[28px] font-bold">
               {profile.businessName}
             </h3>
             <div className="contact flex flex-col gap-8">
               <ul className="flex flex-col gap-4">
-                <li className="text-[13px] flex items-center gap-2 max-md:justify-center md:text-[14px]">
+                <li className="text-[13px] flex items-center gap-2 justify-center md:justify-start md:text-[14px]">
                   <MdOutlineCategory />{" "}
                   {profile.categories[0]?.name || "Unknown Category"}
                 </li>
-                <li className="text-[13px] flex items-center gap-2 max-md:justify-center md:text-[14px]">
+                <li className="text-[13px] flex items-center gap-2 justify-center md:justify-start md:text-[14px]">
                   <IoCallOutline /> {profile.contactNo?.[0] || "Not specified"}
                 </li>
-                <li className="text-[13px] flex items-center gap-2 max-md:justify-center md:text-[14px]">
+                <li className="text-[13px] flex items-center gap-2 justify-center md:justify-start md:text-[14px]">
                   <IoLocationOutline /> {profile.location || "Not specified"}
                 </li>
               </ul>
@@ -373,54 +367,52 @@ const ProfilePage = () => {
             </div>
           </aside>
 
-          <div className="sm:w-[75%] h-[80vh] overflow-y-auto">
-            <div className="w-full h-fit py-16 flex justify-center bg-[#FFFDF2]">
-              <div className="w-[85%] h-fit flex flex-col gap-8">
-                <h1 className="border-b-[1px] border-[#6A7368] text-[20px] text-[#6A7368] pb-1">
-                  Products/Services
-                </h1>
-                <div className="w-full grid xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
-                  {filteredProducts.map((product, index) => (
-                    <motion.div
-                      key={index}
-                      className="flex flex-col gap-1"
-                      initial={{ opacity: 0, y: 50 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: false }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                      <figure>
-                        <img
-                          src={product.imageUrl || BusinessImg}
-                          alt={product.name || "Product"}
-                          className="rounded-lg w-full h-[250px] object-cover"
-                          onError={(e) => (e.target.src = BusinessImg)}
-                        />
-                        <figcaption className="flex flex-col gap-4 text-[#043D12] py-2">
-                          <div className="flex flex-col gap-1">
-                            <b className="lg:text-[15px] text-[10px] md:text-[12px]">
-                              {product.name || "Unnamed Product"}
-                            </b>
-                          </div>
-                        </figcaption>
-                      </figure>
-                    </motion.div>
-                  ))}
-                  {filteredProducts.length === 0 && (
-                    <p className="text-gray-600 text-[14px] text-center w-full">
-                      No products or services available.
-                    </p>
-                  )}
-                </div>
-              </div>
-              <Modal
-                business={selectedBusiness}
-                onClose={() => setSelectedBusiness(null)}
-              />
+          {/* Products/Services Section */}
+          <div className="md:w-[75%] flex flex-col gap-8">
+            <h1 className="border-b-[1px] border-[#6A7368] text-[20px] text-[#6A7368] pb-1 text-center md:text-left">
+              Products/Services
+            </h1>
+            <div className="w-full grid xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
+              {filteredProducts.map((product, index) => (
+                <motion.div
+                  key={index}
+                  className="flex flex-col gap-1"
+                  initial={{ opacity: 0, y: 50 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: false }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <figure>
+                    <img
+                      src={product.imageUrl || BusinessImg}
+                      alt={product.name || "Product"}
+                      className="rounded-lg w-full h-[250px] object-cover"
+                      onError={(e) => (e.target.src = BusinessImg)}
+                    />
+                    <figcaption className="flex flex-col gap-4 text-[#043D12] py-2">
+                      <div className="flex flex-col gap-1">
+                        <b className="lg:text-[15px] text-[10px] md:text-[12px]">
+                          {product.name || "Unnamed Product"}
+                        </b>
+                      </div>
+                    </figcaption>
+                  </figure>
+                </motion.div>
+              ))}
+              {filteredProducts.length === 0 && (
+                <p className="text-gray-600 text-[14px] text-center w-full">
+                  No products or services available.
+                </p>
+              )}
             </div>
+            <Modal
+              business={selectedBusiness}
+              onClose={() => setSelectedBusiness(null)}
+            />
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

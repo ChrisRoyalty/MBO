@@ -133,14 +133,14 @@ const Subscribe = () => {
   };
 
   return (
-    <div className="bg-[#043D12] w-full h-screen py-16 flex flex-col justify-center items-center">
+    <div className="w-full overflow-x-auto bg-[#043D12] h-screen py-16 flex flex-col justify-center items-center">
       <div className="container mx-auto px-[5vw] flex flex-col items-center gap-4">
         <h1 className="text-[#B4B3B3] lg:text-[30px] text-[20px] w-[90%] md:w-[60%] mx-auto text-center">
           Stay Connected, Stay Promoted: <br className="max-lg:hidden" /> Your
           All-in-One Plan
         </h1>
 
-        <div className="w-[85%] md:w-[70%] h-fit text-center flex flex-wrap gap-8 justify-center">
+        <div className="w-fit h-fit text-center flex gap-8 justify-center overflow-x-auto">
           {subscriptions.length > 0 ? (
             subscriptions.map((subscription) => (
               <div
@@ -156,7 +156,7 @@ const Subscribe = () => {
                     YEARLY
                   </span>
                 </div>
-                <div className="w-full flex flex-col gap-4 items-center mt-6">
+                <div className=" flex flex-col gap-4 items-center mt-6">
                   <ul className="w-fit flex flex-col gap-4">
                     <li className="flex items-center gap-4">
                       <Good />
