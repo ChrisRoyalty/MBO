@@ -6,7 +6,7 @@ import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import { CiUser } from "react-icons/ci";
 import { BiPlus, BiSearch } from "react-icons/bi";
-import { IoArrowDown, IoClose } from "react-icons/io5";
+import { IoArrowDown } from "react-icons/io5";
 import { RiEqualizerLine } from "react-icons/ri";
 import { BsThreeDots } from "react-icons/bs";
 import {
@@ -20,13 +20,14 @@ import {
   FiCheckCircle,
 } from "react-icons/fi";
 import { AiOutlineClose } from "react-icons/ai";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const ManageSubscription = () => {
   const [activeSubscriptions, setActiveSubscriptions] = useState([]);
   const [expiredSubscriptions, setExpiredSubscriptions] = useState([]);
   const [filteredSubscriptions, setFilteredSubscriptions] = useState([]);
-  const [plans, setPlans] = useState([]); // To store subscription plans from admin/get-sub
+  const [plans, setPlans] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -55,8 +56,13 @@ const ManageSubscription = () => {
     firstname: "",
     lastname: "",
   });
-  const [dateFilter, setDateFilter] = useState("All Time"); // New state for date filter
-  const [showDateDropdown, setShowDateDropdown] = useState(false); // Toggle dropdown visibility
+  const [dateFilter, setDateFilter] = useState("All Time");
+  const [showDateDropdown, setShowDateDropdown] = useState(false);
+  const [activeMenuIndex, setActiveMenuIndex] = useState(null);
+  const [isSubmittingReset, setIsSubmittingReset] = useState(false);
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   const navigate = useNavigate();
   const { isAuthenticated, user, token } = useSelector((state) => state.auth);
@@ -66,11 +72,13 @@ const ManageSubscription = () => {
   const editModalRef = useRef(null);
   const deleteModalRef = useRef(null);
   const dateDropdownRef = useRef(null);
+  const dropdownRefs = useRef([]);
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
       setError("Not authenticated or missing token!");
       setLoading(false);
+      toast.info("Redirecting to login...");
       navigate("/login", { replace: true });
       return;
     }
@@ -88,16 +96,14 @@ const ManageSubscription = () => {
       });
     }
 
+    setLoading(true);
+
     const fetchSubscriptionsAndPlans = async () => {
       try {
-        // Fetch active subscriptions
         const activeResponse = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/admin/active-suscribers`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        console.log("Active Subscriptions Response:", activeResponse.data);
         if (
           activeResponse.data &&
           Array.isArray(activeResponse.data.activeMembers)
@@ -110,14 +116,10 @@ const ManageSubscription = () => {
           throw new Error("No active subscription data found in the response.");
         }
 
-        // Fetch expired subscriptions
         const expiredResponse = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/admin/expired-suscribers`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        console.log("Expired Subscriptions Response:", expiredResponse.data);
         if (
           expiredResponse.data &&
           Array.isArray(expiredResponse.data.expiredMembers)
@@ -132,14 +134,10 @@ const ManageSubscription = () => {
           );
         }
 
-        // Fetch all subscription plans using admin/get-sub
         const plansResponse = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/admin/get-sub`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        console.log("Plans Response:", plansResponse.data);
         if (plansResponse.data && Array.isArray(plansResponse.data.data)) {
           setPlans(plansResponse.data.data);
         } else {
@@ -147,14 +145,8 @@ const ManageSubscription = () => {
         }
       } catch (error) {
         console.error("❌ Error Fetching Data:", error);
-        if (
-          error.response?.status === 404 ||
-          error.response?.data?.message?.includes("not found")
-        ) {
-          setError("No data found.");
-        } else {
-          setError(error.response?.data?.message || "Failed to fetch data.");
-        }
+        setError(error.response?.data?.message || "Failed to fetch data.");
+        toast.error(error.response?.data?.message || "Failed to fetch data.");
       } finally {
         setLoading(false);
       }
@@ -166,7 +158,6 @@ const ManageSubscription = () => {
   useEffect(() => {
     const filterSubscriptions = () => {
       let filtered = [];
-
       if (activeFilter === "Active") {
         filtered = [...activeSubscriptions];
       } else if (activeFilter === "Expired") {
@@ -175,7 +166,6 @@ const ManageSubscription = () => {
         filtered = [];
       }
 
-      // Apply date filter
       filtered = applyDateFilter(filtered);
 
       if (searchQuery.trim()) {
@@ -244,11 +234,18 @@ const ManageSubscription = () => {
       ) {
         setShowDateDropdown(false);
       }
+      if (
+        activeMenuIndex !== null &&
+        dropdownRefs.current[activeMenuIndex] &&
+        !dropdownRefs.current[activeMenuIndex].contains(event.target)
+      ) {
+        setActiveMenuIndex(null);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [activeMenuIndex]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -278,8 +275,7 @@ const ManageSubscription = () => {
           const last6Months = new Date(now.setMonth(now.getMonth() - 6));
           return endDate >= last6Months && endDate <= now;
         case "Custom Range":
-          // This would require additional state for start and end dates (not implemented here)
-          return true; // Placeholder, implement custom range logic if needed
+          return true;
         case "All Time":
         default:
           return true;
@@ -299,7 +295,7 @@ const ManageSubscription = () => {
   const handleEditPlan = () => {
     setIsEditModalOpen(true);
     if (plans.length > 0) {
-      setActivePlan(plans[0]); // Default to first plan
+      setActivePlan(plans[0]);
       setEditFormData({
         name: plans[0].name,
         description: plans[0].description || "",
@@ -320,11 +316,14 @@ const ManageSubscription = () => {
   const handleAddPlan = () => {
     setActivePlan(null);
     setEditFormData({ name: "", description: "", price: "" });
-    setIsEditModalOpen(true); // Ensure the modal is open when adding a new plan
+    setIsEditModalOpen(true);
   };
 
   const handleDeletePlan = async () => {
-    if (!deletePlan?.id) return;
+    if (!deletePlan?.id) {
+      toast.error("No plan selected for deletion.");
+      return;
+    }
 
     try {
       const response = await axios.delete(
@@ -363,9 +362,9 @@ const ManageSubscription = () => {
       return;
     }
 
+    setIsSubmittingEdit(true);
     try {
       if (activePlan) {
-        // Update existing plan
         const response = await axios.patch(
           `${import.meta.env.VITE_BASE_URL}/admin/edit-sub/${activePlan.id}`,
           {
@@ -434,7 +433,6 @@ const ManageSubscription = () => {
           )
         );
       } else {
-        // Add new plan
         const response = await axios.post(
           `${import.meta.env.VITE_BASE_URL}/admin/sub`,
           {
@@ -456,12 +454,16 @@ const ManageSubscription = () => {
         };
         setPlans((prev) => [...prev, newPlan]);
       }
-      setIsEditModalOpen(false);
-      setActivePlan(null);
-      setEditFormData({ name: "", description: "", price: "" });
+      setTimeout(() => {
+        setIsEditModalOpen(false);
+        setActivePlan(null);
+        setEditFormData({ name: "", description: "", price: "" });
+      }, 1000);
     } catch (error) {
       console.error("❌ Error Saving Plan:", error);
       toast.error(error.response?.data?.message || "Failed to save plan.");
+    } finally {
+      setIsSubmittingEdit(false);
     }
   };
 
@@ -498,6 +500,7 @@ const ManageSubscription = () => {
       toast.error("New passwords do not match.");
       return;
     }
+    setIsSubmittingReset(true);
     try {
       const response = await axios.patch(
         `${import.meta.env.VITE_BASE_URL}/member/change-password`,
@@ -508,14 +511,16 @@ const ManageSubscription = () => {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success("Password changed successfully.");
-      setIsResetModalOpen(false);
-      setResetFormData({
-        oldPassword: "",
-        newPassword: "",
-        confirmNewPassword: "",
-      });
-      setPasswordValidation("");
+      toast.success("Password changed successfully!");
+      setTimeout(() => {
+        setIsResetModalOpen(false);
+        setResetFormData({
+          oldPassword: "",
+          newPassword: "",
+          confirmNewPassword: "",
+        });
+        setPasswordValidation("");
+      }, 1000);
     } catch (error) {
       console.error(
         "❌ Error Changing Password:",
@@ -524,12 +529,43 @@ const ManageSubscription = () => {
       toast.error(
         error.response?.data?.message || "Failed to change password."
       );
+    } finally {
+      setIsSubmittingReset(false);
     }
   };
 
+  const toggleMenu = (index) => {
+    setActiveMenuIndex(activeMenuIndex === index ? null : index);
+  };
+
+  const getDropdownPosition = (index) => {
+    const button = dropdownRefs.current[index];
+    if (!button) return { top: "100%", bottom: "auto" };
+
+    const rect = button.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const dropdownHeight = 100;
+
+    if (spaceBelow < dropdownHeight) {
+      return { top: "auto", bottom: "100%" };
+    }
+    return { top: "100%", bottom: "auto" };
+  };
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredSubscriptions.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+  const totalPages = Math.ceil(filteredSubscriptions.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-[#FFFDF2]">
+      <div className="flex justify-center items-center h-screen bg-white">
         <div className="flex space-x-2">
           <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce"></div>
           <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce delay-200"></div>
@@ -548,24 +584,38 @@ const ManageSubscription = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4 relative pb-16 px-12 pt-8 overflow-y-auto z-0">
-      <div className="h-[12vh] text-[#6A7368] flex justify-between items-center gap-2">
-        <div className="welcome flex max-lg:flex-col max-lg:justify-center justify-between items-center gap-4">
-          <div className="border-[1px] border-[#6A7368] flex items-center gap-2 px-4 rounded-[11px] shadow-lg">
-            <BiSearch />
+    <div className="flex flex-col gap-4 relative pb-16 px-4 sm:px-12 pt-8 overflow-y-auto z-0 min-h-screen">
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        style={{ zIndex: 9999 }}
+      />
+
+      {/* Header */}
+      <div className="text-[#6A7368] flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-4">
+          <div className="border-[1px] border-[#6A7368] flex items-center gap-2 px-3 py-2 rounded-[11px] shadow-lg w-full sm:w-[350px]">
+            <BiSearch className="text-lg" />
             <input
               type="text"
               placeholder="Search by plan name or email"
-              className="h-[42px] w-[350px] outline-0 border-0 bg-transparent"
+              className="h-10 w-full outline-0 border-0 bg-transparent text-sm sm:text-base"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <RiEqualizerLine />
+            <RiEqualizerLine className="text-lg" />
           </div>
         </div>
-        <div className="flex items-center md:gap-4 px-4 relative">
-          <Link to="/">
-            <IoIosNotificationsOutline className="text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
+        <div className="flex items-center gap-3 sm:gap-4 px-2 relative">
+          <Link to="/admin/manage-notifications">
+            <IoIosNotificationsOutline className="text-2xl sm:text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
           </Link>
           <div className="relative">
             <motion.figure
@@ -575,9 +625,9 @@ const ManageSubscription = () => {
               transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
               onClick={toggleResetButton}
             >
-              <CiUser className="text-[32px] text-[#043D12] bg-gray-100 rounded-full p-1" />
-              <figcaption className="ml-2 text-[#6A7368] max-md:hidden">
-                <h3 className="text-[12px] font-semibold">
+              <CiUser className="text-2xl text-[#043D12] bg-gray-100 rounded-full p-1" />
+              <figcaption className="ml-2 text-[#6A7368] hidden sm:block">
+                <h3 className="text-xs sm:text-[12px] font-semibold">
                   {profileData.firstname} {profileData.lastname}
                 </h3>
               </figcaption>
@@ -585,10 +635,10 @@ const ManageSubscription = () => {
             {showResetButton && (
               <div
                 ref={resetButtonRef}
-                className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50"
+                className="absolute right-0 mt-2 w-40 sm:w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50"
               >
                 <button
-                  className="w-full text-left px-4 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100"
+                  className="w-full text-left px-3 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100 text-sm"
                   onClick={handleResetPassword}
                 >
                   <FiLock /> Change Password
@@ -599,145 +649,122 @@ const ManageSubscription = () => {
         </div>
       </div>
 
+      {/* Main Content */}
       <main className="text-[#6A7368]">
-        <p className="text-[20px] font-semibold">Subscription</p>
-        <div className="intro flex justify-between items-center gap-4 mt-4 mb-6">
-          <div className="flex items-center gap-2">
+        <p className="text-lg sm:text-[20px] font-semibold">Subscription</p>
+        <div className="intro flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-4 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
             <button
-              className={`border-[1px] border-[#6A7368] px-4 py-2 rounded-[40px] transition-colors shadow-md ${
+              className={`w-full sm:w-auto border-[1px] border-[#6A7368] px-4 py-2 rounded-[40px] transition-colors shadow-md ${
                 activeFilter === "Active"
                   ? "bg-[#043D12] text-[#FFFDF2]"
-                  : "bg-white"
-              }`}
+                  : "bg-white hover:bg-[#043D12] hover:text-[#FFFDF2]"
+              } text-sm sm:text-base`}
               onClick={() => setActiveFilter("Active")}
             >
               Active
             </button>
             <button
-              className={`border-[1px] border-[#6A7368] px-4 py-2 rounded-[40px] transition-colors shadow-md ${
+              className={`w-full sm:w-auto border-[1px] border-[#6A7368] px-4 py-2 rounded-[40px] transition-colors shadow-md ${
                 activeFilter === "Expired"
                   ? "bg-[#043D12] text-[#FFFDF2]"
-                  : "bg-white"
-              }`}
+                  : "bg-white hover:bg-[#043D12] hover:text-[#FFFDF2]"
+              } text-sm sm:text-base`}
               onClick={() => setActiveFilter("Expired")}
             >
               Expired
             </button>
             <button
-              className={`border-[1px] border-[#6A7368] px-4 py-2 rounded-[40px] transition-colors shadow-md ${
+              className={`w-full sm:w-auto border-[1px] border-[#6A7368] px-4 py-2 rounded-[40px] transition-colors shadow-md ${
                 activeFilter === "Cancelled"
                   ? "bg-[#043D12] text-[#FFFDF2]"
-                  : "bg-white"
-              }`}
+                  : "bg-white hover:bg-[#043D12] hover:text-[#FFFDF2]"
+              } text-sm sm:text-base`}
               onClick={() => setActiveFilter("Cancelled")}
             >
               Cancelled
             </button>
           </div>
-          <div className="flex items-center gap-2 relative">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
             <button
-              className="border-[1px] border-[#6A7368] px-4 py-2 rounded-[40px] transition-colors shadow-md bg-white hover:bg-[#043D12] hover:text-[#FFFDF2]"
+              className="w-full sm:w-auto border-[1px] border-[#6A7368] px-4 py-2 rounded-[40px] transition-colors shadow-md bg-white hover:bg-[#043D12] hover:text-[#FFFDF2] text-sm sm:text-base"
               onClick={handleEditPlan}
             >
               Edit Plan
             </button>
-            <div className="relative" ref={dateDropdownRef}>
+            <div className="relative w-full sm:w-auto" ref={dateDropdownRef}>
               <button
-                className="border-[1px] border-[#6A7368] px-4 py-2 rounded-[40px] transition-colors shadow-md bg-white hover:bg-[#043D12] hover:text-[#FFFDF2] flex items-center gap-2"
+                className="w-full sm:w-auto border-[1px] border-[#6A7368] px-4 py-2 rounded-[40px] transition-colors shadow-md bg-white hover:bg-[#043D12] hover:text-[#FFFDF2] flex items-center gap-2 text-sm sm:text-base"
                 onClick={() => setShowDateDropdown(!showDateDropdown)}
               >
                 {dateFilter} <IoArrowDown />
               </button>
               {showDateDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                  <button
-                    className="w-full text-left px-4 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100"
-                    onClick={() => {
-                      setDateFilter("All Time");
-                      setShowDateDropdown(false);
-                    }}
-                  >
-                    All Time
-                  </button>
-                  <button
-                    className="w-full text-left px-4 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100"
-                    onClick={() => {
-                      setDateFilter("Last Month");
-                      setShowDateDropdown(false);
-                    }}
-                  >
-                    Last Month
-                  </button>
-                  <button
-                    className="w-full text-left px-4 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100"
-                    onClick={() => {
-                      setDateFilter("Last 3 Months");
-                      setShowDateDropdown(false);
-                    }}
-                  >
-                    Last 3 Months
-                  </button>
-                  <button
-                    className="w-full text-left px-4 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100"
-                    onClick={() => {
-                      setDateFilter("Last 6 Months");
-                      setShowDateDropdown(false);
-                    }}
-                  >
-                    Last 6 Months
-                  </button>
-                  <button
-                    className="w-full text-left px-4 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100"
-                    onClick={() => {
-                      setDateFilter("Custom Range");
-                      setShowDateDropdown(false);
-                      toast.info("Custom Range not implemented yet.");
-                    }}
-                  >
-                    Custom Range
-                  </button>
+                <div className="absolute right-0 mt-2 w-40 sm:w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                  {[
+                    "All Time",
+                    "Last Month",
+                    "Last 3 Months",
+                    "Last 6 Months",
+                    "Custom Range",
+                  ].map((option) => (
+                    <button
+                      key={option}
+                      className="w-full text-left px-3 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100 text-sm"
+                      onClick={() => {
+                        setDateFilter(option);
+                        setShowDateDropdown(false);
+                        if (option === "Custom Range") {
+                          toast.info("Custom Range not implemented yet.");
+                        }
+                      }}
+                    >
+                      {option}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-[11px] shadow-lg">
+        {/* Table for Desktop */}
+        <div className="hidden sm:block overflow-x-auto rounded-[11px] shadow-lg">
           <table className="w-full border-collapse text-[14px] bg-white">
             <thead>
               <tr className="bg-[#F0F5F2] border-b-2 border-[#6A7368]">
-                <th className="py-3 px-6 text-left font-semibold w-1/5">
+                <th className="py-3 px-4 sm:px-6 text-left font-semibold w-1/5">
                   Plan
                 </th>
-                <th className="py-3 px-6 text-left font-semibold w-1/5">
+                <th className="py-3 px-4 sm:px-6 text-left font-semibold w-1/5">
                   Email
                 </th>
-                <th className="py-3 px-6 text-left font-semibold w-1/5">
+                <th className="py-3 px-4 sm:px-6 text-left font-semibold w-1/5">
                   Status
                 </th>
-                <th className="py-3 px-6 text-left font-semibold w-1/5">
+                <th className="py-3 px-4 sm:px-6 text-left font-semibold w-1/5">
                   Amount
                 </th>
-                <th className="py-3 px-6 text-left font-semibold w-1/5">
+                <th className="py-3 px-4 sm:px-6 text-left font-semibold w-1/5">
                   Date
                 </th>
               </tr>
             </thead>
             <tbody>
-              {filteredSubscriptions.length > 0 ? (
-                filteredSubscriptions.map((sub, index) => (
+              {currentItems.length > 0 ? (
+                currentItems.map((sub, index) => (
                   <tr
                     key={sub.id}
                     className={`border-b border-gray-200 ${
                       index % 2 === 0 ? "bg-white" : "bg-gray-50"
                     } hover:bg-gray-100 transition-colors`}
                   >
-                    <td className="py-4 px-6 flex items-center gap-2">
-                      <FiUser className="text-[#6A7368]" />{" "}
+                    <td className="py-4 px-4 sm:px-6 flex items-center gap-2">
+                      <FiUser className="text-[#6A7368]" />
                       {sub.subscription.name}
                     </td>
-                    <td className="py-4 px-6">{sub.email}</td>
-                    <td className="py-4 px-6 flex items-center gap-2">
+                    <td className="py-4 px-4 sm:px-6">{sub.email}</td>
+                    <td className="py-4 px-4 sm:px-6 flex items-center gap-2">
                       <span
                         className={`inline-block w-2 h-2 rounded-full ${
                           sub.subscriptionStatus === "active"
@@ -757,9 +784,41 @@ const ManageSubscription = () => {
                           : "Expired"}
                       </span>
                     </td>
-                    <td className="py-4 px-6">₦{sub.subscription.price}</td>
-                    <td className="py-4 px-6">
+                    <td className="py-4 px-4 sm:px-6">
+                      ₦{sub.subscription.price}
+                    </td>
+                    <td className="py-4 px-4 sm:px-6 flex justify-between items-center">
                       {formatDate(sub.subscriptionEndDate)}
+                      <div
+                        ref={(el) => (dropdownRefs.current[index] = el)}
+                        className="relative"
+                      >
+                        <BsThreeDots
+                          className="text-[18px] cursor-pointer hover:text-[#043D12] transition-colors"
+                          onClick={() => toggleMenu(index)}
+                        />
+                        {activeMenuIndex === index && (
+                          <div
+                            className="absolute right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-40 overflow-y-auto"
+                            style={{
+                              minWidth: "160px",
+                              top: getDropdownPosition(index).top,
+                              bottom: getDropdownPosition(index).bottom,
+                            }}
+                          >
+                            <button
+                              className="w-full text-left px-4 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100 text-sm"
+                              onClick={() =>
+                                navigate(
+                                  `/community/profile/${sub.profile?.id || ""}`
+                                )
+                              }
+                            >
+                              <FiUser /> View Profile
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -767,7 +826,7 @@ const ManageSubscription = () => {
                 <tr>
                   <td
                     colSpan="5"
-                    className="py-4 px-6 text-center text-gray-500"
+                    className="py-4 px-4 sm:px-6 text-center text-gray-500"
                   >
                     {activeFilter === "Cancelled"
                       ? "N/A (No endpoint available yet)"
@@ -778,16 +837,115 @@ const ManageSubscription = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Card Layout for Mobile */}
+        <div className="sm:hidden space-y-4">
+          {currentItems.length > 0 ? (
+            currentItems.map((sub, index) => (
+              <div
+                key={sub.id}
+                className="border border-gray-200 rounded-[11px] p-4 bg-white shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-semibold">
+                    {sub.subscription.name}
+                  </span>
+                  <BsThreeDots
+                    className="text-lg cursor-pointer hover:text-[#043D12]"
+                    onClick={() => toggleMenu(index)}
+                  />
+                </div>
+                <div className="mt-2 text-sm space-y-1">
+                  <p>
+                    <strong>Email:</strong> {sub.email}
+                  </p>
+                  <p>
+                    <strong>Status:</strong>{" "}
+                    <span
+                      className={
+                        sub.subscriptionStatus === "active"
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }
+                    >
+                      {sub.subscriptionStatus === "active"
+                        ? "Active"
+                        : "Expired"}
+                    </span>
+                  </p>
+                  <p>
+                    <strong>Amount:</strong> ₦{sub.subscription.price}
+                  </p>
+                  <p>
+                    <strong>Date:</strong> {formatDate(sub.subscriptionEndDate)}
+                  </p>
+                </div>
+                {activeMenuIndex === index && (
+                  <div className="mt-2 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                    <button
+                      className="w-full text-left px-3 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100 text-sm"
+                      onClick={() =>
+                        navigate(`/community/profile/${sub.profile?.id || ""}`)
+                      }
+                    >
+                      <FiUser /> View Profile
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <p className="text-center text-gray-500 text-sm">
+              {activeFilter === "Cancelled"
+                ? "N/A (No endpoint available yet)"
+                : "No subscriptions found matching your criteria."}
+            </p>
+          )}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-4 gap-2">
+            <button
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 bg-[#043D12] text-[#FFFDF2] rounded-[11px] disabled:bg-gray-300"
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => paginate(page)}
+                className={`px-3 py-1 rounded-[11px] ${
+                  currentPage === page
+                    ? "bg-[#043D12] text-[#FFFDF2]"
+                    : "bg-white text-[#6A7368] border border-[#6A7368]"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 bg-[#043D12] text-[#FFFDF2] rounded-[11px] disabled:bg-gray-300"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </main>
 
+      {/* Edit Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div
             ref={editModalRef}
-            className="bg-white rounded-[11px] shadow-lg w-[600px] p-6 flex"
+            className="bg-white rounded-[11px] shadow-lg w-full max-w-[600px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto flex flex-col sm:flex-row"
           >
-            <div className="w-1/3 border-r border-gray-200 pr-4">
-              <h2 className="text-[20px] font-semibold text-[#6A7368] mb-4">
+            <div className="w-full sm:w-1/3 border-b sm:border-b-0 sm:border-r border-gray-200 pb-4 sm:pb-0 sm:pr-4">
+              <h2 className="text-lg sm:text-[20px] font-semibold text-[#6A7368] mb-4">
                 Edit Plans
               </h2>
               <div className="space-y-2">
@@ -799,7 +957,7 @@ const ManageSubscription = () => {
                     }`}
                     onClick={() => handleSelectPlan(plan)}
                   >
-                    <span>{plan.name}</span>
+                    <span className="text-sm">{plan.name}</span>
                     <FiTrash2
                       className="text-red-600 cursor-pointer"
                       onClick={(e) => {
@@ -811,7 +969,7 @@ const ManageSubscription = () => {
                   </div>
                 ))}
                 <div
-                  className="flex items-center gap-2 text-[#6A7368] cursor-pointer mt-4"
+                  className="flex items-center gap-2 text-[#6A7368] cursor-pointer mt-4 text-sm"
                   onClick={handleAddPlan}
                 >
                   <BiPlus />
@@ -819,11 +977,11 @@ const ManageSubscription = () => {
                 </div>
               </div>
             </div>
-            <div className="w-2/3 pl-4">
+            <div className="w-full sm:w-2/3 pt-4 sm:pt-0 sm:pl-4">
               <form onSubmit={handleEditSubmit}>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-[14px] text-[#6A7368] mb-1">
+                    <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                       Plan Name
                     </label>
                     <input
@@ -832,12 +990,12 @@ const ManageSubscription = () => {
                       value={editFormData.name}
                       onChange={handleEditFormChange}
                       placeholder="Enter plan name"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-[14px] text-[#6A7368] mb-1">
+                    <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                       Description
                     </label>
                     <input
@@ -846,11 +1004,11 @@ const ManageSubscription = () => {
                       value={editFormData.description}
                       onChange={handleEditFormChange}
                       placeholder="Enter description"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                     />
                   </div>
                   <div>
-                    <label className="block text-[14px] text-[#6A7368] mb-1">
+                    <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                       Price
                     </label>
                     <div className="relative">
@@ -860,7 +1018,7 @@ const ManageSubscription = () => {
                         value={editFormData.price}
                         onChange={handleEditFormChange}
                         placeholder="Enter price"
-                        className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                        className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                         required
                       />
                       <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368]">
@@ -870,9 +1028,36 @@ const ManageSubscription = () => {
                   </div>
                   <button
                     type="submit"
-                    className="mt-4 px-6 py-2 bg-[#043D12] text-[#FFFDF2] rounded-full hover:bg-[#032d0e] transition-colors float-right"
+                    className="w-full sm:w-auto mt-4 px-6 py-2 bg-[#043D12] text-[#FFFDF2] rounded-full hover:bg-[#032d0e] transition-colors text-sm sm:text-base sm:float-right flex items-center justify-center"
+                    disabled={isSubmittingEdit}
                   >
-                    Save
+                    {isSubmittingEdit ? (
+                      <span className="flex items-center gap-2">
+                        <svg
+                          className="animate-spin h-5 w-5 text-[#FFFDF2]"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Saving...
+                      </span>
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 </div>
               </form>
@@ -881,15 +1066,16 @@ const ManageSubscription = () => {
         </div>
       )}
 
+      {/* Delete Modal */}
       {isDeleteModalOpen && deletePlan && (
-        <div className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div
             ref={deleteModalRef}
-            className="bg-white rounded-[11px] shadow-lg w-[400px] p-6"
+            className="bg-white rounded-[11px] shadow-lg w-full max-w-md sm:w-[400px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex justify-end mb-4">
               <AiOutlineClose
-                className="text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
+                className="text-xl sm:text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
                 onClick={() => {
                   setIsDeleteModalOpen(false);
                   setDeletePlan(null);
@@ -897,14 +1083,14 @@ const ManageSubscription = () => {
               />
             </div>
             <div className="text-center mb-4">
-              <p className="text-[16px] text-[#6A7368]">
+              <p className="text-sm sm:text-[16px] text-[#6A7368]">
                 Are you sure you want to delete the plan{" "}
                 <span className="font-semibold">{deletePlan.name}</span>?
               </p>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-2">
               <button
-                className="px-4 py-2 bg-gray-200 text-[#6A7368] rounded-[11px] hover:bg-gray-300 transition-colors"
+                className="w-full px-4 py-2 bg-gray-200 text-[#6A7368] rounded-[11px] hover:bg-gray-300 transition-colors text-sm sm:text-base"
                 onClick={() => {
                   setIsDeleteModalOpen(false);
                   setDeletePlan(null);
@@ -913,7 +1099,7 @@ const ManageSubscription = () => {
                 Cancel
               </button>
               <button
-                className="px-4 py-2 bg-red-600 text-[#FFFDF2] rounded-[11px] hover:bg-red-700 transition-colors"
+                className="w-full px-4 py-2 bg-red-600 text-[#FFFDF2] rounded-[11px] hover:bg-red-700 transition-colors text-sm sm:text-base"
                 onClick={handleDeletePlan}
               >
                 Delete
@@ -923,18 +1109,19 @@ const ManageSubscription = () => {
         </div>
       )}
 
+      {/* Reset Password Modal */}
       {isResetModalOpen && (
-        <div className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div
             ref={resetModalRef}
-            className="bg-white rounded-[11px] shadow-lg w-[400px] p-6"
+            className="bg-white rounded-[11px] shadow-lg w-full max-w-md sm:w-[400px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-[20px] font-semibold text-[#6A7368]">
+              <h2 className="text-lg sm:text-[20px] font-semibold text-[#6A7368]">
                 Change Password
               </h2>
               <AiOutlineClose
-                className="text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
+                className="text-xl sm:text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
                 onClick={() => {
                   setIsResetModalOpen(false);
                   setResetFormData({
@@ -949,7 +1136,7 @@ const ManageSubscription = () => {
             <form onSubmit={handleResetPasswordSubmit}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     Current Password
                   </label>
                   <div className="relative">
@@ -959,10 +1146,9 @@ const ManageSubscription = () => {
                       value={resetFormData.oldPassword}
                       onChange={handleResetInputChange}
                       placeholder="Enter current password"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
-                    <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                     <span
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
                       onClick={() =>
@@ -973,9 +1159,8 @@ const ManageSubscription = () => {
                     </span>
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     New Password
                   </label>
                   <div className="relative">
@@ -985,10 +1170,9 @@ const ManageSubscription = () => {
                       value={resetFormData.newPassword}
                       onChange={handleResetInputChange}
                       placeholder="Enter new password"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
-                    <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                     <span
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
                       onClick={() => setShowNewPassword(!showNewPassword)}
@@ -997,9 +1181,8 @@ const ManageSubscription = () => {
                     </span>
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     Confirm New Password
                   </label>
                   <div className="relative">
@@ -1009,10 +1192,9 @@ const ManageSubscription = () => {
                       value={resetFormData.confirmNewPassword}
                       onChange={handleResetInputChange}
                       placeholder="Confirm new password"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
-                    <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                     <span
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
                       onClick={() =>
@@ -1023,7 +1205,6 @@ const ManageSubscription = () => {
                     </span>
                   </div>
                 </div>
-
                 {passwordValidation && (
                   <div className="flex items-center gap-2">
                     {passwordValidation === "Password is valid" ? (
@@ -1034,21 +1215,49 @@ const ManageSubscription = () => {
                     <span
                       className={
                         passwordValidation === "Password is valid"
-                          ? "text-green-600"
-                          : "text-red-600"
+                          ? "text-green-600 text-sm"
+                          : "text-red-600 text-sm"
                       }
                     >
                       {passwordValidation}
                     </span>
                   </div>
                 )}
-
                 <button
                   type="submit"
-                  className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-[11px] hover:bg-[#032d0e] transition-colors"
-                  disabled={passwordValidation !== "Password is valid"}
+                  className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-[11px] hover:bg-[#032d0e] transition-colors text-sm sm:text-base flex items-center justify-center"
+                  disabled={
+                    passwordValidation !== "Password is valid" ||
+                    isSubmittingReset
+                  }
                 >
-                  Save Password
+                  {isSubmittingReset ? (
+                    <span className="flex items-center gap-2">
+                      <svg
+                        className="animate-spin h-5 w-5 text-[#FFFDF2]"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Saving...
+                    </span>
+                  ) : (
+                    "Save Password"
+                  )}
                 </button>
               </div>
             </form>

@@ -17,7 +17,7 @@ import SearchPage from "./pages/SearchPage";
 import UserDashboard from "./pages/UserDashboard";
 import CreateProfile from "./components/user-dashboard/CreateProfile";
 import Profile from "./components/user-dashboard/Profile";
-import Analytics from "./components/user-dashboard/Analytics";
+import Analytics from "./components/user-dashboard/HelpAndSupport";
 import ProductAndServices from "./components/user-dashboard/ProductAndServices";
 import ContactAndSocials from "./components/user-dashboard/ContactAndSocials";
 import Subscription from "./components/user-dashboard/Subscription";
@@ -34,6 +34,7 @@ import ManageUsers from "./components/admin/ManageUsers";
 import ManageSubscription from "./components/admin/ManageSubscription";
 import Support from "./components/admin/Support";
 import Notification from "./components/admin/Notification";
+import HelpAndSupport from "./components/user-dashboard/HelpAndSupport";
 
 function App() {
   return (
@@ -86,20 +87,13 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route path="/forgotten-password" element={<ForgottenPassword />} />
         <Route
-          path="/forgotten-password"
+          path="/reset-password"
           element={
-            <PrivateRoute>
-              <ForgottenPassword />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/reset-password/:token"
-          element={
-            <PrivateRoute>
-              <ResetPassword />
-            </PrivateRoute>
+            // <PrivateRoute>
+            <ResetPassword />
+            // </PrivateRoute>
           }
         />
         <Route
@@ -133,7 +127,7 @@ function App() {
             <Route path="subscription" element={<Subscription />} />
             <Route path="password" element={<Password />} />
           </Route>
-          <Route path="analytics" element={<Analytics />} />
+          <Route path="help" element={<HelpAndSupport />} />
           <Route path="create-profile" element={<CreateProfile />} />
         </Route>
 

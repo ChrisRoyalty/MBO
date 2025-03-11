@@ -34,10 +34,6 @@ const BusinessProfile = () => {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   useEffect(() => {
-    toast.success("Toast is working!");
-  }, []);
-
-  useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await axios.get(
@@ -109,7 +105,7 @@ const BusinessProfile = () => {
     <div className="w-full h-screen flex justify-center lg:grid grid-cols-2">
       <div className="max-lg:hidden w-full h-full flex justify-center items-center bg-[url('/Group2.svg')] bg-cover bg-center bg-green-800">
         <div className="w-full h-[90%] flex flex-col items-center">
-          <div className="w-[90%] text-[#FFFDF2] mt-8">
+          <div className="container px-[5vw] mx-auto text-[#FFFDF2] mt-8">
             <Link
               to="/"
               className="lg:text-[50px] text-[32px] font-medium leading-[70px]"
@@ -124,7 +120,7 @@ const BusinessProfile = () => {
         </div>
       </div>
       <div className="relative max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
-        <div className="w-[80%] h-fit max-lg:mt-20">
+        <div className="container px-[5vw] mx-auto h-fit max-lg:mt-20">
           <div className="absolute top-0 right-0 m-2 text-[#043D12] font-medium">
             1 of 2
           </div>

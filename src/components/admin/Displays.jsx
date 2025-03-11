@@ -90,7 +90,6 @@ const Display = () => {
 
     const fetchData = async () => {
       try {
-        // Updated to use user.firstName and user.lastName
         if (user && user.firstName && user.lastName) {
           setProfileData({
             firstname: user.firstName,
@@ -387,13 +386,10 @@ const Display = () => {
       return date.toLocaleDateString("en-US", { weekday: "short" });
     if (range === "weekly") {
       const week = getWeekNumber(date);
-      return `Week ${week} ${date.getFullYear()}`;
+      return `Week ${week}`;
     }
     if (range === "monthly")
-      return date.toLocaleString("default", {
-        month: "short",
-        year: "numeric",
-      });
+      return date.toLocaleString("default", { month: "short" });
     if (range === "yearly") return date.getFullYear().toString();
     return date.toISOString().split("T")[0];
   };
@@ -425,10 +421,9 @@ const Display = () => {
     if (range === "weekly") {
       const newDate = new Date(now);
       newDate.setDate(now.getDate() - index * 7);
-      if (isNaN(newDate.getTime()))
-        return `Week ${getWeekNumber(now)} ${now.getFullYear()}`;
+      if (isNaN(newDate.getTime())) return `Week ${getWeekNumber(now)}`;
       const week = getWeekNumber(newDate);
-      return `Week ${week} ${newDate.getFullYear()}`;
+      return `Week ${week}`;
     }
     if (range === "monthly") {
       const newDate = new Date(now);
@@ -445,7 +440,7 @@ const Display = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-[#FFFDF2]">
+      <div className="flex justify-center items-center h-screen bg-white">
         <div className="flex space-x-2">
           <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce"></div>
           <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce delay-200"></div>
@@ -464,33 +459,31 @@ const Display = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4 relative pb-16 px-8 overflow-y-auto z-0">
+    <div className="flex flex-col gap-4 relative px-4 sm:px-8 min-h-screen bg-white overflow-y-auto">
       {/* Header */}
-      <div className="h-[12vh] p-8 text-[#6A7368] flex justify-between items-center gap-2">
+      <div className="h-[12vh] p-4 sm:p-8 text-[#6A7368] flex flex-col sm:flex-row justify-between items-center gap-2">
         {/* Welcome Section */}
-        <div className="welcome flex max-lg:flex-col max-lg:justify-center justify-between items-center gap-4">
-          <div className="text-[#6A7368]">
-            <h2 className="text-[20px]">
-              {isFirstVisit ? "Welcome" : "Welcome back"},{" "}
-              {profileData.firstname || "Admin"}
-            </h2>
-          </div>
+        <div className="welcome flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+          <h2 className="text-base sm:text-xl md:text-2xl">
+            {isFirstVisit ? "Welcome" : "Welcome back"},{" "}
+            {profileData.firstname || "Admin"}
+          </h2>
         </div>
-        <div className="flex items-center md:gap-4 px-4 relative">
-          <Link to="/">
-            <IoIosNotificationsOutline className="text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
+        <div className="flex items-center gap-2 sm:gap-4">
+          <Link to="/admin/manage-notifications">
+            <IoIosNotificationsOutline className="text-2xl sm:text-3xl text-[#6A7368] hover:text-[#043D12] transition-colors" />
           </Link>
           <div className="relative">
             <motion.figure
-              className="flex items-center bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200 cursor-pointer"
+              className="flex items-center bg-white rounded-full p-1 sm:p-2 shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200 cursor-pointer"
               whileHover={{ scale: 1.05 }}
               animate={{ opacity: [1, 0.8, 1] }}
               transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
               onClick={toggleProfileDropdown}
             >
-              <CiUser className="text-[32px] text-[#043D12] bg-gray-100 rounded-full p-1" />
-              <figcaption className="ml-2 text-[#6A7368] max-md:hidden">
-                <h3 className="text-[12px] font-semibold">
+              <CiUser className="text-2xl text-[#043D12] bg-gray-100 rounded-full p-1" />
+              <figcaption className="ml-2 text-[#6A7368] hidden sm:block">
+                <h3 className="text-xs sm:text-sm font-semibold">
                   {profileData.firstname} {profileData.lastname}
                 </h3>
               </figcaption>
@@ -498,10 +491,10 @@ const Display = () => {
             {showProfileDropdown && (
               <div
                 ref={profileDropdownRef}
-                className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50"
+                className="absolute right-0 mt-2 w-40 sm:w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50"
               >
                 <button
-                  className="w-full text-left px-4 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100"
+                  className="w-full text-left px-3 py-2 text-sm text-[#6A7368] flex items-center gap-2 hover:bg-gray-100"
                   onClick={handleChangePassword}
                 >
                   <FiLock /> Change Password
@@ -512,28 +505,26 @@ const Display = () => {
         </div>
       </div>
 
-      {/* Conditionally Render Content */}
+      {/* Content Section */}
       <div
         className={`content-section transition-all duration-300 ${
           isVisible ? "opacity-100 visible" : "opacity-0 invisible h-0"
         }`}
       >
         {/* Profile Stats */}
-        <div className="mt-12">
-          <div className="grid lg:grid-cols-3 md:grid-cols-3 grid-cols-1 w-full gap-4">
+        <div className="">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {METRICS.map(({ title, key, label, value }) => (
               <div
                 key={key}
                 onClick={() => handleContainerClick(key)}
-                className={`lg:px-6 px-2 py-4 text-[14px] text-[#6A7368] hover:text-white hover:bg-[#043D12] rounded-[11px] flex flex-col gap-4 text-center cursor-pointer ${
-                  metric === key
-                    ? "lg:col-span-1 md:col-span-1 col-span-2 bg-[#043D12] text-[#FFFDF2]"
-                    : "bg-gray-200"
+                className={`p-4 text-sm text-[#6A7368] hover:text-white hover:bg-[#043D12] rounded-xl flex flex-col gap-2 text-center cursor-pointer ${
+                  metric === key ? "bg-[#043D12] text-[#FFFDF2]" : "bg-gray-200"
                 }`}
               >
-                <h5 className="text-start max-lg:text-[12px]">{title}</h5>
-                <figcaption className="text-[14px]">{label}</figcaption>
-                <h3 className="count text-[32px]">
+                <h5 className="text-start text-xs sm:text-sm">{title}</h5>
+                <figcaption className="text-xs">{label}</figcaption>
+                <h3 className="count text-xl sm:text-2xl md:text-3xl">
                   {value(analyticsData[0] || {})}
                 </h3>
               </div>
@@ -542,31 +533,31 @@ const Display = () => {
         </div>
 
         {/* Graph */}
-        <div className="mt-8 border-[1px] border-[#6A7368] rounded-[30px] shadow-lg p-4 z-20">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[16px] text-[#6A7368]">
+        <div className="mt-6 sm:mt-8 border-[1px] border-[#6A7368] rounded-3xl shadow-lg p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <h3 className="text-sm sm:text-base text-[#6A7368]">
               {metric === "profilesCreated"
-                ? "Total Users Performance is Active"
+                ? "Total Users"
                 : metric === "activeSubscribers"
-                ? "Active Users Performance is Active"
-                : "Total Visitors Performance is Active"}
+                ? "Active Users"
+                : "Total Visitors"}
             </h3>
-            <div className="mt-4 relative border-[1px] rounded-lg dropdown-container">
+            <div className="relative border-[1px] rounded-lg dropdown-container w-full sm:w-auto">
               <div
-                className="flex items-center gap-4 cursor-pointer rounded-lg px-2 py-1"
+                className="flex items-center gap-2 sm:gap-4 cursor-pointer rounded-lg px-2 py-1"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               >
-                <span className="text-[14px] text-[#6A7368]">
+                <span className="text-xs sm:text-sm text-[#6A7368]">
                   {timeRange.charAt(0).toUpperCase() + timeRange.slice(1)}
                 </span>
-                <RiArrowDropDownLine className="text-[20px]" />
+                <RiArrowDropDownLine className="text-lg sm:text-xl" />
               </div>
               {isDropdownOpen && (
-                <div className="absolute left-0 top-full mt-2 bg-white shadow-lg rounded-md w-full z-30">
+                <div className="absolute left-0 top-full mt-2 bg-white shadow-lg rounded-md w-full sm:w-32 z-30">
                   {["daily", "weekly", "monthly", "yearly"].map((range) => (
                     <div
                       key={range}
-                      className="p-2 cursor-pointer hover:bg-gray-100"
+                      className="p-2 text-xs sm:text-sm cursor-pointer hover:bg-gray-100"
                       onClick={() => handleTimeRangeChange(range)}
                     >
                       {range.charAt(0).toUpperCase() + range.slice(1)}
@@ -576,26 +567,31 @@ const Display = () => {
               )}
             </div>
           </div>
-          <div className="mt-8 w-full h-[300px] relative z-30">
+          <div className="mt-4 sm:mt-8 w-full h-[250px] sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               {generateGraphData().length > 0 ? (
                 <LineChart
                   data={generateGraphData()}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
+                  margin={{ top: 20, right: 10, left: -20, bottom: 10 }}
                 >
-                  <XAxis dataKey="date" />
-                  <YAxis />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 10 }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                  />
+                  <YAxis tick={{ fontSize: 12 }} />
                   <CartesianGrid strokeDasharray="3 3" />
                   <Tooltip
                     content={({ payload }) => {
-                      console.log("Tooltip Payload:", payload);
                       return payload && payload.length ? (
-                        <div className="bg-white p-2 border border-gray-300 rounded shadow">
+                        <div className="bg-white p-2 border border-gray-300 rounded shadow text-xs">
                           <p>{payload[0].payload.date}</p>
                           <p>{payload[0].value}</p>
                         </div>
                       ) : (
-                        <div>No data available</div>
+                        <div>No data</div>
                       );
                     }}
                   />
@@ -603,13 +599,18 @@ const Display = () => {
                     type="monotone"
                     dataKey="value"
                     stroke="#82ca9d"
-                    activeDot={{ r: 8 }}
+                    strokeWidth={2}
+                    activeDot={{ r: 6 }}
                   />
-                  <Legend verticalAlign="top" align="right" />
+                  <Legend
+                    verticalAlign="top"
+                    align="right"
+                    wrapperStyle={{ fontSize: 12 }}
+                  />
                 </LineChart>
               ) : (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  No data available for this range
+                <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+                  No data available
                 </div>
               )}
             </ResponsiveContainer>
@@ -619,17 +620,17 @@ const Display = () => {
 
       {/* Change Password Modal */}
       {isChangePasswordModalOpen && (
-        <div className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div
             ref={changePasswordModalRef}
-            className="bg-white rounded-[11px] shadow-lg w-[400px] p-6"
+            className="bg-white rounded-xl shadow-lg w-full max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6"
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-[20px] font-semibold text-[#6A7368]">
+              <h2 className="text-lg sm:text-xl font-semibold text-[#6A7368]">
                 Change Password
               </h2>
               <AiOutlineClose
-                className="text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
+                className="text-lg sm:text-xl text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
                 onClick={() => {
                   setIsChangePasswordModalOpen(false);
                   setChangePasswordFormData({
@@ -641,109 +642,107 @@ const Display = () => {
                 }}
               />
             </div>
-            <form onSubmit={handleChangePasswordSubmit}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
-                    Current Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showOldPassword ? "text" : "password"}
-                      name="oldPassword"
-                      value={changePasswordFormData.oldPassword}
-                      onChange={handleChangePasswordInputChange}
-                      placeholder="Enter current password"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
-                      required
-                    />
-                    <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
-                    <span
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
-                      onClick={() => setShowOldPassword(!showOldPassword)}
-                    >
-                      {showOldPassword ? <FiEyeOff /> : <FiEye />}
-                    </span>
-                  </div>
+            <form onSubmit={handleChangePasswordSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs sm:text-sm text-[#6A7368] mb-1">
+                  Current Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showOldPassword ? "text" : "password"}
+                    name="oldPassword"
+                    value={changePasswordFormData.oldPassword}
+                    onChange={handleChangePasswordInputChange}
+                    placeholder="Enter current password"
+                    className="w-full h-10 sm:h-11 px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-xl outline-none bg-transparent text-sm"
+                    required
+                  />
+                  <FiKey className="absolute right-8 sm:right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
+                  <span
+                    className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
+                    onClick={() => setShowOldPassword(!showOldPassword)}
+                  >
+                    {showOldPassword ? <FiEyeOff /> : <FiEye />}
+                  </span>
                 </div>
-
-                <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
-                    New Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showNewPassword ? "text" : "password"}
-                      name="newPassword"
-                      value={changePasswordFormData.newPassword}
-                      onChange={handleChangePasswordInputChange}
-                      placeholder="Enter new password"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
-                      required
-                    />
-                    <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
-                    <span
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                    >
-                      {showNewPassword ? <FiEyeOff /> : <FiEye />}
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
-                    Confirm New Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showConfirmNewPassword ? "text" : "password"}
-                      name="confirmNewPassword"
-                      value={changePasswordFormData.confirmNewPassword}
-                      onChange={handleChangePasswordInputChange}
-                      placeholder="Confirm new password"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
-                      required
-                    />
-                    <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
-                    <span
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
-                      onClick={() =>
-                        setShowConfirmNewPassword(!showConfirmNewPassword)
-                      }
-                    >
-                      {showConfirmNewPassword ? <FiEyeOff /> : <FiEye />}
-                    </span>
-                  </div>
-                </div>
-
-                {passwordValidation && (
-                  <div className="flex items-center gap-2">
-                    {passwordValidation === "Password is valid" ? (
-                      <FiCheckCircle className="text-green-600" />
-                    ) : (
-                      <FiAlertCircle className="text-red-600" />
-                    )}
-                    <span
-                      className={
-                        passwordValidation === "Password is valid"
-                          ? "text-green-600"
-                          : "text-red-600"
-                      }
-                    >
-                      {passwordValidation}
-                    </span>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-[11px] hover:bg-[#032d0e] transition-colors"
-                  disabled={passwordValidation !== "Password is valid"}
-                >
-                  Save Password
-                </button>
               </div>
+
+              <div>
+                <label className="block text-xs sm:text-sm text-[#6A7368] mb-1">
+                  New Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    name="newPassword"
+                    value={changePasswordFormData.newPassword}
+                    onChange={handleChangePasswordInputChange}
+                    placeholder="Enter new password"
+                    className="w-full h-10 sm:h-11 px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-xl outline-none bg-transparent text-sm"
+                    required
+                  />
+                  <FiKey className="absolute right-8 sm:right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
+                  <span
+                    className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    {showNewPassword ? <FiEyeOff /> : <FiEye />}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs sm:text-sm text-[#6A7368] mb-1">
+                  Confirm New Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmNewPassword ? "text" : "password"}
+                    name="confirmNewPassword"
+                    value={changePasswordFormData.confirmNewPassword}
+                    onChange={handleChangePasswordInputChange}
+                    placeholder="Confirm new password"
+                    className="w-full h-10 sm:h-11 px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-xl outline-none bg-transparent text-sm"
+                    required
+                  />
+                  <FiKey className="absolute right-8 sm:right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
+                  <span
+                    className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
+                    onClick={() =>
+                      setShowConfirmNewPassword(!showConfirmNewPassword)
+                    }
+                  >
+                    {showConfirmNewPassword ? <FiEyeOff /> : <FiEye />}
+                  </span>
+                </div>
+              </div>
+
+              {passwordValidation && (
+                <div className="flex items-center gap-2 text-xs sm:text-sm">
+                  {passwordValidation === "Password is valid" ? (
+                    <FiCheckCircle className="text-green-600" />
+                  ) : (
+                    <FiAlertCircle className="text-red-600" />
+                  )}
+                  <span
+                    className={
+                      passwordValidation === "Password is valid"
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }
+                  >
+                    {passwordValidation}
+                  </span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-xl hover:bg-[#032d0e] transition-colors text-sm sm:text-base"
+                disabled={passwordValidation !== "Password is valid"}
+              >
+                Save Password
+              </button>
             </form>
           </div>
         </div>

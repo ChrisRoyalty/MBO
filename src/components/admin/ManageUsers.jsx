@@ -6,7 +6,6 @@ import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import { CiUser } from "react-icons/ci";
 import { BiPlus, BiSearch } from "react-icons/bi";
-import { IoFilter } from "react-icons/io5";
 import { RiEqualizerLine } from "react-icons/ri";
 import { BsThreeDots } from "react-icons/bs";
 import {
@@ -22,7 +21,8 @@ import {
   FiRefreshCw,
 } from "react-icons/fi";
 import { AiOutlineClose } from "react-icons/ai";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
@@ -64,6 +64,9 @@ const ManageUsers = () => {
     firstname: "",
     lastname: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   const navigate = useNavigate();
   const { isAuthenticated, user, token } = useSelector((state) => state.auth);
@@ -77,10 +80,10 @@ const ManageUsers = () => {
   const dropdownRefs = useRef([]);
 
   useEffect(() => {
-    console.log("Initial token from Redux:", token);
     if (!isAuthenticated || !token) {
       setError("Not authenticated or missing token!");
       setLoading(false);
+      toast.info("Redirecting to login...");
       navigate("/login", { replace: true });
       return;
     }
@@ -104,11 +107,8 @@ const ManageUsers = () => {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/admin/all-members`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        console.log("Users Response:", response.data);
         if (response.data && Array.isArray(response.data.members)) {
           setUsers(response.data.members);
           setFilteredUsers(response.data.members);
@@ -117,16 +117,8 @@ const ManageUsers = () => {
         }
       } catch (error) {
         console.error("❌ Error Fetching Users:", error);
-        if (
-          error.response?.status === 404 ||
-          error.response?.data?.message?.includes("not found")
-        ) {
-          setError("No users found.");
-        } else {
-          setError(
-            error.response?.data?.message || "Failed to fetch user data."
-          );
-        }
+        setError(error.response?.data?.message || "Failed to fetch user data.");
+        toast.error(error.response?.data?.message || "Failed to fetch users");
       }
     };
 
@@ -134,11 +126,8 @@ const ManageUsers = () => {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/admin/suspended-members`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        console.log("Suspended Users Response:", response.data);
         if (response.data && Array.isArray(response.data.members)) {
           setSuspendedUsers(response.data.members);
           setFilteredSuspendedUsers(response.data.members);
@@ -147,22 +136,21 @@ const ManageUsers = () => {
         }
       } catch (error) {
         console.error("❌ Error Fetching Suspended Users:", error);
-        if (
-          error.response?.status === 404 ||
-          error.response?.data?.message?.includes("not found")
-        ) {
-          setError("No suspended users found.");
-        } else {
-          setError(
-            error.response?.data?.message ||
-              "Failed to fetch suspended user data."
-          );
-        }
+        setError(
+          error.response?.data?.message || "Failed to fetch suspended users"
+        );
+        toast.error(
+          error.response?.data?.message || "Failed to fetch suspended users"
+        );
       }
     };
 
     Promise.all([fetchUsers(), fetchSuspendedUsers()])
-      .then(() => {})
+      .then(() => {
+        setTimeout(() => {
+          console.log("User data loaded successfully!");
+        }, 100);
+      })
       .catch((error) => {
         console.error("❌ One or more fetch requests failed:", error);
       })
@@ -285,13 +273,12 @@ const ManageUsers = () => {
   };
 
   const handleViewProfile = (user) => {
-    const profileId = user.profile?.id;
-    if (profileId) {
-      navigate(`/community/profile/${profileId}`);
-    } else {
-      toast.error("This user has no associated profile.");
-      console.warn("No profile ID found for user:", user);
+    if (!user.profile || !user.profile.id) {
+      toast.error("This user has no associated profile to view.");
+      return;
     }
+    navigate(`/community/profile/${user.profile.id}`);
+    toast.success(`Viewing profile for ${user.firstname} ${user.lastname}`);
   };
 
   const handleRemoveUser = async () => {
@@ -306,14 +293,11 @@ const ManageUsers = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("Delete User Response:", response.data);
       toast.success(response.data.message);
-
       if (view === "active") {
         setUsers((prev) => prev.filter((u) => u.id !== deleteUser.id));
         setFilteredUsers((prev) => prev.filter((u) => u.id !== deleteUser.id));
       }
-
       setIsDeleteModalOpen(false);
       setDeleteUser(null);
     } catch (error) {
@@ -321,10 +305,7 @@ const ManageUsers = () => {
         "❌ Error Deleting User:",
         error.response?.data || error.message
       );
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to delete user. Check the console for details."
-      );
+      toast.error(error.response?.data?.message || "Failed to delete user.");
     }
   };
 
@@ -334,26 +315,27 @@ const ManageUsers = () => {
       return;
     }
 
-    const profileId = suspendUser.profile?.id;
-    if (!profileId) {
-      toast.error("This user has no associated profile to suspend.");
+    if (!suspendUser.profile || !suspendUser.profile.id) {
+      toast.error("This user has no profile to suspend.");
+      setIsSuspendModalOpen(false);
+      setSuspendUser(null);
       return;
     }
 
     try {
       const response = await axios.delete(
-        `${import.meta.env.VITE_BASE_URL}/member/delete-profile/${profileId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        `${import.meta.env.VITE_BASE_URL}/member/delete-profile/${
+          suspendUser.profile.id
+        }`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("Suspend User Response:", response.data);
       toast.success(response.data.message);
+      const updatedUser = { ...suspendUser, profile: null };
       setUsers((prev) => prev.filter((u) => u.id !== suspendUser.id));
       setFilteredUsers((prev) => prev.filter((u) => u.id !== suspendUser.id));
-      setSuspendedUsers((prev) => [...prev, suspendUser]);
-      setFilteredSuspendedUsers((prev) => [...prev, suspendUser]);
+      setSuspendedUsers((prev) => [...prev, updatedUser]);
+      setFilteredSuspendedUsers((prev) => [...prev, updatedUser]);
       setIsSuspendModalOpen(false);
       setSuspendUser(null);
     } catch (error) {
@@ -361,43 +343,38 @@ const ManageUsers = () => {
         "❌ Error Suspending User:",
         error.response?.data || error.message
       );
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to suspend user. Check the console for details."
-      );
+      toast.error(error.response?.data?.message || "Failed to suspend user.");
     }
   };
 
   const handleRestoreUser = async (user) => {
-    const profileId = user.profile?.id;
-    if (!profileId) {
-      toast.error("This user has no associated profile to restore.");
+    if (!user) {
+      toast.error("No user selected for restoration.");
       return;
     }
 
     try {
       const response = await axios.patch(
-        `${import.meta.env.VITE_BASE_URL}/admin/restore-profile/${profileId}`,
+        `${import.meta.env.VITE_BASE_URL}/admin/restore-profile/${user.id}`,
         {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("Restore User Response:", response.data);
-      toast.success(response.data.message);
+      toast.success(
+        response.data.message || "User profile restored successfully."
+      );
+      const restoredUser = { ...user, profile: response.data.profile || {} };
       setSuspendedUsers((prev) => prev.filter((u) => u.id !== user.id));
       setFilteredSuspendedUsers((prev) => prev.filter((u) => u.id !== user.id));
-      setUsers((prev) => [...prev, user]);
-      setFilteredUsers((prev) => [...prev, user]);
+      setUsers((prev) => [...prev, restoredUser]);
+      setFilteredUsers((prev) => [...prev, restoredUser]);
     } catch (error) {
       console.error(
-        "❌ Error Restoring User:",
+        "❌ Error Restoring User Profile:",
         error.response?.data || error.message
       );
       toast.error(
-        error.response?.data?.message ||
-          "Failed to restore user. Check the console for details."
+        error.response?.data?.message || "Failed to restore user profile."
       );
     }
   };
@@ -405,6 +382,7 @@ const ManageUsers = () => {
   const handleSendEmail = (user) => {
     const mailtoLink = `mailto:${encodeURIComponent(user.email)}`;
     window.location.href = mailtoLink;
+    toast.success(`Email client opened for ${user.email}`);
   };
 
   const openModal = () => setIsModalOpen(true);
@@ -470,15 +448,12 @@ const ManageUsers = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("Add User Response:", response.data);
       toast.success(response.data.message);
-
       const newUser = {
         ...response.data.newMember,
         firstname: response.data.newMember.firstName,
         lastname: response.data.newMember.lastName,
       };
-
       setUsers((prev) => [...prev, newUser]);
       setFilteredUsers((prev) => [...prev, newUser]);
       setTimeout(closeModal, 2000);
@@ -501,8 +476,8 @@ const ManageUsers = () => {
       toast.error("New passwords do not match.");
       return;
     }
+    setIsSubmitting(true);
     try {
-      console.log("Token being used:", token);
       const response = await axios.patch(
         `${import.meta.env.VITE_BASE_URL}/member/change-password`,
         {
@@ -513,8 +488,7 @@ const ManageUsers = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("Change Password Response:", response.data);
-      toast.success("Password changed successfully.");
+      toast.success("Password changed successfully!");
       setIsResetModalOpen(false);
       setResetUser(null);
       setResetFormData({
@@ -531,6 +505,8 @@ const ManageUsers = () => {
       toast.error(
         error.response?.data?.message || "Failed to change password."
       );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -549,9 +525,23 @@ const ManageUsers = () => {
     return { top: "100%", bottom: "auto" };
   };
 
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems =
+    view === "active"
+      ? filteredUsers.slice(indexOfFirstItem, indexOfLastItem)
+      : filteredSuspendedUsers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(
+    (view === "active" ? filteredUsers.length : filteredSuspendedUsers.length) /
+      itemsPerPage
+  );
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-[#FFFDF2]">
+      <div className="flex justify-center items-center h-screen bg-white">
         <div className="flex space-x-2">
           <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce"></div>
           <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce delay-200"></div>
@@ -570,24 +560,38 @@ const ManageUsers = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4 relative pb-16 px-12 pt-8 overflow-y-auto z-0">
-      <div className="h-[12vh] text-[#6A7368] flex justify-between items-center gap-2">
-        <div className="welcome flex max-lg:flex-col max-lg:justify-center justify-between items-center gap-4">
-          <div className="border-[1px] border-[#6A7368] flex items-center gap-2 px-4 rounded-[11px] shadow-lg">
-            <BiSearch />
+    <div className="flex flex-col gap-4 relative pb-16 px-4 sm:px-12 pt-8 overflow-y-auto z-0 min-h-screen">
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        style={{ zIndex: 9999 }}
+      />
+
+      {/* Header */}
+      <div className="text-[#6A7368] flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-4">
+          <div className="border-[1px] border-[#6A7368] flex items-center gap-2 px-3 py-2 rounded-[11px] shadow-lg w-full sm:w-[350px]">
+            <BiSearch className="text-lg" />
             <input
               type="text"
               placeholder="Search by name or email"
-              className="h-[42px] w-[350px] outline-0 border-0 bg-transparent"
+              className="h-10 w-full outline-0 border-0 bg-transparent text-sm sm:text-base"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <RiEqualizerLine />
+            <RiEqualizerLine className="text-lg" />
           </div>
         </div>
-        <div className="flex items-center md:gap-4 px-4 relative">
-          <Link to="/">
-            <IoIosNotificationsOutline className="text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
+        <div className="flex items-center gap-3 sm:gap-4 px-2 relative">
+          <Link to="/admin/manage-notifications">
+            <IoIosNotificationsOutline className="text-2xl sm:text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
           </Link>
           <div className="relative">
             <motion.figure
@@ -597,9 +601,9 @@ const ManageUsers = () => {
               transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
               onClick={toggleResetButton}
             >
-              <CiUser className="text-[32px] text-[#043D12] bg-gray-100 rounded-full p-1" />
-              <figcaption className="ml-2 text-[#6A7368] max-md:hidden">
-                <h3 className="text-[12px] font-semibold">
+              <CiUser className="text-2xl text-[#043D12] bg-gray-100 rounded-full p-1" />
+              <figcaption className="ml-2 text-[#6A7368] hidden sm:block">
+                <h3 className="text-xs sm:text-[12px] font-semibold">
                   {profileData.firstname} {profileData.lastname}
                 </h3>
               </figcaption>
@@ -607,10 +611,10 @@ const ManageUsers = () => {
             {showResetButton && (
               <div
                 ref={resetButtonRef}
-                className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50"
+                className="absolute right-0 mt-2 w-40 sm:w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50"
               >
                 <button
-                  className="w-full text-left px-4 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100"
+                  className="w-full text-left px-3 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100 text-sm"
                   onClick={handleResetPassword}
                 >
                   <FiLock /> Change Password
@@ -621,34 +625,45 @@ const ManageUsers = () => {
         </div>
       </div>
 
+      {/* Main Content */}
       <main className="text-[#6A7368]">
-        <div className="intro flex flex-col gap-4 mb-6">
-          <p className="text-[20px] font-semibold">Users</p>
-          <div className="flex items-center gap-2">
+        <div className="intro flex flex-col items-start justify-between mb-6 gap-4">
+          <p className="text-lg sm:text-[20px] font-semibold">Users</p>
+          <div className="w-full flex justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                className={`border-[1px] border-[#6A7368] px-4 py-2 rounded-[40px] transition-colors shadow-md ${
+                  view === "active"
+                    ? "bg-[#043D12] text-[#FFFDF2]"
+                    : "bg-white hover:bg-[#043D12] hover:text-[#FFFDF2]"
+                } text-sm sm:text-base`}
+                onClick={() => setView("active")}
+              >
+                Active
+              </button>
+              <button
+                className={`border-[1px] border-[#6A7368] px-4 py-2 rounded-[40px] transition-colors shadow-md ${
+                  view === "suspended"
+                    ? "bg-[#043D12] text-[#FFFDF2]"
+                    : "bg-white hover:bg-[#043D12] hover:text-[#FFFDF2]"
+                } text-sm sm:text-base`}
+                onClick={() => setView("suspended")}
+              >
+                Suspended
+              </button>
+            </div>
             <button
-              className={`border-[1px] border-[#6A7368] px-4 py-2 rounded-[40px] transition-colors shadow-md ${
-                view === "active"
-                  ? "bg-[#043D12] text-[#FFFDF2]"
-                  : "bg-white hover:bg-[#043D12] hover:text-[#FFFDF2]"
-              }`}
-              onClick={() => setView("active")}
+              className="flex items-center gap-2 border-[1px] border-[#6A7368] px-4 py-2 rounded-[11px] bg-white hover:bg-[#043D12] hover:text-[#FFFDF2] transition-colors shadow-md text-sm sm:text-base"
+              onClick={openModal}
             >
-              Active
-            </button>
-            <button
-              className={`border-[1px] border-[#6A7368] px-4 py-2 rounded-[40px] transition-colors shadow-md ${
-                view === "suspended"
-                  ? "bg-[#043D12] text-[#FFFDF2]"
-                  : "bg-white hover:bg-[#043D12] hover:text-[#FFFDF2]"
-              }`}
-              onClick={() => setView("suspended")}
-            >
-              Suspended
+              <BiPlus />
+              Add User
             </button>
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-[11px] shadow-lg">
+        {/* Table for Desktop */}
+        <div className="hidden sm:block overflow-x-auto rounded-[11px] shadow-lg">
           <table className="w-full border-collapse text-[14px] bg-white">
             <thead>
               <tr className="bg-[#F0F5F2] border-b-2 border-[#6A7368]">
@@ -670,83 +685,80 @@ const ManageUsers = () => {
               </tr>
             </thead>
             <tbody>
-              {(view === "active" ? filteredUsers : filteredSuspendedUsers)
-                .length > 0 ? (
-                (view === "active"
-                  ? filteredUsers
-                  : filteredSuspendedUsers
-                ).map((user, index) => (
+              {currentItems.length > 0 ? (
+                currentItems.map((user, index) => (
                   <tr
                     key={index}
                     className={`border-b border-gray-200 ${
                       index % 2 === 0 ? "bg-white" : "bg-gray-50"
                     } hover:bg-gray-100 transition-colors`}
                   >
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-[#043D12] font-semibold">
-                          {user.firstname.charAt(0)}
-                        </div>
-                        <span>{`${user.firstname} ${user.lastname}`}</span>
-                      </div>
-                    </td>
+                    <td className="py-4 px-6">{`${user.firstname} ${user.lastname}`}</td>
                     <td className="py-4 px-6">{user.email}</td>
                     <td className="py-4 px-6">
                       {user.subscription ? user.subscription.name : "None"}
                     </td>
                     <td className="py-4 px-6">{formatDate(user.lastLogin)}</td>
-                    <td className="py-4 px-6 relative">
-                      <div className="flex items-center gap-2">
-                        {formatDate(user.createdAt)}
-                        <div
-                          ref={(el) => (dropdownRefs.current[index] = el)}
-                          className="relative"
-                        >
-                          <BsThreeDots
-                            className="text-[18px] cursor-pointer hover:text-[#043D12] transition-colors"
-                            onClick={() => toggleMenu(index)}
-                          />
-                          {activeMenuIndex === index && (
-                            <div
-                              ref={dropdownRef}
-                              className="absolute right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-40 overflow-y-auto"
-                              style={{
-                                minWidth: "160px",
-                                top: getDropdownPosition(index).top,
-                                bottom: getDropdownPosition(index).bottom,
-                              }}
-                            >
+                    <td className="py-4 px-6 flex justify-between items-center">
+                      {formatDate(user.createdAt)}
+                      <div
+                        ref={(el) => (dropdownRefs.current[index] = el)}
+                        className="relative"
+                      >
+                        <BsThreeDots
+                          className="text-[18px] cursor-pointer hover:text-[#043D12] transition-colors"
+                          onClick={() => toggleMenu(index)}
+                        />
+                        {activeMenuIndex === index && (
+                          <div
+                            ref={dropdownRef}
+                            className="absolute right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-40 overflow-y-auto"
+                            style={{
+                              minWidth: "160px",
+                              top: getDropdownPosition(index).top,
+                              bottom: getDropdownPosition(index).bottom,
+                            }}
+                          >
+                            {view === "active" && (
                               <button
                                 className="w-full text-left px-4 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100"
                                 onClick={() => handleViewProfile(user)}
                               >
                                 <FiUser /> View Profile
                               </button>
-                              <button
-                                className="w-full text-left px-4 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100"
-                                onClick={() => handleSendEmail(user)}
-                              >
-                                <FiMail /> Send Email
-                              </button>
-                              {view === "active" && (
+                            )}
+                            <button
+                              className="w-full text-left px-4 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100"
+                              onClick={() => handleSendEmail(user)}
+                            >
+                              <FiMail /> Send Email
+                            </button>
+                            {view === "active" && (
+                              <>
                                 <button
                                   className="w-full text-left px-4 py-2 text-red-600 flex items-center gap-2 hover:bg-gray-100"
                                   onClick={() => openSuspendModal(user)}
                                 >
                                   <FiAlertCircle /> Suspend User
                                 </button>
-                              )}
-                              {view === "suspended" && (
                                 <button
-                                  className="w-full text-left px-4 py-2 text-green-600 flex items-center gap-2 hover:bg-gray-100"
-                                  onClick={() => handleRestoreUser(user)}
+                                  className="w-full text-left px-4 py-2 text-red-600 flex items-center gap-2 hover:bg-gray-100"
+                                  onClick={() => openDeleteModal(user)}
                                 >
-                                  <FiRefreshCw /> Restore User
+                                  <FiTrash2 /> Delete User
                                 </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                              </>
+                            )}
+                            {view === "suspended" && (
+                              <button
+                                className="w-full text-left px-4 py-2 text-green-600 flex items-center gap-2 hover:bg-gray-100"
+                                onClick={() => handleRestoreUser(user)}
+                              >
+                                <FiRefreshCw /> Restore User
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -765,27 +777,143 @@ const ManageUsers = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Card Layout for Mobile */}
+        <div className="sm:hidden space-y-4">
+          {currentItems.length > 0 ? (
+            currentItems.map((user, index) => (
+              <div
+                key={index}
+                className="border border-gray-200 rounded-[11px] p-4 bg-white shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-semibold">{`${user.firstname} ${user.lastname}`}</span>
+                  <BsThreeDots
+                    className="text-lg cursor-pointer hover:text-[#043D12]"
+                    onClick={() => toggleMenu(index)}
+                  />
+                </div>
+                <div className="mt-2 text-sm space-y-1">
+                  <p>
+                    <strong>Email:</strong> {user.email}
+                  </p>
+                  <p>
+                    <strong>Plan:</strong>{" "}
+                    {user.subscription ? user.subscription.name : "None"}
+                  </p>
+                  <p>
+                    <strong>Last Login:</strong> {formatDate(user.lastLogin)}
+                  </p>
+                  <p>
+                    <strong>Joined:</strong> {formatDate(user.createdAt)}
+                  </p>
+                </div>
+                {activeMenuIndex === index && (
+                  <div className="mt-2 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                    {view === "active" && (
+                      <button
+                        className="w-full text-left px-3 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100 text-sm"
+                        onClick={() => handleViewProfile(user)}
+                      >
+                        <FiUser /> View Profile
+                      </button>
+                    )}
+                    <button
+                      className="w-full text-left px-3 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100 text-sm"
+                      onClick={() => handleSendEmail(user)}
+                    >
+                      <FiMail /> Send Email
+                    </button>
+                    {view === "active" && (
+                      <>
+                        <button
+                          className="w-full text-left px-3 py-2 text-red-600 flex items-center gap-2 hover:bg-gray-100 text-sm"
+                          onClick={() => openSuspendModal(user)}
+                        >
+                          <FiAlertCircle /> Suspend User
+                        </button>
+                        <button
+                          className="w-full text-left px-3 py-2 text-red-600 flex items-center gap-2 hover:bg-gray-100 text-sm"
+                          onClick={() => openDeleteModal(user)}
+                        >
+                          <FiTrash2 /> Delete User
+                        </button>
+                      </>
+                    )}
+                    {view === "suspended" && (
+                      <button
+                        className="w-full text-left px-3 py-2 text-green-600 flex items-center gap-2 hover:bg-gray-100 text-sm"
+                        onClick={() => handleRestoreUser(user)}
+                      >
+                        <FiRefreshCw /> Restore User
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <p className="text-center text-gray-500 text-sm">
+              No {view === "active" ? "active" : "suspended"} users found
+              matching your search.
+            </p>
+          )}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-4 gap-2">
+            <button
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 bg-[#043D12] text-[#FFFDF2] rounded-[11px] disabled:bg-gray-300"
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => paginate(page)}
+                className={`px-3 py-1 rounded-[11px] ${
+                  currentPage === page
+                    ? "bg-[#043D12] text-[#FFFDF2]"
+                    : "bg-white text-[#6A7368] border border-[#6A7368]"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 bg-[#043D12] text-[#FFFDF2] rounded-[11px] disabled:bg-gray-300"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </main>
 
+      {/* Add User Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div
             ref={modalRef}
-            className="bg-white rounded-[11px] shadow-lg w-[400px] p-6"
+            className="bg-white rounded-[11px] shadow-lg w-full max-w-md sm:w-[400px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-[20px] font-semibold text-[#6A7368]">
+              <h2 className="text-lg sm:text-[20px] font-semibold text-[#6A7368]">
                 New User
               </h2>
               <AiOutlineClose
-                className="text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
+                className="text-xl sm:text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
                 onClick={closeModal}
               />
             </div>
             <form onSubmit={handleAddUser}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     First Name
                   </label>
                   <div className="relative">
@@ -795,15 +923,14 @@ const ManageUsers = () => {
                       value={formData.firstname}
                       onChange={handleInputChange}
                       placeholder="Enter first name"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
                     <FiUser className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     Last Name
                   </label>
                   <div className="relative">
@@ -813,15 +940,14 @@ const ManageUsers = () => {
                       value={formData.lastname}
                       onChange={handleInputChange}
                       placeholder="Enter last name"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
                     <FiUser className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     Email
                   </label>
                   <div className="relative">
@@ -831,15 +957,14 @@ const ManageUsers = () => {
                       value={formData.email}
                       onChange={handleInputChange}
                       placeholder="Enter email"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
                     <FiMail className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     Password
                   </label>
                   <div className="relative">
@@ -849,10 +974,9 @@ const ManageUsers = () => {
                       value={formData.password}
                       onChange={handleInputChange}
                       placeholder="Enter password"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
-                    <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                     <span
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
                       onClick={() => setShowPassword(!showPassword)}
@@ -861,9 +985,8 @@ const ManageUsers = () => {
                     </span>
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     Confirm Password
                   </label>
                   <div className="relative">
@@ -873,10 +996,9 @@ const ManageUsers = () => {
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       placeholder="Confirm password"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
-                    <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                     <span
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
                       onClick={() =>
@@ -887,10 +1009,9 @@ const ManageUsers = () => {
                     </span>
                   </div>
                 </div>
-
                 <button
                   type="submit"
-                  className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-[11px] hover:bg-[#032d0e] transition-colors"
+                  className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-[11px] hover:bg-[#032d0e] transition-colors text-sm sm:text-base"
                 >
                   Add User
                 </button>
@@ -900,15 +1021,16 @@ const ManageUsers = () => {
         </div>
       )}
 
+      {/* Delete User Modal */}
       {isDeleteModalOpen && deleteUser && (
-        <div className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div
             ref={deleteModalRef}
-            className="bg-white rounded-[11px] shadow-lg w-[400px] p-6"
+            className="bg-white rounded-[11px] shadow-lg w-full max-w-md sm:w-[400px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex justify-end mb-4">
               <AiOutlineClose
-                className="text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
+                className="text-xl sm:text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
                 onClick={() => {
                   setIsDeleteModalOpen(false);
                   setDeleteUser(null);
@@ -921,17 +1043,17 @@ const ManageUsers = () => {
               </div>
             </div>
             <div className="text-center mb-4">
-              <p className="text-[16px] text-[#6A7368]">
-                Are you sure you want to remove{" "}
+              <p className="text-sm sm:text-[16px] text-[#6A7368]">
+                Are you sure you want to delete{" "}
                 <span className="font-semibold">
                   {`${deleteUser.firstname} ${deleteUser.lastname}`}
                 </span>
                 ?
               </p>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-2">
               <button
-                className="px-4 py-2 bg-gray-200 text-[#6A7368] rounded-[11px] hover:bg-gray-300 transition-colors"
+                className="w-full px-4 py-2 bg-gray-200 text-[#6A7368] rounded-[11px] hover:bg-gray-300 transition-colors text-sm sm:text-base"
                 onClick={() => {
                   setIsDeleteModalOpen(false);
                   setDeleteUser(null);
@@ -940,25 +1062,26 @@ const ManageUsers = () => {
                 Cancel
               </button>
               <button
-                className="px-4 py-2 bg-red-600 text-[#FFFDF2] rounded-[11px] hover:bg-red-700 transition-colors"
+                className="w-full px-4 py-2 bg-red-600 text-[#FFFDF2] rounded-[11px] hover:bg-red-700 transition-colors text-sm sm:text-base"
                 onClick={handleRemoveUser}
               >
-                Remove
+                Delete
               </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Suspend User Modal */}
       {isSuspendModalOpen && suspendUser && (
-        <div className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div
             ref={suspendModalRef}
-            className="bg-white rounded-[11px] shadow-lg w-[400px] p-6"
+            className="bg-white rounded-[11px] shadow-lg w-full max-w-md sm:w-[400px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex justify-end mb-4">
               <AiOutlineClose
-                className="text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
+                className="text-xl sm:text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
                 onClick={() => {
                   setIsSuspendModalOpen(false);
                   setSuspendUser(null);
@@ -971,7 +1094,7 @@ const ManageUsers = () => {
               </div>
             </div>
             <div className="text-center mb-4">
-              <p className="text-[16px] text-[#6A7368]">
+              <p className="text-sm sm:text-[16px] text-[#6A7368]">
                 Are you sure you want to suspend{" "}
                 <span className="font-semibold">
                   {`${suspendUser.firstname} ${suspendUser.lastname}`}
@@ -979,9 +1102,9 @@ const ManageUsers = () => {
                 ?
               </p>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-2">
               <button
-                className="px-4 py-2 bg-gray-200 text-[#6A7368] rounded-[11px] hover:bg-gray-300 transition-colors"
+                className="w-full px-4 py-2 bg-gray-200 text-[#6A7368] rounded-[11px] hover:bg-gray-300 transition-colors text-sm sm:text-base"
                 onClick={() => {
                   setIsSuspendModalOpen(false);
                   setSuspendUser(null);
@@ -990,7 +1113,7 @@ const ManageUsers = () => {
                 Cancel
               </button>
               <button
-                className="px-4 py-2 bg-red-600 text-[#FFFDF2] rounded-[11px] hover:bg-red-700 transition-colors"
+                className="w-full px-4 py-2 bg-red-600 text-[#FFFDF2] rounded-[11px] hover:bg-red-700 transition-colors text-sm sm:text-base"
                 onClick={handleSuspendUser}
               >
                 Suspend
@@ -1000,18 +1123,19 @@ const ManageUsers = () => {
         </div>
       )}
 
+      {/* Reset Password Modal */}
       {isResetModalOpen && resetUser && (
-        <div className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div
             ref={resetModalRef}
-            className="bg-white rounded-[11px] shadow-lg w-[400px] p-6"
+            className="bg-white rounded-[11px] shadow-lg w-full max-w-md sm:w-[400px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-[20px] font-semibold text-[#6A7368]">
+              <h2 className="text-lg sm:text-[20px] font-semibold text-[#6A7368]">
                 Change Password
               </h2>
               <AiOutlineClose
-                className="text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
+                className="text-xl sm:text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
                 onClick={() => {
                   setIsResetModalOpen(false);
                   setResetUser(null);
@@ -1027,7 +1151,7 @@ const ManageUsers = () => {
             <form onSubmit={handleResetPasswordSubmit}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     Current Password
                   </label>
                   <div className="relative">
@@ -1037,10 +1161,9 @@ const ManageUsers = () => {
                       value={resetFormData.oldPassword}
                       onChange={handleResetInputChange}
                       placeholder="Enter current password"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
-                    <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                     <span
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
                       onClick={() =>
@@ -1051,9 +1174,8 @@ const ManageUsers = () => {
                     </span>
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     New Password
                   </label>
                   <div className="relative">
@@ -1063,10 +1185,9 @@ const ManageUsers = () => {
                       value={resetFormData.newPassword}
                       onChange={handleResetInputChange}
                       placeholder="Enter new password"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
-                    <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                     <span
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
                       onClick={() => setShowNewPassword(!showNewPassword)}
@@ -1075,9 +1196,8 @@ const ManageUsers = () => {
                     </span>
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     Confirm New Password
                   </label>
                   <div className="relative">
@@ -1087,10 +1207,9 @@ const ManageUsers = () => {
                       value={resetFormData.confirmNewPassword}
                       onChange={handleResetInputChange}
                       placeholder="Confirm new password"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
-                    <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                     <span
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
                       onClick={() =>
@@ -1101,7 +1220,6 @@ const ManageUsers = () => {
                     </span>
                   </div>
                 </div>
-
                 {passwordValidation && (
                   <div className="flex items-center gap-2">
                     {passwordValidation === "Password is valid" ? (
@@ -1112,21 +1230,48 @@ const ManageUsers = () => {
                     <span
                       className={
                         passwordValidation === "Password is valid"
-                          ? "text-green-600"
-                          : "text-red-600"
+                          ? "text-green-600 text-sm"
+                          : "text-red-600 text-sm"
                       }
                     >
                       {passwordValidation}
                     </span>
                   </div>
                 )}
-
                 <button
                   type="submit"
-                  className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-[11px] hover:bg-[#032d0e] transition-colors"
-                  disabled={passwordValidation !== "Password is valid"}
+                  className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-[11px] hover:bg-[#032d0e] transition-colors text-sm sm:text-base flex items-center justify-center"
+                  disabled={
+                    passwordValidation !== "Password is valid" || isSubmitting
+                  }
                 >
-                  Save Password
+                  {isSubmitting ? (
+                    <span className="flex items-center gap-2">
+                      <svg
+                        className="animate-spin h-5 w-5 text-[#FFFDF2]"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Saving...
+                    </span>
+                  ) : (
+                    "Save Password"
+                  )}
                 </button>
               </div>
             </form>

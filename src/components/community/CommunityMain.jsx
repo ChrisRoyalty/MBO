@@ -5,6 +5,7 @@ import NewBusinesses from "./NewBusinesses";
 import TrendingBusiness from "../community/TrendingBusiness";
 import PopularServices from "../community/PopularServices";
 import AddBusiness from "../community/AddBusiness";
+import Footer from "../Footer";
 
 const CommunityMain = () => {
   return (
@@ -12,10 +13,11 @@ const CommunityMain = () => {
       {/* Static Sections That Should Always Be Visible */}
       <Discover />
       <Search />
-      <NewBusinesses />
       {/* <TrendingBusiness /> */}
       {/* <PopularServices /> */}
+      <NewBusinesses />
       <AddBusiness />
+      <Footer />
     </div>
   );
 };

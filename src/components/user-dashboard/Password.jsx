@@ -129,7 +129,7 @@ const Password = () => {
       <h2 className="text-[16px] text-[#043D12] font-medium border-b-[1px] border-[#6A7368] px-2 py-1 w-fit">
         Change Password
       </h2>
-      <form className="w-[70%] flex flex-col gap-8" onSubmit={handleSubmit}>
+      <form className="lg:w-[70%] flex flex-col gap-8" onSubmit={handleSubmit}>
         <div className="text-[#6A7368] flex flex-col gap-2">
           <label>Current Password</label>
           <div className="relative">
