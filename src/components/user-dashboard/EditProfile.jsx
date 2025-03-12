@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -24,14 +24,19 @@ const EditProfile = () => {
     firstName: "",
     lastName: "",
     category: "",
+    categoryId: "",
     createdAt: "",
   });
   const [originalData, setOriginalData] = useState(null);
   const [editField, setEditField] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [imageLoading, setImageLoading] = useState({
-    businesImg: false,
-    backgroundImg: false,
+  const [imageFiles, setImageFiles] = useState({
+    businesImg: null,
+    backgroundImg: null,
+  });
+  const [imagePreviews, setImagePreviews] = useState({
+    businesImg: "",
+    backgroundImg: "",
   });
   const [buttonActive, setButtonActive] = useState({
     personalSubmit: false,
@@ -51,9 +56,17 @@ const EditProfile = () => {
   const [shareableLink, setShareableLink] = useState("");
   const [showShareOptions, setShowShareOptions] = useState(false);
 
+  const inputRefs = {
+    firstName: useRef(null),
+    lastName: useRef(null),
+    businessName: useRef(null),
+    keyword: useRef(null),
+    location: useRef(null),
+  };
+
   const { isAuthenticated, token } = useSelector((state) => state.auth);
 
-  // Fetch profile data and populate selectedCategory
+  // Fetch profile data
   useEffect(() => {
     if (!isAuthenticated || !token) {
       setError("Not authenticated or missing token!");
@@ -67,10 +80,10 @@ const EditProfile = () => {
         const response = await axios.get(API_URL, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("Initial Profile Fetch:", response.data); // Debug initial fetch
         if (response.data && response.data.success && response.data.data) {
           const profile = response.data.data;
           const member = profile.member || {};
+          const categoryFromProfile = profile.categories?.[0] || {};
           const initialData = {
             businessName: profile.businessName || "",
             contactNo: Array.isArray(profile.contactNo)
@@ -83,16 +96,19 @@ const EditProfile = () => {
             keyword: Array.isArray(profile.keyword) ? profile.keyword : [],
             firstName: member.firstname || "",
             lastName: member.lastname || "",
-            category: profile.category || "",
+            category: categoryFromProfile.name || "",
+            categoryId: categoryFromProfile.id || "",
             createdAt: profile.createdAt || "",
           };
           setProfileData(initialData);
           setOriginalData(initialData);
-
-          const categoryFromProfile = profile.categories?.[0] || {};
+          setImagePreviews({
+            businesImg: initialData.businesImg,
+            backgroundImg: initialData.backgroundImg,
+          });
           setSelectedCategory({
             id: categoryFromProfile.id || "",
-            name: categoryFromProfile.name || profile.category || "",
+            name: categoryFromProfile.name || "",
           });
         } else {
           setError("No profile data found in the response.");
@@ -177,14 +193,16 @@ const EditProfile = () => {
     }));
   };
 
-  // Handle edit button click
+  // Handle edit button click with focus
   const handleEditClick = (field) => {
     setEditField(field);
     setButtonActive((prev) => ({ ...prev, [field]: true }));
-    setTimeout(
-      () => setButtonActive((prev) => ({ ...prev, [field]: false })),
-      200
-    );
+    setTimeout(() => {
+      setButtonActive((prev) => ({ ...prev, [field]: false }));
+      if (inputRefs[field]?.current) {
+        inputRefs[field].current.focus();
+      }
+    }, 200);
   };
 
   // Toggle category dropdown
@@ -193,55 +211,31 @@ const EditProfile = () => {
   // Handle category selection
   const handleCategorySelect = (id, name) => {
     setSelectedCategory({ id, name });
-    setProfileData((prevData) => ({ ...prevData, category: name }));
+    setProfileData((prevData) => ({
+      ...prevData,
+      category: name,
+      categoryId: id,
+    }));
     setShowDropdown(false);
   };
 
-  // Upload image to Cloudinary
-  const uploadImageToCloudinary = async (file) => {
+  // Handle image selection and preview
+  const handleImageUpload = (field, file) => {
     if (!file || !file.type.startsWith("image/")) {
       toast.error("Please upload a valid image file.");
-      return null;
+      return;
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "profile_upload_unsigned");
-    formData.append("folder", "user_profiles");
+    setImageFiles((prev) => ({ ...prev, [field]: file }));
 
-    try {
-      const response = await axios.post(
-        "https://api.cloudinary.com/v1_1/drve24nad/image/upload",
-        formData
-      );
-      console.log("Cloudinary Upload Response:", response.data); // Debug Cloudinary response
-      return response.data?.secure_url || null;
-    } catch (error) {
-      console.error("❌ Error Uploading Image to Cloudinary:", error);
-      toast.error(error.response?.data?.message || "Failed to upload image.");
-      return null;
-    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreviews((prev) => ({ ...prev, [field]: reader.result }));
+    };
+    reader.readAsDataURL(file);
   };
 
-  // Handle image upload
-  const handleImageUpload = async (field, file) => {
-    if (!file) return;
-
-    setImageLoading((prev) => ({ ...prev, [field]: true }));
-    const imageUrl = await uploadImageToCloudinary(file);
-    setImageLoading((prev) => ({ ...prev, [field]: false }));
-
-    if (imageUrl) {
-      setProfileData((prevData) => {
-        const updatedData = { ...prevData, [field]: imageUrl };
-        console.log(`After ${field} Upload:`, updatedData); // Debug state after upload
-        return updatedData;
-      });
-      toast.success("Image uploaded successfully!");
-    }
-  };
-
-  // Handle form submission with two endpoints
+  // Handle form submission
   const handleSubmit = async (e, formType) => {
     e.preventDefault();
     const submitKey =
@@ -262,35 +256,10 @@ const EditProfile = () => {
           firstName: profileData.firstName,
           lastName: profileData.lastName,
         };
-      } else {
-        API_URL = `${import.meta.env.VITE_BASE_URL}/member/edit-profile`;
-        payload = {
-          businessName: profileData.businessName,
-          contactNo: profileData.contactNo,
-          businesImg: profileData.businesImg,
-          backgroundImg: profileData.backgroundImg,
-          description: profileData.description,
-          location: profileData.location,
-          keyword: profileData.keyword,
-          category: profileData.category,
-        };
-        console.log("PATCH Payload:", payload); // Debug payload before sending
-      }
-
-      const response = await axios.patch(API_URL, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      console.log("PATCH Response:", response.data); // Debug response from backend
-
-      toast.success(
-        response.data.message ||
-          `${
-            formType === "personal" ? "Personal" : "Business"
-          } profile updated successfully!`
-      );
-      setEditField(null);
-
-      if (formType === "personal") {
+        const response = await axios.patch(API_URL, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        toast.success(response.data.message || "Personal profile updated!");
         const updatedName = response.data.data.name.split(" ");
         setProfileData((prev) => ({
           ...prev,
@@ -303,7 +272,32 @@ const EditProfile = () => {
           lastName: updatedName.slice(1).join(" ") || prev.lastName,
         }));
       } else {
-        const updatedProfile = response.data.updatedProfile || {};
+        API_URL = `${import.meta.env.VITE_BASE_URL}/member/edit-profile`;
+        const formData = new FormData();
+        formData.append("businessName", profileData.businessName);
+        formData.append("contactNo", JSON.stringify(profileData.contactNo));
+        formData.append("description", profileData.description);
+        formData.append("location", profileData.location);
+        formData.append("keyword", JSON.stringify(profileData.keyword));
+        formData.append("categoryId", profileData.categoryId);
+
+        if (imageFiles.businesImg) {
+          formData.append("businesImg", imageFiles.businesImg);
+        }
+        if (imageFiles.backgroundImg) {
+          formData.append("backgroundImg", imageFiles.backgroundImg);
+        }
+
+        const response = await axios.patch(API_URL, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        toast.success(response.data.message || "Business profile updated!");
+        const updatedProfile =
+          response.data.updatedProfile || response.data.data || {};
+        const categoryFromUpdate = updatedProfile.categories?.[0] || {};
         const syncedData = {
           businessName: updatedProfile.businessName || profileData.businessName,
           contactNo: Array.isArray(updatedProfile.contactNo)
@@ -317,33 +311,30 @@ const EditProfile = () => {
           keyword: Array.isArray(updatedProfile.keyword)
             ? updatedProfile.keyword
             : profileData.keyword,
-          category: updatedProfile.category || profileData.category,
+          category: categoryFromUpdate.name || profileData.category,
+          categoryId: categoryFromUpdate.id || profileData.categoryId,
           createdAt: updatedProfile.createdAt || profileData.createdAt,
           firstName: profileData.firstName,
           lastName: profileData.lastName,
         };
         setProfileData(syncedData);
         setOriginalData(syncedData);
-        setSelectedCategory({
-          id: updatedProfile.categories?.[0]?.id || selectedCategory.id,
-          name: updatedProfile.category || selectedCategory.name,
+        setImagePreviews({
+          businesImg: syncedData.businesImg,
+          backgroundImg: syncedData.backgroundImg,
         });
-        console.log("Synced Profile Data:", syncedData); // Debug synced data
+        setImageFiles({ businesImg: null, backgroundImg: null });
+        setSelectedCategory({
+          id: categoryFromUpdate.id || profileData.categoryId,
+          name: categoryFromUpdate.name || profileData.category,
+        });
       }
+      setEditField(null);
     } catch (error) {
       console.error(`❌ ${formType} PATCH Error:`, error);
-      const errorMessage =
-        error.response?.data?.message ||
-        `Failed to update ${formType} profile.`;
-      toast.error(errorMessage);
-      if (formType === "business") {
-        // Fallback to local state if backend fails to save images
-        setProfileData((prev) => ({
-          ...prev,
-          businesImg: prev.businesImg,
-          backgroundImg: prev.backgroundImg,
-        }));
-      }
+      toast.error(
+        error.response?.data?.message || `Failed to update ${formType} profile.`
+      );
     } finally {
       setButtonActive((prev) => ({ ...prev, [submitKey]: false }));
     }
@@ -365,6 +356,7 @@ const EditProfile = () => {
         : {
             businessName: originalData?.businessName || "",
             category: originalData?.category || "",
+            categoryId: originalData?.categoryId || "",
             keyword: originalData?.keyword || [],
             location: originalData?.location || "",
             description: originalData?.description || "",
@@ -374,9 +366,15 @@ const EditProfile = () => {
           };
 
     setProfileData((prevData) => ({ ...prevData, ...resetFields }));
+    setImageFiles({ businesImg: null, backgroundImg: null });
+    setImagePreviews({
+      businesImg: resetFields.businesImg || "",
+      backgroundImg: resetFields.backgroundImg || "",
+    });
+
     if (formType === "business") {
       setSelectedCategory({
-        id: originalData?.categories?.[0]?.id || "",
+        id: resetFields.categoryId || "",
         name: resetFields.category || "",
       });
     }
@@ -416,19 +414,22 @@ const EditProfile = () => {
     setShowShareOptions(false);
   };
 
-  // Loader component
-  const Loader = () => (
-    <div className="flex space-x-2 items-center">
-      <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce"></div>
-      <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce delay-200"></div>
-      <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce delay-400"></div>
+  // Loader component with text
+  const LoaderWithText = () => (
+    <div className="flex items-center gap-2">
+      <span className="text-white text-[12px] sm:text-[15px]">Saving...</span>
+      <div className="flex space-x-1">
+        <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
+        <div className="w-2 h-2 bg-white rounded-full animate-bounce delay-200"></div>
+        <div className="w-2 h-2 bg-white rounded-full animate-bounce delay-400"></div>
+      </div>
     </div>
   );
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-white">
-        <Loader />
+        <LoaderWithText />
       </div>
     );
   }
@@ -447,17 +448,15 @@ const EditProfile = () => {
         pauseOnHover
       />
       <div className="relative w-full h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px] overflow-hidden">
-        {imageLoading.backgroundImg ? (
-          <div className="absolute inset-0 flex justify-center items-center bg-gray-200 bg-opacity-50">
-            <Loader />
-          </div>
-        ) : (
-          <img
-            src={profileData.backgroundImg || ProfileBg}
-            className="w-full h-full object-cover object-center"
-            alt="Background"
-          />
-        )}
+        <img
+          src={
+            imagePreviews.backgroundImg ||
+            profileData.backgroundImg ||
+            ProfileBg
+          }
+          className="w-full h-full object-cover object-center"
+          alt="Background"
+        />
         <FiEdit3
           className="absolute right-4 top-4 text-white text-[20px] sm:text-[24px] cursor-pointer z-10 bg-black bg-opacity-50 p-1 rounded-full"
           onClick={() => {
@@ -474,23 +473,19 @@ const EditProfile = () => {
       <div className="relative w-full max-w-5xl mx-auto -mt-16 sm:-mt-20 md:-mt-24 lg:-mt-28 px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center sm:flex-row sm:items-end sm:justify-between">
           <figure className="relative flex flex-col items-center">
-            {imageLoading.businesImg ? (
-              <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 flex justify-center items-center">
-                <Loader />
-              </div>
-            ) : (
-              <img
-                src={profileData.businesImg || ProfileImg}
-                alt="Profile-photo"
-                className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-full object-cover border-4 border-white shadow-lg"
-              />
-            )}
+            <img
+              src={
+                imagePreviews.businesImg || profileData.businesImg || ProfileImg
+              }
+              alt="Profile-photo"
+              className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-full object-cover border-4 border-white shadow-lg"
+            />
             <figcaption className="text-center mt-2 text-[#6A7368]">
               <h4 className="text-sm sm:text-base md:text-lg font-semibold">
                 {profileData.businessName}
               </h4>
               <p className="text-xs sm:text-sm">
-                {selectedCategory.name || "Clothing and Accessories"}
+                {selectedCategory.name || "Select a category"}
               </p>
             </figcaption>
           </figure>
@@ -531,6 +526,7 @@ const EditProfile = () => {
                 <div className="flex justify-between gap-4">
                   <input
                     type="text"
+                    ref={inputRefs.firstName}
                     disabled={editField !== "firstName"}
                     value={profileData.firstName || ""}
                     onChange={(e) =>
@@ -561,6 +557,7 @@ const EditProfile = () => {
                 <div className="flex justify-between gap-4">
                   <input
                     type="text"
+                    ref={inputRefs.lastName}
                     disabled={editField !== "lastName"}
                     value={profileData.lastName || ""}
                     onChange={(e) =>
@@ -650,15 +647,18 @@ const EditProfile = () => {
               </button>
               <button
                 type="submit"
-                className={`border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform flex items-center gap-2 ${
+                className={`border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform flex items-center justify-center gap-2 ${
                   buttonActive.personalSubmit
                     ? "scale-95 bg-[#043D12] text-white"
                     : "hover:text-white hover:bg-[#043D12]"
                 }`}
                 disabled={buttonActive.personalSubmit}
               >
-                Save Changes
-                {buttonActive.personalSubmit && <Loader />}
+                {buttonActive.personalSubmit ? (
+                  <LoaderWithText />
+                ) : (
+                  "Save Changes"
+                )}
               </button>
             </div>
           </div>
@@ -674,6 +674,7 @@ const EditProfile = () => {
               <div className="flex justify-between gap-4">
                 <input
                   type="text"
+                  ref={inputRefs.businessName}
                   disabled={editField !== "businessName"}
                   value={profileData.businessName || ""}
                   onChange={(e) =>
@@ -712,9 +713,9 @@ const EditProfile = () => {
                   }`}
                   disabled={editField !== "category"}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-grow">
                     <MdOutlineCategory className="text-[#6A7368] text-[18px]" />
-                    <span className="text-sm truncate max-w-[80%]">
+                    <span className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">
                       {selectedCategory.name || "Select Business Category"}
                     </span>
                   </div>
@@ -771,6 +772,7 @@ const EditProfile = () => {
               <div className="flex justify-between gap-4">
                 <input
                   type="text"
+                  ref={inputRefs.keyword}
                   disabled={editField !== "keyword"}
                   value={profileData.keyword.join(",") || ""}
                   onChange={(e) => handleInputChange("keyword", e.target.value)}
@@ -799,6 +801,7 @@ const EditProfile = () => {
               <div className="flex justify-between gap-4">
                 <input
                   type="text"
+                  ref={inputRefs.location}
                   disabled={editField !== "location"}
                   value={profileData.location || ""}
                   onChange={(e) =>
@@ -840,15 +843,18 @@ const EditProfile = () => {
               </button>
               <button
                 type="submit"
-                className={`border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform flex items-center gap-2 ${
+                className={`border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform flex items-center justify-center gap-2 ${
                   buttonActive.businessSubmit
                     ? "scale-95 bg-[#043D12] text-white"
                     : "hover:text-white hover:bg-[#043D12]"
                 }`}
                 disabled={buttonActive.businessSubmit}
               >
-                Save Changes
-                {buttonActive.businessSubmit && <Loader />}
+                {buttonActive.businessSubmit ? (
+                  <LoaderWithText />
+                ) : (
+                  "Save Changes"
+                )}
               </button>
             </div>
           </div>

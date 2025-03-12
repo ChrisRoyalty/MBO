@@ -14,6 +14,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import BusinessImg from "../../assets/businessImg.jpeg";
 import NetworkError from "../NetworkError";
 import Footer from "../Footer";
+import Start from "../home/Start";
 
 const BASE_URL = "https://mbo.bookbank.com.ng";
 
@@ -412,6 +413,7 @@ const ProfilePage = () => {
           </div>
         </div>
       </div>
+      <Start />
       <Footer />
     </div>
   );

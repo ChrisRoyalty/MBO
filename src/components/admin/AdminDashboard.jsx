@@ -34,11 +34,11 @@ const navItems = [
       { to: "/admin/manage-subscriptions", label: "Subscription" },
     ],
   },
-  {
-    to: "/admin/analytics",
-    icon: <img src={AnalyticsIcon} alt="Analytics" className="w-6 h-6" />,
-    label: "Analytics",
-  },
+  // {
+  //   to: "/admin/analytics",
+  //   icon: <img src={AnalyticsIcon} alt="Analytics" className="w-6 h-6" />,
+  //   label: "Analytics",
+  // },
   {
     to: "/admin/manage-notifications",
     icon: <img src={NotificationIcon} alt="Notification" className="w-6 h-6" />,

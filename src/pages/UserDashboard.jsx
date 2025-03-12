@@ -226,7 +226,7 @@ const UserDashboard = () => {
           x: isSidebarOpen || window.innerWidth >= 1024 ? "0%" : "-100%",
         }}
         transition={{ duration: 0.5, ease: "easeInOut" }}
-        className={`fixed lg:static z-50 top-0 left-0 lg:w-[25%] max-md:h-screen py-14 px-10 md:h-full h-auto bg-white border-r border-black shadow-2xl ${
+        className={`fixed lg:static z-50 top-0 left-0 lg:w-[25%] max-md:h-screen py-14 px-10 md:h-full h-auto bg-white shadow-xl ${
           isSidebarOpen ? "absolute md:relative" : "absolute"
         } flex flex-col`}
       >

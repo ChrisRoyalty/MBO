@@ -468,7 +468,7 @@ const ManageAdmin = () => {
                   className="w-full text-left px-3 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100 text-sm"
                   onClick={handleResetPassword}
                 >
-                  <FiLock /> Change Password
+                  <FiLock /> Reset Password
                 </button>
               </div>
             )}
@@ -643,53 +643,123 @@ const ManageAdmin = () => {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div
             ref={modalRef}
-            className="bg-white rounded-[11px] shadow-lg w-full max-w-[600px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
-            style={{ marginLeft: "auto", marginRight: "auto" }}
+            className="bg-white rounded-[11px] shadow-lg w-full max-w-md sm:w-[400px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg sm:text-[20px] font-semibold text-[#6A7368]">
-                New User
+                New Admin
               </h2>
               <AiOutlineClose
                 className="text-xl sm:text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
                 onClick={closeModal}
               />
             </div>
-            <form onSubmit={handleAddUser}>
+            <form onSubmit={handleAddAdmin}>
               <div className="space-y-4">
-                {/* Form fields */}
+                <div>
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
+                    First Name
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="firstname"
+                      value={formData.firstname}
+                      onChange={handleInputChange}
+                      placeholder="Enter first name"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
+                      required
+                    />
+                    <FiUser className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
+                    Last Name
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="lastname"
+                      value={formData.lastname}
+                      onChange={handleInputChange}
+                      placeholder="Enter last name"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
+                      required
+                    />
+                    <FiUser className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="Enter email"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
+                      required
+                    />
+                    <FiMail className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      placeholder="Enter password"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
+                      required
+                    />
+                    <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
+                    <span
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <FiEyeOff /> : <FiEye />}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      placeholder="Confirm password"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
+                      required
+                    />
+                    <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
+                    <span
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                    >
+                      {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+                    </span>
+                  </div>
+                </div>
                 <button
                   type="submit"
-                  className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-[11px] hover:bg-[#032d0e] transition-colors text-sm sm:text-base flex items-center justify-center"
-                  disabled={isSubmitting}
+                  className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-[11px] hover:bg-[#032d0e] transition-colors text-sm sm:text-base"
                 >
-                  {isSubmitting ? (
-                    <span className="flex items-center gap-2">
-                      <svg
-                        className="animate-spin h-5 w-5 text-[#FFFDF2]"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Adding...
-                    </span>
-                  ) : (
-                    "Add User"
-                  )}
+                  Add Admin
                 </button>
               </div>
             </form>
@@ -789,6 +859,7 @@ const ManageAdmin = () => {
                       className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
+                    <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                     <span
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
                       onClick={() =>
@@ -813,6 +884,7 @@ const ManageAdmin = () => {
                       className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
+                    <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                     <span
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
                       onClick={() => setShowNewPassword(!showNewPassword)}
@@ -835,6 +907,7 @@ const ManageAdmin = () => {
                       className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
+                    <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                     <span
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
                       onClick={() =>

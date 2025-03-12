@@ -25,7 +25,8 @@ import {
   FiCheckCircle,
 } from "react-icons/fi";
 import { AiOutlineClose } from "react-icons/ai";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify"; // Import ToastContainer
+import "react-toastify/dist/ReactToastify.css"; // Ensure CSS is imported
 
 const Display = () => {
   const [timeRange, setTimeRange] = useState("daily");
@@ -43,6 +44,7 @@ const Display = () => {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] =
     useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [changePasswordFormData, setChangePasswordFormData] = useState({
     oldPassword: "",
     newPassword: "",
@@ -85,6 +87,7 @@ const Display = () => {
       setError("Not authenticated or missing token!");
       setLoading(false);
       navigate("/login", { replace: true });
+      toast.info("Redirecting to login..."); // This will now show
       return;
     }
 
@@ -151,6 +154,9 @@ const Display = () => {
             error.response?.data?.message || "Failed to fetch admin data."
           );
         }
+        toast.error(
+          error.response?.data?.message || "Failed to fetch admin data."
+        ); // This will now show
       } finally {
         setLoading(false);
       }
@@ -252,8 +258,10 @@ const Display = () => {
       toast.error("New passwords do not match.");
       return;
     }
+
+    setIsSubmitting(true);
+
     try {
-      console.log("Token being used:", token);
       const response = await axios.patch(
         `${import.meta.env.VITE_BASE_URL}/member/change-password`,
         {
@@ -264,8 +272,7 @@ const Display = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("Change Password Response:", response.data);
-      toast.success("Password changed successfully.");
+      toast.success(response.data.message || "Password changed successfully.");
       setIsChangePasswordModalOpen(false);
       setChangePasswordFormData({
         oldPassword: "",
@@ -281,6 +288,8 @@ const Display = () => {
       toast.error(
         error.response?.data?.message || "Failed to change password."
       );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -460,6 +469,20 @@ const Display = () => {
 
   return (
     <div className="flex flex-col gap-4 relative px-4 sm:px-8 min-h-screen bg-white overflow-y-auto">
+      {/* Add ToastContainer here */}
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        style={{ zIndex: 9999 }}
+      />
+
       {/* Header */}
       <div className="h-[12vh] p-4 sm:p-8 text-[#6A7368] flex flex-col sm:flex-row justify-between items-center gap-2">
         {/* Welcome Section */}
@@ -657,7 +680,6 @@ const Display = () => {
                     className="w-full h-10 sm:h-11 px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-xl outline-none bg-transparent text-sm"
                     required
                   />
-                  <FiKey className="absolute right-8 sm:right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                   <span
                     className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
                     onClick={() => setShowOldPassword(!showOldPassword)}
@@ -681,7 +703,6 @@ const Display = () => {
                     className="w-full h-10 sm:h-11 px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-xl outline-none bg-transparent text-sm"
                     required
                   />
-                  <FiKey className="absolute right-8 sm:right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                   <span
                     className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
                     onClick={() => setShowNewPassword(!showNewPassword)}
@@ -705,7 +726,6 @@ const Display = () => {
                     className="w-full h-10 sm:h-11 px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-xl outline-none bg-transparent text-sm"
                     required
                   />
-                  <FiKey className="absolute right-8 sm:right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                   <span
                     className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
                     onClick={() =>
@@ -738,10 +758,19 @@ const Display = () => {
 
               <button
                 type="submit"
-                className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-xl hover:bg-[#032d0e] transition-colors text-sm sm:text-base"
-                disabled={passwordValidation !== "Password is valid"}
+                className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-xl hover:bg-[#032d0e] transition-colors text-sm sm:text-base flex items-center justify-center"
+                disabled={
+                  passwordValidation !== "Password is valid" || isSubmitting
+                }
               >
-                Save Password
+                {isSubmitting ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-2 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Saving...</span>
+                  </div>
+                ) : (
+                  "Save Password"
+                )}
               </button>
             </form>
           </div>

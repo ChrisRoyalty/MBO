@@ -156,7 +156,7 @@ const BusinessProfile = () => {
               >
                 <div className="flex items-center gap-2">
                   <MdOutlineCategory className="text-[#6A7368] text-[18px]" />
-                  <span className="text-sm md:text-base truncate max-w-[80%]">
+                  <span className="text-sm md:text-base">
                     {selectedCategory.name || "Select Business Category"}
                   </span>
                 </div>

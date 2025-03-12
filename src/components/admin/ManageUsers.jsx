@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import { CiUser } from "react-icons/ci";
-import { BiPlus, BiSearch } from "react-icons/bi";
+import { BiSearch } from "react-icons/bi";
 import { RiEqualizerLine } from "react-icons/ri";
 import { BsThreeDots } from "react-icons/bs";
 import {
@@ -13,7 +13,6 @@ import {
   FiTrash2,
   FiUser,
   FiMail,
-  FiKey,
   FiEye,
   FiEyeOff,
   FiAlertCircle,
@@ -385,26 +384,6 @@ const ManageUsers = () => {
     toast.success(`Email client opened for ${user.email}`);
   };
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setFormData({
-      firstname: "",
-      lastname: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    });
-    setShowPassword(false);
-    setShowConfirmPassword(false);
-    setError(null);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
   const handleResetInputChange = (e) => {
     const { name, value } = e.target;
     setResetFormData((prev) => ({ ...prev, [name]: value }));
@@ -652,13 +631,6 @@ const ManageUsers = () => {
                 Suspended
               </button>
             </div>
-            <button
-              className="flex items-center gap-2 border-[1px] border-[#6A7368] px-4 py-2 rounded-[11px] bg-white hover:bg-[#043D12] hover:text-[#FFFDF2] transition-colors shadow-md text-sm sm:text-base"
-              onClick={openModal}
-            >
-              <BiPlus />
-              Add User
-            </button>
           </div>
         </div>
 
@@ -910,113 +882,6 @@ const ManageUsers = () => {
                 onClick={closeModal}
               />
             </div>
-            <form onSubmit={handleAddUser}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
-                    First Name
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      name="firstname"
-                      value={formData.firstname}
-                      onChange={handleInputChange}
-                      placeholder="Enter first name"
-                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
-                      required
-                    />
-                    <FiUser className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
-                    Last Name
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      name="lastname"
-                      value={formData.lastname}
-                      onChange={handleInputChange}
-                      placeholder="Enter last name"
-                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
-                      required
-                    />
-                    <FiUser className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
-                    Email
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder="Enter email"
-                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
-                      required
-                    />
-                    <FiMail className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      placeholder="Enter password"
-                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
-                      required
-                    />
-                    <span
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <FiEyeOff /> : <FiEye />}
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
-                    Confirm Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
-                      placeholder="Confirm password"
-                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
-                      required
-                    />
-                    <span
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-[#6A7368]"
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
-                    >
-                      {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-[11px] hover:bg-[#032d0e] transition-colors text-sm sm:text-base"
-                >
-                  Add User
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
