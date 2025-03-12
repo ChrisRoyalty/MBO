@@ -90,6 +90,9 @@ const Footer = () => {
             <Link to="terms-of-service" className="hover:text-[17px]">
               Terms of service
             </Link>
+            <Link to="help-and-support" className="hover:text-[17px]">
+              Help & Support
+            </Link>
           </div>
         </motion.nav>
       </motion.div>

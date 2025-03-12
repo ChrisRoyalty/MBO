@@ -8,7 +8,6 @@ import { CiUser } from "react-icons/ci";
 import { BiPlus, BiSearch } from "react-icons/bi";
 import { IoArrowDown } from "react-icons/io5";
 import { RiEqualizerLine } from "react-icons/ri";
-import { BsThreeDots } from "react-icons/bs";
 import {
   FiLock,
   FiTrash2,
@@ -22,7 +21,7 @@ import {
 import { AiOutlineClose } from "react-icons/ai";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import SubIcon from "../../assets/sub.svg";
 const ManageSubscription = () => {
   const [activeSubscriptions, setActiveSubscriptions] = useState([]);
   const [expiredSubscriptions, setExpiredSubscriptions] = useState([]);
@@ -38,6 +37,7 @@ const ManageSubscription = () => {
   const [showResetButton, setShowResetButton] = useState(false);
   const [activePlan, setActivePlan] = useState(null);
   const [deletePlan, setDeletePlan] = useState(null);
+
   const [editFormData, setEditFormData] = useState({
     name: "",
     description: "",
@@ -58,8 +58,7 @@ const ManageSubscription = () => {
   });
   const [dateFilter, setDateFilter] = useState("All Time");
   const [showDateDropdown, setShowDateDropdown] = useState(false);
-  const [activeMenuIndex, setActiveMenuIndex] = useState(null);
-  const [isSubmittingReset, setIsSubmittingReset] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -72,7 +71,6 @@ const ManageSubscription = () => {
   const editModalRef = useRef(null);
   const deleteModalRef = useRef(null);
   const dateDropdownRef = useRef(null);
-  const dropdownRefs = useRef([]);
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
@@ -234,18 +232,11 @@ const ManageSubscription = () => {
       ) {
         setShowDateDropdown(false);
       }
-      if (
-        activeMenuIndex !== null &&
-        dropdownRefs.current[activeMenuIndex] &&
-        !dropdownRefs.current[activeMenuIndex].contains(event.target)
-      ) {
-        setActiveMenuIndex(null);
-      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [activeMenuIndex]);
+  }, []);
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -500,7 +491,7 @@ const ManageSubscription = () => {
       toast.error("New passwords do not match.");
       return;
     }
-    setIsSubmittingReset(true);
+    setIsSubmitting(true);
     try {
       const response = await axios.patch(
         `${import.meta.env.VITE_BASE_URL}/member/change-password`,
@@ -511,16 +502,14 @@ const ManageSubscription = () => {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success("Password changed successfully!");
-      setTimeout(() => {
-        setIsResetModalOpen(false);
-        setResetFormData({
-          oldPassword: "",
-          newPassword: "",
-          confirmNewPassword: "",
-        });
-        setPasswordValidation("");
-      }, 1000);
+      toast.success(response.data.message || "Password changed successfully!");
+      setIsResetModalOpen(false);
+      setResetFormData({
+        oldPassword: "",
+        newPassword: "",
+        confirmNewPassword: "",
+      });
+      setPasswordValidation("");
     } catch (error) {
       console.error(
         "❌ Error Changing Password:",
@@ -530,27 +519,8 @@ const ManageSubscription = () => {
         error.response?.data?.message || "Failed to change password."
       );
     } finally {
-      setIsSubmittingReset(false);
+      setIsSubmitting(false);
     }
-  };
-
-  const toggleMenu = (index) => {
-    setActiveMenuIndex(activeMenuIndex === index ? null : index);
-  };
-
-  const getDropdownPosition = (index) => {
-    const button = dropdownRefs.current[index];
-    if (!button) return { top: "100%", bottom: "auto" };
-
-    const rect = button.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    const spaceBelow = viewportHeight - rect.bottom;
-    const dropdownHeight = 100;
-
-    if (spaceBelow < dropdownHeight) {
-      return { top: "auto", bottom: "100%" };
-    }
-    return { top: "100%", bottom: "auto" };
   };
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -760,7 +730,7 @@ const ManageSubscription = () => {
                     } hover:bg-gray-100 transition-colors`}
                   >
                     <td className="py-4 px-4 sm:px-6 flex items-center gap-2">
-                      <FiUser className="text-[#6A7368]" />
+                      <img src={SubIcon} alt="Subscribe_Icon" />
                       {sub.subscription.name}
                     </td>
                     <td className="py-4 px-4 sm:px-6">{sub.email}</td>
@@ -787,38 +757,8 @@ const ManageSubscription = () => {
                     <td className="py-4 px-4 sm:px-6">
                       ₦{sub.subscription.price}
                     </td>
-                    <td className="py-4 px-4 sm:px-6 flex justify-between items-center">
+                    <td className="py-4 px-4 sm:px-6">
                       {formatDate(sub.subscriptionEndDate)}
-                      <div
-                        ref={(el) => (dropdownRefs.current[index] = el)}
-                        className="relative"
-                      >
-                        <BsThreeDots
-                          className="text-[18px] cursor-pointer hover:text-[#043D12] transition-colors"
-                          onClick={() => toggleMenu(index)}
-                        />
-                        {activeMenuIndex === index && (
-                          <div
-                            className="absolute right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-40 overflow-y-auto"
-                            style={{
-                              minWidth: "160px",
-                              top: getDropdownPosition(index).top,
-                              bottom: getDropdownPosition(index).bottom,
-                            }}
-                          >
-                            <button
-                              className="w-full text-left px-4 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100 text-sm"
-                              onClick={() =>
-                                navigate(
-                                  `/community/profile/${sub.profile?.id || ""}`
-                                )
-                              }
-                            >
-                              <FiUser /> View Profile
-                            </button>
-                          </div>
-                        )}
-                      </div>
                     </td>
                   </tr>
                 ))
@@ -841,19 +781,13 @@ const ManageSubscription = () => {
         {/* Card Layout for Mobile */}
         <div className="sm:hidden space-y-4">
           {currentItems.length > 0 ? (
-            currentItems.map((sub, index) => (
+            currentItems.map((sub) => (
               <div
                 key={sub.id}
                 className="border border-gray-200 rounded-[11px] p-4 bg-white shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-semibold">
-                    {sub.subscription.name}
-                  </span>
-                  <BsThreeDots
-                    className="text-lg cursor-pointer hover:text-[#043D12]"
-                    onClick={() => toggleMenu(index)}
-                  />
+                <div className="text-sm font-semibold">
+                  {sub.subscription.name}
                 </div>
                 <div className="mt-2 text-sm space-y-1">
                   <p>
@@ -880,18 +814,6 @@ const ManageSubscription = () => {
                     <strong>Date:</strong> {formatDate(sub.subscriptionEndDate)}
                   </p>
                 </div>
-                {activeMenuIndex === index && (
-                  <div className="mt-2 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                    <button
-                      className="w-full text-left px-3 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100 text-sm"
-                      onClick={() =>
-                        navigate(`/community/profile/${sub.profile?.id || ""}`)
-                      }
-                    >
-                      <FiUser /> View Profile
-                    </button>
-                  </div>
-                )}
               </div>
             ))
           ) : (
@@ -939,7 +861,7 @@ const ManageSubscription = () => {
 
       {/* Edit Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+        <div className=" fixed inset-0 bg-black/60 flex items-center justify-center z-0 px-4">
           <div
             ref={editModalRef}
             className="bg-white rounded-[11px] shadow-lg w-full max-w-[600px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto flex flex-col sm:flex-row"
@@ -1013,7 +935,7 @@ const ManageSubscription = () => {
                     </label>
                     <div className="relative">
                       <input
-                        type="number"
+                        type="text"
                         name="price"
                         value={editFormData.price}
                         onChange={handleEditFormChange}
@@ -1108,10 +1030,9 @@ const ManageSubscription = () => {
           </div>
         </div>
       )}
-
       {/* Reset Password Modal */}
       {isResetModalOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-0 px-4">
           <div
             ref={resetModalRef}
             className="bg-white rounded-[11px] shadow-lg w-full max-w-md sm:w-[400px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
@@ -1227,11 +1148,10 @@ const ManageSubscription = () => {
                   type="submit"
                   className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-[11px] hover:bg-[#032d0e] transition-colors text-sm sm:text-base flex items-center justify-center"
                   disabled={
-                    passwordValidation !== "Password is valid" ||
-                    isSubmittingReset
+                    passwordValidation !== "Password is valid" || isSubmitting
                   }
                 >
-                  {isSubmittingReset ? (
+                  {isSubmitting ? (
                     <span className="flex items-center gap-2">
                       <svg
                         className="animate-spin h-5 w-5 text-[#FFFDF2]"

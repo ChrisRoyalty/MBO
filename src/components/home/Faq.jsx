@@ -70,7 +70,7 @@ const Faq = () => {
   ];
 
   return (
-    <div className="w-full bg-[#FAFEF4] md:py-18 py-10">
+    <div className="w-full bg-[#FFFDF2] md:py-18 py-10">
       <div className="container mx-auto px-[5vw] flex flex-col gap-10">
         <div className="w-full flex flex-col lg:gap-4 gap-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-12">

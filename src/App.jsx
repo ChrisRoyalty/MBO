@@ -34,7 +34,9 @@ import ManageUsers from "./components/admin/ManageUsers";
 import ManageSubscription from "./components/admin/ManageSubscription";
 import Support from "./components/admin/Support";
 import Notification from "./components/admin/Notification";
-import HelpAndSupport from "./components/user-dashboard/HelpAndSupport";
+import HelpAndSupport from "./pages/HelpAndSupport";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 function App() {
   return (
@@ -44,8 +46,12 @@ function App() {
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/create-account" element={<Signup />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
+          <Route path="/help-and-support" element={<HelpAndSupport />} />
           <Route path="community" element={<Community />}>
             <Route index element={<CommunityMain />} />
             <Route path="all-businesses" element={<AllBusiness />} />
@@ -54,6 +60,7 @@ function App() {
             {/* Updated to dynamic route with :id */}
           </Route>
         </Route>
+
         {/* Protected Routes */}
         <Route
           path="/subscribe"

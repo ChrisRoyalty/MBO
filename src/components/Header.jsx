@@ -20,8 +20,13 @@ const navItemVariants = {
 };
 
 const Header = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+
+  // Check if the current route is "/" or "/help-and-support"
+  const isHomeActive =
+    location.pathname === "/" || location.pathname === "/help-and-support";
+  const [isOpen, setIsOpen] = useState(false);
+  // const location = useLocation();
   const navigate = useNavigate();
   const { id } = useParams();
   const [profile, setProfile] = useState(null);
