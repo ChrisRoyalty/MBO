@@ -145,10 +145,10 @@ const Subscribe = () => {
             subscriptions.map((subscription) => (
               <div
                 key={subscription.id}
-                className="details w-full px-10 py-10 bg-[#FFFDF2] shadow-lg rounded-lg lg:flex"
+                className="details w-[50vw] px-10 py-10 bg-[#FFFDF2] shadow-lg rounded-lg lg:flex"
               >
                 <div className="amount w-full flex flex-col items-center lg:pt-8">
-                  <h1 className="lg:text-[50px] text-[45px] text-[#043D12] flex items-center gap-0">
+                  <h1 className="lg:text-[30px] text-[45px] text-[#043D12] flex items-center gap-0">
                     <TbCurrencyNaira />
                     {subscription.price}
                   </h1>
@@ -156,7 +156,7 @@ const Subscribe = () => {
                     YEARLY
                   </span>
                 </div>
-                <div className=" flex flex-col gap-4 items-center mt-6">
+                <div className="w-full flex flex-col gap-4 items-center mt-6">
                   <ul className="w-fit flex flex-col gap-4">
                     <li className="flex items-center gap-4">
                       <Good />
