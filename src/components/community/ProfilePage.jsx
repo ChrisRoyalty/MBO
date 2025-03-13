@@ -1,4 +1,3 @@
-// src/components/community/ProfilePage.jsx
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
@@ -16,9 +15,7 @@ import NetworkError from "../NetworkError";
 import Footer from "../Footer";
 import Start from "../home/Start";
 
-const BASE_URL = "https://mbo.bookbank.com.ng";
-
-// Modal Component (unchanged, but simplified imports)
+// Modal Component (for viewing business details)
 const Modal = ({ business, onClose }) => {
   if (!business) return null;
 
@@ -100,10 +97,149 @@ const Modal = ({ business, onClose }) => {
   );
 };
 
+// Report Modal Component
+const ReportModal = ({ profile, onClose }) => {
+  const [reportData, setReportData] = useState({
+    fullName: "",
+    email: "",
+    issueType: "Complaint",
+    issueDescription: "",
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setReportData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Report submitted:", reportData);
+    alert("Report submitted successfully!");
+    onClose();
+  };
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 bg-black/75 bg-opacity-50 flex justify-center items-center z-50"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      >
+        <motion.div
+          className="bg-[#FFFDF2] p-6 rounded-lg shadow-lg w-full max-w-md"
+          initial={{ scale: 0.8 }}
+          animate={{ scale: 1 }}
+          exit={{ scale: 0.8 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">
+              Why do you want to report this profile
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+          <form onSubmit={handleSubmit}>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  FULL NAME
+                </label>
+                <input
+                  type="text"
+                  name="fullName"
+                  value={reportData.fullName}
+                  onChange={handleInputChange}
+                  placeholder="Woody"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#043D12]"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  EMAIL
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={reportData.email}
+                  onChange={handleInputChange}
+                  placeholder="devplay@chibuke.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#043D12]"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  ISSUE TYPE
+                </label>
+                <select
+                  name="issueType"
+                  value={reportData.issueType}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#043D12]"
+                  required
+                >
+                  <option value="Complaint">Complaint</option>
+                  <option value="Spam">Spam</option>
+                  <option value="Inappropriate Content">
+                    Inappropriate Content
+                  </option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  TELL US THE ISSUE
+                </label>
+                <textarea
+                  name="issueDescription"
+                  value={reportData.issueDescription}
+                  onChange={handleInputChange}
+                  placeholder="Type your issue here..."
+                  rows="4"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#043D12]"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-2 bg-[#043D12] text-white rounded-md hover:bg-[#032d0e] transition-colors"
+              >
+                SEND REPORT
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
 const ProfilePage = () => {
   const { id } = useParams();
   const [profile, setProfile] = useState(null);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -360,9 +496,27 @@ const ProfilePage = () => {
                       year: "numeric",
                     })}
                   </h5>
-                  <p className="text-[13px] md:text-[14px] text-[#6A7368] cursor-pointer hover:text-[#043D12]">
+                  <motion.p
+                    className="text-[16px] text-[#6A7368] cursor-pointer font-bold"
+                    onClick={() => setIsReportModalOpen(true)}
+                    whileHover={{
+                      scale: 1.1,
+                      color: "#032d0e",
+                      fontWeight: 600,
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                    animate={{
+                      scale: [1, 1.05, 1],
+                      transition: {
+                        duration: 1.5,
+                        repeat: Infinity,
+                        repeatType: "reverse",
+                      },
+                    }}
+                    style={{ display: "inline-block" }}
+                  >
                     Report
-                  </p>
+                  </motion.p>
                 </div>
               </div>
             </div>
@@ -413,6 +567,12 @@ const ProfilePage = () => {
           </div>
         </div>
       </div>
+      {isReportModalOpen && (
+        <ReportModal
+          profile={profile}
+          onClose={() => setIsReportModalOpen(false)}
+        />
+      )}
       <Start />
       <Footer />
     </div>

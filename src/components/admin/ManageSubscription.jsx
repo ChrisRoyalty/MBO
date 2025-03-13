@@ -22,6 +22,7 @@ import { AiOutlineClose } from "react-icons/ai";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import SubIcon from "../../assets/sub.svg";
+
 const ManageSubscription = () => {
   const [activeSubscriptions, setActiveSubscriptions] = useState([]);
   const [expiredSubscriptions, setExpiredSubscriptions] = useState([]);
@@ -41,7 +42,8 @@ const ManageSubscription = () => {
   const [editFormData, setEditFormData] = useState({
     name: "",
     description: "",
-    price: "",
+    price: "", // Formatted string (e.g., "10,000")
+    rawPrice: "", // Raw numeric string (e.g., "10000")
   });
   const [resetFormData, setResetFormData] = useState({
     oldPassword: "",
@@ -71,6 +73,13 @@ const ManageSubscription = () => {
   const editModalRef = useRef(null);
   const deleteModalRef = useRef(null);
   const dateDropdownRef = useRef(null);
+
+  // Utility function to format number with commas
+  const formatNumberWithCommas = (value) => {
+    if (!value) return "";
+    const number = value.replace(/[^0-9]/g, ""); // Remove non-numeric characters
+    return number.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
@@ -217,7 +226,7 @@ const ManageSubscription = () => {
       ) {
         setIsEditModalOpen(false);
         setActivePlan(null);
-        setEditFormData({ name: "", description: "", price: "" });
+        setEditFormData({ name: "", description: "", price: "", rawPrice: "" });
       }
       if (
         deleteModalRef.current &&
@@ -290,7 +299,8 @@ const ManageSubscription = () => {
       setEditFormData({
         name: plans[0].name,
         description: plans[0].description || "",
-        price: plans[0].price || "",
+        price: formatNumberWithCommas(plans[0].price.toString()),
+        rawPrice: plans[0].price.toString(),
       });
     }
   };
@@ -300,13 +310,14 @@ const ManageSubscription = () => {
     setEditFormData({
       name: plan.name,
       description: plan.description || "",
-      price: plan.price || "",
+      price: formatNumberWithCommas(plan.price.toString()),
+      rawPrice: plan.price.toString(),
     });
   };
 
   const handleAddPlan = () => {
     setActivePlan(null);
-    setEditFormData({ name: "", description: "", price: "" });
+    setEditFormData({ name: "", description: "", price: "", rawPrice: "" });
     setIsEditModalOpen(true);
   };
 
@@ -343,12 +354,22 @@ const ManageSubscription = () => {
 
   const handleEditFormChange = (e) => {
     const { name, value } = e.target;
-    setEditFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "price") {
+      const rawValue = value.replace(/[^0-9]/g, ""); // Strip non-numeric characters
+      const formattedValue = formatNumberWithCommas(rawValue);
+      setEditFormData((prev) => ({
+        ...prev,
+        price: formattedValue,
+        rawPrice: rawValue,
+      }));
+    } else {
+      setEditFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    if (!editFormData.name || !editFormData.price) {
+    if (!editFormData.name || !editFormData.rawPrice) {
       toast.error("Plan name and price are required.");
       return;
     }
@@ -360,7 +381,7 @@ const ManageSubscription = () => {
           `${import.meta.env.VITE_BASE_URL}/admin/edit-sub/${activePlan.id}`,
           {
             name: editFormData.name,
-            price: parseFloat(editFormData.price),
+            price: parseFloat(editFormData.rawPrice),
             description: editFormData.description,
           },
           { headers: { Authorization: `Bearer ${token}` } }
@@ -372,7 +393,7 @@ const ManageSubscription = () => {
               ? {
                   ...p,
                   name: editFormData.name,
-                  price: editFormData.price,
+                  price: parseFloat(editFormData.rawPrice),
                   description: editFormData.description,
                 }
               : p
@@ -386,7 +407,7 @@ const ManageSubscription = () => {
                   subscription: {
                     ...sub.subscription,
                     name: editFormData.name,
-                    price: editFormData.price,
+                    price: parseFloat(editFormData.rawPrice),
                     description: editFormData.description,
                   },
                 }
@@ -401,7 +422,7 @@ const ManageSubscription = () => {
                   subscription: {
                     ...sub.subscription,
                     name: editFormData.name,
-                    price: editFormData.price,
+                    price: parseFloat(editFormData.rawPrice),
                     description: editFormData.description,
                   },
                 }
@@ -416,7 +437,7 @@ const ManageSubscription = () => {
                   subscription: {
                     ...sub.subscription,
                     name: editFormData.name,
-                    price: editFormData.price,
+                    price: parseFloat(editFormData.rawPrice),
                     description: editFormData.description,
                   },
                 }
@@ -428,7 +449,7 @@ const ManageSubscription = () => {
           `${import.meta.env.VITE_BASE_URL}/admin/sub`,
           {
             name: editFormData.name,
-            price: parseFloat(editFormData.price),
+            price: parseFloat(editFormData.rawPrice),
             description: editFormData.description,
           },
           { headers: { Authorization: `Bearer ${token}` } }
@@ -437,7 +458,7 @@ const ManageSubscription = () => {
         const newPlan = {
           id: response.data.newSubscription.id,
           name: response.data.newSubscription.name,
-          price: response.data.newSubscription.price,
+          price: parseFloat(editFormData.rawPrice),
           description: response.data.newSubscription.description,
           createdAt: response.data.newSubscription.createdAt,
           updatedAt: response.data.newSubscription.updatedAt,
@@ -448,7 +469,7 @@ const ManageSubscription = () => {
       setTimeout(() => {
         setIsEditModalOpen(false);
         setActivePlan(null);
-        setEditFormData({ name: "", description: "", price: "" });
+        setEditFormData({ name: "", description: "", price: "", rawPrice: "" });
       }, 1000);
     } catch (error) {
       console.error("❌ Error Saving Plan:", error);
@@ -554,7 +575,7 @@ const ManageSubscription = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4 relative pb-16 px-4 sm:px-12 pt-8 overflow-y-auto z-0 min-h-screen">
+    <div className="flex flex-col gap-4 pb-16 px-4 sm:px-12 pt-6 overflow-y-auto z-0 min-h-screen relative">
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -861,7 +882,7 @@ const ManageSubscription = () => {
 
       {/* Edit Modal */}
       {isEditModalOpen && (
-        <div className=" fixed inset-0 bg-black/60 flex items-center justify-center z-0 px-4">
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-0 px-4">
           <div
             ref={editModalRef}
             className="bg-white rounded-[11px] shadow-lg w-full max-w-[600px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto flex flex-col sm:flex-row"
@@ -990,7 +1011,7 @@ const ManageSubscription = () => {
 
       {/* Delete Modal */}
       {isDeleteModalOpen && deletePlan && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div
             ref={deleteModalRef}
             className="bg-white rounded-[11px] shadow-lg w-full max-w-md sm:w-[400px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
@@ -1030,9 +1051,10 @@ const ManageSubscription = () => {
           </div>
         </div>
       )}
+
       {/* Reset Password Modal */}
       {isResetModalOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-0 px-4">
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-0 px-4">
           <div
             ref={resetModalRef}
             className="bg-white rounded-[11px] shadow-lg w-full max-w-md sm:w-[400px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
