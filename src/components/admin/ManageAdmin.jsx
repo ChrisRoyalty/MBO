@@ -411,7 +411,7 @@ const ManageAdmin = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4 relative pb-16 px-4 sm:px-12 pt-8 overflow-y-auto z-0 min-h-screen">
+    <div className="flex flex-col gap-4 relative pb-16 px-4 sm:px-12 pt-6 overflow-y-auto z-0 min-h-screen">
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -468,7 +468,7 @@ const ManageAdmin = () => {
                   className="w-full text-left px-3 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100 text-sm"
                   onClick={handleResetPassword}
                 >
-                  <FiLock /> Reset Password
+                  <FiLock /> Change Password
                 </button>
               </div>
             )}
@@ -477,7 +477,7 @@ const ManageAdmin = () => {
       </div>
 
       {/* Main Content */}
-      <main className="text-[#6A7368]">
+      <main className="text-[#6A7368] container">
         <div className="intro flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <p className="text-lg sm:text-[20px] font-semibold">Admin</p>
           <button
@@ -640,7 +640,7 @@ const ManageAdmin = () => {
 
       {/* Add Admin Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div
             ref={modalRef}
             className="bg-white rounded-[11px] shadow-lg w-full max-w-md sm:w-[400px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
@@ -769,7 +769,7 @@ const ManageAdmin = () => {
 
       {/* Delete Admin Modal */}
       {isDeleteModalOpen && deleteAdmin && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div
             ref={deleteModalRef}
             className="bg-white rounded-[11px] shadow-lg w-full max-w-md sm:w-[400px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
@@ -820,7 +820,7 @@ const ManageAdmin = () => {
 
       {/* Reset Password Modal */}
       {isResetModalOpen && resetUser && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div
             ref={resetModalRef}
             className="bg-white rounded-[11px] shadow-lg w-full max-w-md sm:w-[400px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
