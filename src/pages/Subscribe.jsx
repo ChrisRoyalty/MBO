@@ -12,12 +12,12 @@ const PUBLIC_KEY = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
 
 const Subscribe = () => {
   const navigate = useNavigate();
-  const [subscriptions, setSubscriptions] = useState([]); // Initial empty array
+  const [subscriptions, setSubscriptions] = useState([]);
   const [userId, setUserId] = useState(null);
   const [txRef, setTxRef] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
-  const [isLoadingSubscriptions, setIsLoadingSubscriptions] = useState(true); // New loading state
+  const [isLoadingSubscriptions, setIsLoadingSubscriptions] = useState(true);
 
   const user = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
@@ -40,7 +40,7 @@ const Subscribe = () => {
 
   useEffect(() => {
     const fetchSubscriptions = async () => {
-      setIsLoadingSubscriptions(true); // Start loading
+      setIsLoadingSubscriptions(true);
       try {
         console.log(
           "Fetching from:",
@@ -51,7 +51,7 @@ const Subscribe = () => {
         );
         console.log("API Response:", response.data);
         if (response.data && Array.isArray(response.data.data)) {
-          setSubscriptions(response.data.data); // Set even if empty
+          setSubscriptions(response.data.data);
         } else {
           console.warn("Unexpected response format:", response.data);
           toast.error("Invalid subscription data.");
@@ -60,7 +60,7 @@ const Subscribe = () => {
         console.error("Error fetching subscriptions:", error);
         toast.error("Failed to load subscriptions. Please refresh.");
       } finally {
-        setIsLoadingSubscriptions(false); // Done loading
+        setIsLoadingSubscriptions(false);
       }
     };
 
@@ -227,7 +227,7 @@ const Subscribe = () => {
               </div>
             ))
           ) : (
-            <p className="text-white">No subscriptions available.</p> // New message
+            <p className="text-white">No subscriptions available.</p>
           )}
         </div>
       </div>
