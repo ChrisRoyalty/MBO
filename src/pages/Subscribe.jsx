@@ -14,16 +14,20 @@ const Subscribe = () => {
   const navigate = useNavigate();
   const [subscriptions, setSubscriptions] = useState([]);
   const [userId, setUserId] = useState(null);
-  const [txRef, setTxRef] = useState(""); // Initialize as an empty string
-  const [selectedPlan, setSelectedPlan] = useState(null); // T
+  const [txRef, setTxRef] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
+  const [isLoadingSubscriptions, setIsLoadingSubscriptions] = useState(true);
 
   const user = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
 
   useEffect(() => {
+    console.log("Token from Redux:", token);
     if (token) {
       try {
         const decodedToken = jwtDecode(token);
+        console.log("Decoded token:", decodedToken);
         setUserId(decodedToken.id);
       } catch (error) {
         console.error("Invalid token:", error);
@@ -36,15 +40,27 @@ const Subscribe = () => {
 
   useEffect(() => {
     const fetchSubscriptions = async () => {
+      setIsLoadingSubscriptions(true);
       try {
+        console.log(
+          "Fetching from:",
+          `${import.meta.env.VITE_BASE_URL}/admin/get-sub`
+        );
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/admin/get-sub`
         );
+        console.log("API Response:", response.data);
         if (response.data && Array.isArray(response.data.data)) {
           setSubscriptions(response.data.data);
+        } else {
+          console.warn("Unexpected response format:", response.data);
+          toast.error("Invalid subscription data.");
         }
       } catch (error) {
         console.error("Error fetching subscriptions:", error);
+        toast.error("Failed to load subscriptions. Please refresh.");
+      } finally {
+        setIsLoadingSubscriptions(false);
       }
     };
 
@@ -56,7 +72,8 @@ const Subscribe = () => {
       toast.error("User details not found. Please log in.");
       return;
     }
-    setSelectedPlan(subscription.id); // Mark selected subscription
+    setSelectedPlan(subscription.id);
+    setIsLoadingPayment(true);
 
     try {
       const response = await axios.post(
@@ -77,30 +94,33 @@ const Subscribe = () => {
     } catch (error) {
       console.error("Error initiating payment:", error);
       toast.error("Failed to initiate payment. Please try again.");
+    } finally {
+      setIsLoadingPayment(false);
     }
   };
 
   return (
-    <div className="w-full overflow-x-auto bg-[#043D12] h-screen py-16 flex flex-col justify-center items-center">
+    <div className="bg-[#043D12] w-full h-screen py-16 flex flex-col justify-center items-center">
       <div className="container mx-auto px-[5vw] flex flex-col items-center gap-4">
         <h1 className="text-[#B4B3B3] lg:text-[30px] text-[20px] w-[90%] md:w-[60%] mx-auto text-center">
           Stay Connected, Stay Promoted: <br className="max-lg:hidden" /> Your
           All-in-One Plan
         </h1>
 
-        {/* Horizontal Scroll Container */}
-        <div className="w-[90%] md:w-[70%] overflow-x-auto whitespace-nowrap flex gap-6 py-4">
-          {subscriptions.length > 0 ? (
+        <div className="w-[90%] md:w-[70%] overflow-x-auto whitespace-nowrap flex gap-6 py-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 items-center justify-center">
+          {isLoadingSubscriptions ? (
+            <p className="text-white">Loading subscriptions...</p>
+          ) : subscriptions.length > 0 ? (
             subscriptions.map((subscription) => (
               <div
                 key={subscription.id}
-                className={`details min-w-[250px] md:min-w-[300px] px-10 py-10 bg-[#FFFDF2] shadow-lg rounded-lg flex flex-col transition-all duration-300 
+                className={`details min-w-[250px] md:min-w-[300px] px-10 py-10 bg-[#FFFDF2] shadow-lg rounded-lg flex max-lg:flex-col gap-8 transition-all duration-300 
                   ${
                     selectedPlan === subscription.id ? "scale-110" : "scale-100"
-                  }`} // Enlarges selected plan
+                  }`}
               >
                 <div className="amount w-full flex flex-col items-center lg:pt-8">
-                  <h1 className="lg:text-[30px] text-[45px] text-[#043D12] flex items-center gap-0">
+                  <h1 className="lg:text-[50px] text-[45px] text-[#043D12] flex items-center gap-0">
                     <TbCurrencyNaira />
                     {subscription.price}
                   </h1>
@@ -141,9 +161,8 @@ const Subscribe = () => {
                       </span>
                     </li>
                   </ul>
-                  {/* Subscription Buttons */}
                   <div className="shadow-lg mt-8 register px-6 md:px-14 md:py-4 py-3 bg-[#043D12] rounded-[9px] text-[#FFFDF2] flex flex-col gap-2">
-                    {selectedPlan !== subscription.id && ( // Hide "Subscribe Now" if selected
+                    {selectedPlan !== subscription.id && (
                       <button
                         className="cursor-pointer bg-transparent text-white font-medium text-[18px] border-2 border-white px-4 py-2 rounded-lg"
                         onClick={() => handlePayment(subscription)}
@@ -152,8 +171,15 @@ const Subscribe = () => {
                       </button>
                     )}
 
+                    {selectedPlan === subscription.id && isLoadingPayment && (
+                      <p className="text-white text-[18px]">
+                        Initializing payment...
+                      </p>
+                    )}
+
                     {selectedPlan === subscription.id &&
-                      txRef && ( // Show "Proceed with Payment" only for selected plan
+                      txRef &&
+                      !isLoadingPayment && (
                         <FlutterWaveButton
                           className="cursor-pointer bg-transparent text-white font-medium text-[18px] border-2 border-white px-4 py-2 rounded-lg"
                           public_key={PUBLIC_KEY}
@@ -162,10 +188,12 @@ const Subscribe = () => {
                           currency="NGN"
                           payment_options="card, banktransfer, ussd"
                           customer={{
-                            email: user?.email,
-                            name: `${user.firstName || ""} ${
-                              user.lastName || ""
-                            }`.trim(),
+                            email: user?.email || "default@example.com",
+                            name: user
+                              ? `${user.firstName || ""} ${
+                                  user.lastName || ""
+                                }`.trim() || "Anonymous"
+                              : "Anonymous",
                           }}
                           customizations={{
                             title: "MBO Subscription",
@@ -181,9 +209,10 @@ const Subscribe = () => {
                               toast.success(
                                 "Payment successful! Redirecting..."
                               );
-                              setTimeout(() => {
+                              const timer = setTimeout(() => {
                                 navigate("/business-profile");
-                              }, 1500); // Redirect after 2 seconds
+                              }, 2000);
+                              return () => clearTimeout(timer);
                             } else {
                               toast.error("Payment failed. Please try again.");
                             }
@@ -198,7 +227,7 @@ const Subscribe = () => {
               </div>
             ))
           ) : (
-            <p className="text-white">Loading subscriptions...</p>
+            <p className="text-white">No subscriptions available.</p>
           )}
         </div>
       </div>
