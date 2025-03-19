@@ -36,7 +36,7 @@ const navItems = [
 ];
 
 const helpItem = {
-  to: "/user-dashboard/help",
+  to: "/user-dashboard/help-and-support",
   icon: <PiUserCircle className="text-[25px]" />,
   label: "Help & Support",
 };
@@ -454,7 +454,7 @@ const UserDashboard = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="absolute z-50 top-6 lg:left-4 right-4 cursor-pointer border w-fit rounded shadow p-1 bg-white lg:hidden"
+            className="absolute z-50 top-6 left-4 cursor-pointer border w-fit rounded shadow p-1 bg-white lg:hidden"
           >
             <CgMenuLeftAlt
               onClick={toggleSidebar}

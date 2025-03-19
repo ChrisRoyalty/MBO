@@ -29,6 +29,7 @@ const EditProfile = () => {
   });
   const [originalData, setOriginalData] = useState(null);
   const [editField, setEditField] = useState(null);
+  const [editedFields, setEditedFields] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [imageFiles, setImageFiles] = useState({
     businesImg: null,
@@ -62,6 +63,8 @@ const EditProfile = () => {
     businessName: useRef(null),
     keyword: useRef(null),
     location: useRef(null),
+    contactNo: useRef(null),
+    description: useRef(null),
   };
 
   const { isAuthenticated, token } = useSelector((state) => state.auth);
@@ -184,13 +187,14 @@ const EditProfile = () => {
     fetchShareableLink();
   }, [token]);
 
-  // Handle input change
+  // Handle input change and track edited fields
   const handleInputChange = (field, value) => {
     setProfileData((prevData) => ({
       ...prevData,
       [field]:
         field === "keyword" || field === "contactNo" ? value.split(",") : value,
     }));
+    setEditedFields((prev) => new Set(prev).add(field));
   };
 
   // Handle edit button click with focus
@@ -216,6 +220,7 @@ const EditProfile = () => {
       category: name,
       categoryId: id,
     }));
+    setEditedFields((prev) => new Set(prev).add("category"));
     setShowDropdown(false);
   };
 
@@ -227,6 +232,7 @@ const EditProfile = () => {
     }
 
     setImageFiles((prev) => ({ ...prev, [field]: file }));
+    setEditedFields((prev) => new Set(prev).add(field));
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -235,7 +241,7 @@ const EditProfile = () => {
     reader.readAsDataURL(file);
   };
 
-  // Handle form submission
+  // Handle form submission with only edited fields
   const handleSubmit = async (e, formType) => {
     e.preventDefault();
     const submitKey =
@@ -248,14 +254,21 @@ const EditProfile = () => {
       return;
     }
 
+    if (editedFields.size === 0) {
+      toast.info("No changes to save.");
+      setButtonActive((prev) => ({ ...prev, [submitKey]: false }));
+      return;
+    }
+
     try {
       let API_URL, payload;
       if (formType === "personal") {
         API_URL = `${import.meta.env.VITE_BASE_URL}/member/edit-member`;
-        payload = {
-          firstName: profileData.firstName,
-          lastName: profileData.lastName,
-        };
+        payload = {};
+        if (editedFields.has("firstName"))
+          payload.firstName = profileData.firstName;
+        if (editedFields.has("lastName"))
+          payload.lastName = profileData.lastName;
         const response = await axios.patch(API_URL, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -274,18 +287,29 @@ const EditProfile = () => {
       } else {
         API_URL = `${import.meta.env.VITE_BASE_URL}/member/edit-profile`;
         const formData = new FormData();
-        formData.append("businessName", profileData.businessName);
-        formData.append("contactNo", JSON.stringify(profileData.contactNo));
-        formData.append("description", profileData.description);
-        formData.append("location", profileData.location);
-        formData.append("keyword", JSON.stringify(profileData.keyword));
-        formData.append("categoryId", profileData.categoryId);
 
-        if (imageFiles.businesImg) {
+        if (editedFields.has("businessName"))
+          formData.append("businessName", profileData.businessName);
+        if (editedFields.has("contactNo"))
+          profileData.contactNo.forEach((number) =>
+            formData.append("contactNo[]", number)
+          );
+        if (editedFields.has("description"))
+          formData.append("description", profileData.description);
+        if (editedFields.has("location"))
+          formData.append("location", profileData.location);
+        if (editedFields.has("keyword"))
+          profileData.keyword.forEach((word) =>
+            formData.append("keyword[]", word)
+          );
+        if (editedFields.has("businesImg") && imageFiles.businesImg)
           formData.append("businesImg", imageFiles.businesImg);
-        }
-        if (imageFiles.backgroundImg) {
+        if (editedFields.has("backgroundImg") && imageFiles.backgroundImg)
           formData.append("backgroundImg", imageFiles.backgroundImg);
+
+        console.log("FormData payload:");
+        for (let [key, value] of formData.entries()) {
+          console.log(`${key}: ${value}`);
         }
 
         const response = await axios.patch(API_URL, formData, {
@@ -330,6 +354,7 @@ const EditProfile = () => {
         });
       }
       setEditField(null);
+      setEditedFields(new Set());
     } catch (error) {
       console.error(`❌ ${formType} PATCH Error:`, error);
       toast.error(
@@ -371,6 +396,7 @@ const EditProfile = () => {
       businesImg: resetFields.businesImg || "",
       backgroundImg: resetFields.backgroundImg || "",
     });
+    setEditedFields(new Set());
 
     if (formType === "business") {
       setSelectedCategory({
@@ -637,20 +663,20 @@ const EditProfile = () => {
               <button
                 type="button"
                 onClick={() => handleDiscardChanges("personal")}
-                className={`border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform ${
-                  buttonActive.personalDiscard
-                    ? "scale-95 bg-[#043D12] text-white"
-                    : "hover:text-white hover:bg-[#043D12]"
+                className={`border-[1px] border-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform ${
+                  buttonActive.personalSubmit
+                    ? "text-[#6A7368] hover:bg-gray-200"
+                    : "bg-[#043D12] text-white hover:bg-[#032b0e]"
                 }`}
               >
                 Discard Changes
               </button>
               <button
                 type="submit"
-                className={`border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform flex items-center justify-center gap-2 ${
+                className={`border-[1px] border-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform flex items-center justify-center gap-2 ${
                   buttonActive.personalSubmit
                     ? "scale-95 bg-[#043D12] text-white"
-                    : "hover:text-white hover:bg-[#043D12]"
+                    : "text-[#6A7368] hover:bg-[#043D12] hover:text-white"
                 }`}
                 disabled={buttonActive.personalSubmit}
               >
@@ -827,26 +853,87 @@ const EditProfile = () => {
                 </button>
               </div>
             </div>
+            <div className="text-[#6A7368] flex flex-col gap-2">
+              <label className="text-sm">Contact Number</label>
+              <div className="flex justify-between gap-4">
+                <input
+                  type="text"
+                  ref={inputRefs.contactNo}
+                  disabled={editField !== "contactNo"}
+                  value={profileData.contactNo.join(",") || ""}
+                  onChange={(e) =>
+                    handleInputChange("contactNo", e.target.value)
+                  }
+                  className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
+                    editField === "contactNo"
+                      ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
+                      : "border-[#6A7368]"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleEditClick("contactNo")}
+                  className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
+                    buttonActive.contactNo
+                      ? "scale-95 bg-[#043D12] text-white"
+                      : "hover:bg-[#043D12] hover:text-white"
+                  }`}
+                >
+                  <FiEdit3 className="text-[18px]" />
+                  Edit
+                </button>
+              </div>
+            </div>
+            <div className="text-[#6A7368] flex flex-col gap-2">
+              <label className="text-sm">Description</label>
+              <div className="flex justify-between gap-4">
+                <textarea
+                  ref={inputRefs.description}
+                  disabled={editField !== "description"}
+                  value={profileData.description || ""}
+                  onChange={(e) =>
+                    handleInputChange("description", e.target.value)
+                  }
+                  className={`w-full h-[100px] px-4 py-2 rounded-[11px] border-[1px] ${
+                    editField === "description"
+                      ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
+                      : "border-[#6A7368]"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleEditClick("description")}
+                  className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
+                    buttonActive.description
+                      ? "scale-95 bg-[#043D12] text-white"
+                      : "hover:bg-[#043D12] hover:text-white"
+                  }`}
+                >
+                  <FiEdit3 className="text-[18px]" />
+                  Edit
+                </button>
+              </div>
+            </div>
           </div>
           <div className="btns flex justify-end pt-12 sm:pt-20 pb-8 sm:pb-12">
             <div className="w-fit flex items-center gap-4 sm:gap-6">
               <button
                 type="button"
                 onClick={() => handleDiscardChanges("business")}
-                className={`border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform ${
-                  buttonActive.businessDiscard
-                    ? "scale-95 bg-[#043D12] text-white"
-                    : "hover:text-white hover:bg-[#043D12]"
+                className={`border-[1px] border-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform ${
+                  buttonActive.businessSubmit
+                    ? "text-[#6A7368] hover:bg-gray-200"
+                    : "bg-[#043D12] text-white hover:bg-[#032b0e]"
                 }`}
               >
                 Discard Changes
               </button>
               <button
                 type="submit"
-                className={`border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform flex items-center justify-center gap-2 ${
+                className={`border-[1px] border-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform flex items-center justify-center gap-2 ${
                   buttonActive.businessSubmit
                     ? "scale-95 bg-[#043D12] text-white"
-                    : "hover:text-white hover:bg-[#043D12]"
+                    : "text-[#6A7368] hover:bg-[#043D12] hover:text-white"
                 }`}
                 disabled={buttonActive.businessSubmit}
               >
