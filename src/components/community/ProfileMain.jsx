@@ -10,6 +10,8 @@ import { BsTiktok } from "react-icons/bs";
 import { CiShare1 } from "react-icons/ci";
 import { BiMessage } from "react-icons/bi";
 import { useParams, useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify"; // Import toast
+import "react-toastify/dist/ReactToastify.css"; // Import toast styles
 import BusinessImg from "../../assets/businessImg.jpeg";
 import NetworkError from "../NetworkError";
 
@@ -96,24 +98,72 @@ const Modal = ({ business, onClose }) => {
 };
 
 // Report Modal Component
+// Report Modal Component
+// Report Modal Component
 const ReportModal = ({ profile, onClose }) => {
   const [reportData, setReportData] = useState({
     fullName: "",
     email: "",
-    issueType: "Complaint",
+    issueType: "Report a Business",
     issueDescription: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setReportData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Report submitted:", reportData);
-    alert("Report submitted successfully!");
-    onClose();
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const BASE_URL = import.meta.env.VITE_BASE_URL;
+      const profileId = profile.id; // Use the profile ID from the prop
+      const payload = {
+        name: reportData.fullName,
+        email: reportData.email,
+        issue: reportData.issueDescription,
+        issueType: reportData.issueType,
+      };
+
+      console.log("Submitting report payload:", payload);
+
+      const response = await axios.post(
+        `${BASE_URL}/admin/create-issue/${profileId}`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Report submitted successfully!", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+        onClose();
+      } else {
+        throw new Error("Unexpected response format");
+      }
+    } catch (err) {
+      console.error("❌ Error submitting report:", err.response?.data || err);
+      const errorMessage =
+        err.response?.data?.message ||
+        "Failed to submit report. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -197,11 +247,9 @@ const ReportModal = ({ profile, onClose }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#043D12]"
                   required
                 >
-                  <option value="Complaint">Complaint</option>
-                  <option value="Spam">Spam</option>
-                  <option value="Inappropriate Content">
-                    Inappropriate Content
-                  </option>
+                  <option value="Report a Business">Report a Business</option>
+                  <option value="Feedback">Feedback</option>
+                  <option value="System Glitch">System Glitch</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
@@ -219,11 +267,17 @@ const ReportModal = ({ profile, onClose }) => {
                   required
                 />
               </div>
+              {error && <p className="text-red-600 text-sm">{error}</p>}
               <button
                 type="submit"
-                className="w-full py-2 bg-[#043D12] text-white rounded-md hover:bg-[#032d0e] transition-colors"
+                className={`w-full py-2 rounded-md text-white transition-colors ${
+                  isSubmitting
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-[#043D12] hover:bg-[#032d0e]"
+                }`}
+                disabled={isSubmitting}
               >
-                SEND REPORT
+                {isSubmitting ? "Submitting..." : "SEND REPORT"}
               </button>
             </div>
           </form>
@@ -571,6 +625,7 @@ const ProfileMain = () => {
           onClose={() => setIsReportModalOpen(false)}
         />
       )}
+      <ToastContainer /> {/* Add ToastContainer here */}
     </div>
   );
 };

@@ -212,7 +212,7 @@ const AdminDashboard = () => {
                     to={item.to}
                     onClick={item.label === "Logout" ? handleLogout : null}
                     className={`text-[14px] flex items-center gap-4 px-6 py-2 rounded-[11px] transition-all duration-300 relative overflow-hidden ${
-                      location.pathname === item.to
+                      location.pathname.startsWith(item.to) // Use startsWith instead of ===
                         ? "bg-[#C8E6C9] text-[#043D12] shadow-lg"
                         : "text-[#6A7368] hover:bg-gray-200"
                     }`}

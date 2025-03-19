@@ -37,6 +37,11 @@ import Notification from "./components/admin/Notification";
 import HelpAndSupport from "./pages/HelpAndSupport";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import AllTickets from "./components/admin/support/AllTickets";
+import PendingTickets from "./components/admin/support/PendingTickets";
+import ResolvedTickets from "./components/admin/support/ResolvedTickets";
+import SupportFaqs from "./components/admin/support/SupportFaqs";
+import UserHelpAndSupport from "./components/user-dashboard/UserHelpAndSupport";
 
 function App() {
   return (
@@ -89,9 +94,9 @@ function App() {
         <Route
           path="/verify-email"
           element={
-            <PrivateRoute>
-              <VerifyEmail />
-            </PrivateRoute>
+            // <PrivateRoute>
+            <VerifyEmail />
+            // </PrivateRoute>
           }
         />
         <Route path="/forgotten-password" element={<ForgottenPassword />} />
@@ -134,7 +139,9 @@ function App() {
             <Route path="subscription" element={<Subscription />} />
             <Route path="password" element={<Password />} />
           </Route>
-          <Route path="help" element={<HelpAndSupport />} />
+          <Route path="help-and-support" element={<UserHelpAndSupport />} />
+
+          {/* <Route path="help" element={<HelpAndSupport />} /> */}
           <Route path="create-profile" element={<CreateProfile />} />
         </Route>
 
@@ -153,7 +160,12 @@ function App() {
           <Route path="manage-subscriptions" element={<ManageSubscription />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="manage-notifications" element={<Notification />} />
-          <Route path="support" element={<Support />} />
+          <Route path="support/*" element={<Support />}>
+            <Route path="all-tickets" element={<AllTickets />} />
+            <Route path="pending-tickets" element={<PendingTickets />} />
+            <Route path="resolved-tickets" element={<ResolvedTickets />} />
+            <Route path="faqs" element={<SupportFaqs />} />
+          </Route>
           <Route path="manage-users" element={<ManageUsers />} />
         </Route>
       </Routes>
