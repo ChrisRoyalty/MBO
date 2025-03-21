@@ -292,13 +292,13 @@ const AllBusiness = () => {
                   <img
                     src={profile.businesImg || ProfilePic}
                     alt={profile.businessName}
-                    className="absolute top-[35px] left-1/2 transform -translate-x-1/2 w-[70px] rounded-full object-cover"
+                    className="absolute top-[45px] left-1/2 transform -translate-x-1/2 w-[70px] h-[70px] rounded-full object-cover"
                     onError={(e) => (e.target.src = ProfilePic)}
                   />
                 </div>
 
                 {/* Profile Details */}
-                <figure className="flex flex-col gap-2 items-center mt-[45px] justify-center">
+                <figure className="flex flex-col gap-2 items-center mt-[25px] justify-center">
                   <figcaption className="name text-center flex flex-col gap-4">
                     <Link
                       to={`/community/profile/${profile.id}`}

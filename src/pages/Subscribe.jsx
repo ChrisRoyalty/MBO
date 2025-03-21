@@ -10,13 +10,13 @@ import { useNavigate } from "react-router-dom";
 
 const PUBLIC_KEY = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
 
-// Reusable Success Modal Component
+// SuccessModal in Subscribe component
 const SuccessModal = ({ onClose }) => {
   const navigate = useNavigate();
 
   const handleAcknowledge = () => {
     onClose(); // Close the modal
-    navigate("/business-profile"); // Redirect to the business profile page
+    navigate("/business-profile", { state: { subscriptionSuccess: true } }); // Pass success flag
   };
 
   return (
@@ -48,7 +48,7 @@ const Subscribe = () => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
   const [isLoadingSubscriptions, setIsLoadingSubscriptions] = useState(true);
-  const [showSuccessModal, setShowSuccessModal] = useState(false); // State for modal visibility
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const user = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
@@ -63,11 +63,11 @@ const Subscribe = () => {
       } catch (error) {
         console.error("Invalid token:", error);
         toast.error("Session expired, please log in again.");
-        navigate("/login"); // Redirect to login if token is invalid
+        navigate("/login");
       }
     } else {
       toast.error("User not authenticated. Please log in.");
-      navigate("/login"); // Redirect to login if no token
+      navigate("/login");
     }
   }, [token, navigate]);
 
@@ -128,7 +128,7 @@ const Subscribe = () => {
     } catch (error) {
       console.error("Error initiating payment:", error);
       toast.error("Failed to initiate payment. Please try again.");
-      setSelectedPlan(null); // Reset on failure
+      setSelectedPlan(null);
     } finally {
       setIsLoadingPayment(false);
     }
@@ -137,13 +137,13 @@ const Subscribe = () => {
   const handlePaymentCallback = (paymentResponse) => {
     console.log("Flutterwave response:", paymentResponse);
     if (paymentResponse.status === "successful") {
-      setShowSuccessModal(true); // Show the success modal
+      setShowSuccessModal(true);
     } else {
       toast.error("Payment failed. Please try again.");
-      setSelectedPlan(null); // Reset on failure
+      setSelectedPlan(null);
       setTxRef(null);
     }
-    closePaymentModal(); // Close the Flutterwave modal
+    closePaymentModal();
   };
 
   return (
@@ -234,7 +234,7 @@ const Subscribe = () => {
                           tx_ref={txRef}
                           amount={subscription.price}
                           currency="NGN"
-                          payment_options="card, banktransfer, ussd"
+                          payment_options="banktransfer, card, ussd" // Updated here
                           customer={{
                             email: user?.email || "default@example.com",
                             name: user
@@ -251,7 +251,7 @@ const Subscribe = () => {
                           callback={handlePaymentCallback}
                           onClose={() => {
                             console.log("Payment modal closed");
-                            setSelectedPlan(null); // Reset on close
+                            setSelectedPlan(null);
                             setTxRef(null);
                           }}
                           text="Proceed with Payment"
@@ -267,7 +267,6 @@ const Subscribe = () => {
         </div>
       </div>
 
-      {/* Success Modal */}
       {showSuccessModal && (
         <SuccessModal onClose={() => setShowSuccessModal(false)} />
       )}

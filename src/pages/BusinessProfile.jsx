@@ -1,8 +1,7 @@
 // src/components/BusinessProfile.jsx
 import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux"; // Keep useDispatch for potential future use
-// Remove: import { loginSuccess } from "../redux/authSlice";
-import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { Link, useNavigate, useLocation } from "react-router-dom"; // Added useLocation
 import { BsPerson } from "react-icons/bs";
 import { MdOutlineCategory } from "react-icons/md";
 import { VscSymbolKeyword } from "react-icons/vsc";
@@ -13,7 +12,75 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Hand from "../components/svgs/Hand";
 
-// Rest of the code remains unchanged
+// CongratsModal Component (embedded here for simplicity)
+const CongratsModal = ({ onClose }) => {
+  const navigate = useNavigate();
+
+  const handleProceed = () => {
+    onClose(); // Close the modal
+    // No navigation needed here since we're already on /business-profile
+  };
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
+      <div
+        className="bg-gradient-to-br from-[#043D12] via-[#1A5A2C] to-[#FFFDF2] rounded-3xl p-8 max-w-lg w-full text-center shadow-2xl transform transition-all duration-500 scale-100 hover:scale-105"
+        style={{ animation: "fadeIn 0.5s ease-in-out" }}
+      >
+        {/* Animated Icon */}
+        <div className="mb-6">
+          <svg
+            className="w-16 h-16 mx-auto animate-bounce text-[#FFFDF2]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+        </div>
+
+        {/* Title */}
+        <h2 className="text-3xl font-extrabold text-[#FFFDF2] mb-4 tracking-wide">
+          Congratulations!
+        </h2>
+
+        {/* Message */}
+        <p className="text-lg text-[#D1D5DB] mb-8 leading-relaxed">
+          You’ve successfully subscribed! Your business is ready to shine. Let’s
+          get started with your profile.
+        </p>
+
+        {/* Button */}
+        <button
+          onClick={handleProceed}
+          className="bg-[#FFFDF2] text-[#043D12] font-semibold rounded-full px-8 py-3 hover:bg-[#043D12] hover:text-[#FFFDF2] transition-all duration-300 shadow-lg"
+        >
+          Start Creating Your Profile
+        </button>
+      </div>
+
+      {/* CSS Animation */}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
+    </div>
+  );
+};
+
 const BusinessProfile = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState({
@@ -27,11 +94,22 @@ const BusinessProfile = () => {
   const [keyword, setKeyword] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showCongratsModal, setShowCongratsModal] = useState(false); // Added for modal
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation(); // Added to access navigation state
   const token = useSelector((state) => state.auth.token);
   const BASE_URL = import.meta.env.VITE_BASE_URL;
+
+  useEffect(() => {
+    // Check for subscription success from navigation state
+    if (location.state?.subscriptionSuccess) {
+      setShowCongratsModal(true);
+      // Clear the state to prevent re-triggering on refresh
+      window.history.replaceState({}, document.title, "/business-profile");
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -99,6 +177,10 @@ const BusinessProfile = () => {
       setLoading(false);
       navigate("/business-profile2");
     }, 500);
+  };
+
+  const handleCloseCongratsModal = () => {
+    setShowCongratsModal(false);
   };
 
   return (
@@ -228,6 +310,11 @@ const BusinessProfile = () => {
           </form>
         </div>
       </div>
+
+      {/* Render CongratsModal if subscription was successful */}
+      {showCongratsModal && (
+        <CongratsModal onClose={handleCloseCongratsModal} />
+      )}
     </div>
   );
 };
