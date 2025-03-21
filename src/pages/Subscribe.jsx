@@ -1,4 +1,3 @@
-// src/pages/Subscribe.jsx
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
@@ -11,6 +10,36 @@ import { useNavigate } from "react-router-dom";
 
 const PUBLIC_KEY = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
 
+// Reusable Success Modal Component
+const SuccessModal = ({ onClose }) => {
+  const navigate = useNavigate();
+
+  const handleAcknowledge = () => {
+    onClose(); // Close the modal
+    navigate("/business-profile"); // Redirect to the business profile page
+  };
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black/60 bg-opacity-50 z-50">
+      <div className="bg-[#FFFDF2] rounded-[27px] p-8 max-w-md w-full text-center shadow-lg">
+        <h2 className="text-[24px] font-bold text-[#043D12] mb-4">
+          🎉 Payment Successful!
+        </h2>
+        <p className="text-[#6A7368] mb-6">
+          Thank you for subscribing! Your payment was successful. Click below to
+          access your business profile.
+        </p>
+        <button
+          onClick={handleAcknowledge}
+          className="bg-[#043D12] text-[#FFFDF2] rounded-[27px] px-6 py-2 hover:bg-[#043D12]/75 transition-colors"
+        >
+          Go to Business Profile
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const Subscribe = () => {
   const navigate = useNavigate();
   const [subscriptions, setSubscriptions] = useState([]);
@@ -19,6 +48,7 @@ const Subscribe = () => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
   const [isLoadingSubscriptions, setIsLoadingSubscriptions] = useState(true);
+  const [showSuccessModal, setShowSuccessModal] = useState(false); // State for modal visibility
 
   const user = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
@@ -107,12 +137,7 @@ const Subscribe = () => {
   const handlePaymentCallback = (paymentResponse) => {
     console.log("Flutterwave response:", paymentResponse);
     if (paymentResponse.status === "successful") {
-      toast.success("Payment successful! Redirecting...");
-      setTimeout(() => {
-        setSelectedPlan(null); // Reset selected plan
-        setTxRef(null); // Reset transaction reference
-        navigate("/business-profile"); // Redirect to business profile
-      }, 2000);
+      setShowSuccessModal(true); // Show the success modal
     } else {
       toast.error("Payment failed. Please try again.");
       setSelectedPlan(null); // Reset on failure
@@ -210,7 +235,6 @@ const Subscribe = () => {
                           amount={subscription.price}
                           currency="NGN"
                           payment_options="card, banktransfer, ussd"
-                          // Remove redirect_url to rely on navigate
                           customer={{
                             email: user?.email || "default@example.com",
                             name: user
@@ -242,6 +266,11 @@ const Subscribe = () => {
           )}
         </div>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <SuccessModal onClose={() => setShowSuccessModal(false)} />
+      )}
     </div>
   );
 };
