@@ -5,12 +5,12 @@ import "react-toastify/dist/ReactToastify.css";
 import { useSelector } from "react-redux";
 import ProfileImg from "../../assets/DefaultProfileImg.svg";
 import ProfileBg from "../../assets/DefaultProfileBg.svg";
-import { FiEdit3 } from "react-icons/fi";
+import { FiEdit3, FiCopy } from "react-icons/fi";
 import { TiArrowForwardOutline } from "react-icons/ti";
 import { TbLayoutGrid } from "react-icons/tb";
 import { MdOutlineCategory } from "react-icons/md";
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
-import { FaWhatsapp } from "react-icons/fa";
+import { FaWhatsapp, FaFacebook, FaTwitter, FaLinkedin } from "react-icons/fa";
 
 const EditProfile = () => {
   const [profileData, setProfileData] = useState({
@@ -56,6 +56,7 @@ const EditProfile = () => {
   });
   const [shareableLink, setShareableLink] = useState("");
   const [showShareOptions, setShowShareOptions] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const inputRefs = {
     firstName: useRef(null),
@@ -224,8 +225,8 @@ const EditProfile = () => {
     setShowDropdown(false);
   };
 
-  // Handle image selection and preview
-  const handleImageUpload = (field, file) => {
+  // Handle image selection, preview, and immediate upload
+  const handleImageUpload = async (field, file) => {
     if (!file || !file.type.startsWith("image/")) {
       toast.error("Please upload a valid image file.");
       return;
@@ -239,6 +240,33 @@ const EditProfile = () => {
       setImagePreviews((prev) => ({ ...prev, [field]: reader.result }));
     };
     reader.readAsDataURL(file);
+
+    // Immediate upload
+    try {
+      const formData = new FormData();
+      formData.append(field, file);
+
+      const API_URL = `${import.meta.env.VITE_BASE_URL}/member/edit-profile`;
+      const response = await axios.patch(API_URL, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      toast.success(response.data.message || "Image updated successfully!");
+      setProfileData((prev) => ({
+        ...prev,
+        [field]: response.data.updatedProfile[field],
+      }));
+      setImageFiles((prev) => ({ ...prev, [field]: null }));
+    } catch (error) {
+      console.error("❌ Error uploading image:", error);
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to upload image. Please try again."
+      );
+    }
   };
 
   // Handle form submission with only edited fields
@@ -302,15 +330,6 @@ const EditProfile = () => {
           profileData.keyword.forEach((word) =>
             formData.append("keyword[]", word)
           );
-        if (editedFields.has("businesImg") && imageFiles.businesImg)
-          formData.append("businesImg", imageFiles.businesImg);
-        if (editedFields.has("backgroundImg") && imageFiles.backgroundImg)
-          formData.append("backgroundImg", imageFiles.backgroundImg);
-
-        console.log("FormData payload:");
-        for (let [key, value] of formData.entries()) {
-          console.log(`${key}: ${value}`);
-        }
 
         const response = await axios.patch(API_URL, formData, {
           headers: {
@@ -432,12 +451,35 @@ const EditProfile = () => {
           message
         )}`;
         break;
+      case "facebook":
+        url = `https://www.facebook.com/sharer/sharer.php?u=${encodedLink}`;
+        break;
+      case "twitter":
+        url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+          message
+        )}`;
+        break;
+      case "linkedin":
+        url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedLink}`;
+        break;
       default:
         return;
     }
 
     window.open(url, "_blank");
     setShowShareOptions(false);
+  };
+
+  // Copy link to clipboard
+  const copyToClipboard = () => {
+    if (!shareableLink) {
+      toast.error("No shareable link available!");
+      return;
+    }
+
+    navigator.clipboard.writeText(shareableLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   // Loader component with text
@@ -537,7 +579,7 @@ const EditProfile = () => {
               );
             }}
           >
-            Change Image
+            Change Profile Image
           </button>
         </div>
 
@@ -624,18 +666,11 @@ const EditProfile = () => {
                 <button
                   type="button"
                   className="w-full h-[46px] px-4 rounded-[11px] border-[1px] border-[#6A7368] text-[#6A7368] text-[12px] sm:text-sm overflow-hidden text-ellipsis whitespace-nowrap"
-                  onClick={() => {
-                    if (shareableLink) {
-                      navigator.clipboard.writeText(shareableLink);
-                      toast.success("Link copied to clipboard!");
-                    }
-                  }}
+                  onClick={copyToClipboard}
                   disabled={!shareableLink}
                   title={shareableLink || "Generating shareable link..."}
                 >
-                  {shareableLink
-                    ? "mbo-seven.vercel..."
-                    : "Loading shareable link..."}
+                  {copied ? "Copied!" : "Copy Profile Link"}
                 </button>
                 <button
                   type="button"
@@ -652,6 +687,27 @@ const EditProfile = () => {
                       title="Share on WhatsApp"
                     >
                       <FaWhatsapp className="text-[20px] text-green-500 hover:text-green-600" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => shareToSocialMedia("facebook")}
+                      title="Share on Facebook"
+                    >
+                      <FaFacebook className="text-[20px] text-blue-600 hover:text-blue-700" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => shareToSocialMedia("twitter")}
+                      title="Share on Twitter"
+                    >
+                      <FaTwitter className="text-[20px] text-blue-400 hover:text-blue-500" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => shareToSocialMedia("linkedin")}
+                      title="Share on LinkedIn"
+                    >
+                      <FaLinkedin className="text-[20px] text-blue-700 hover:text-blue-800" />
                     </button>
                   </div>
                 )}

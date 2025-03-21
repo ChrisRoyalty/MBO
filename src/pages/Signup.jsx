@@ -1,17 +1,46 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
 import { FaRegEnvelope } from "react-icons/fa";
 import { CiLock } from "react-icons/ci";
 import { BsPerson } from "react-icons/bs";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
-//import { useNavigate } from "react-router-dom"; // Import useNavigate
 import Hand from "../components/svgs/Hand";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+// Reusable Modal Component
+const SuccessModal = ({ onClose }) => {
+  const navigate = useNavigate();
+
+  const handleAcknowledge = () => {
+    onClose(); // Close the modal
+    navigate("/login"); // Redirect to the login page
+  };
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black/60 bg-opacity-50 z-50">
+      <div className="bg-[#FFFDF2] rounded-[27px] p-8 max-w-md w-full text-center shadow-lg">
+        <h2 className="text-[24px] font-bold text-[#043D12] mb-4">
+          🎉 Signup Successful!
+        </h2>
+        <p className="text-[#6A7368] mb-6">
+          Welcome to MBO! Your account has been created successfully. Click
+          below to log in and get started.
+        </p>
+        <button
+          onClick={handleAcknowledge}
+          className="bg-[#043D12] text-[#FFFDF2] rounded-[27px] px-6 py-2 hover:bg-[#043D12]/75 transition-colors"
+        >
+          Go to Login
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const Signup = () => {
-  //const navigate = useNavigate();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -22,6 +51,7 @@ const Signup = () => {
     confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false); // State for modal visibility
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -49,6 +79,7 @@ const Signup = () => {
         password: "",
         confirmPassword: "",
       });
+      setShowSuccessModal(true); // Show the success modal
     } catch (error) {
       console.error("Error:", error);
 
@@ -83,9 +114,9 @@ const Signup = () => {
       {/* Left Section with Background Image */}
       <div className="max-lg:hidden w-full h-full flex justify-center items-center bg-[url('/Group2.svg')] bg-cover bg-center bg-green-800">
         <div className="w-full h-[90%] flex flex-col items-center">
-          <div className="container mx-auto px-[5vw] text-[#FFFDF2] mt-8">
-            <Link to="/" className="lg:text-[50px] text-[32px] font-medium">
-              Welcome to <br /> MBO
+          <div className="container mx-auto px-[5vw] text-[#FFFDF2]">
+            <Link to="/" className="lg:text-[35px] text-[32px] font-medium">
+              Welcome to <br /> MindPower Business Online
             </Link>
             <p className="text-[18px]">
               Step into a community that puts your business in the spotlight.
@@ -216,6 +247,11 @@ const Signup = () => {
             </div>
           </form>
         </div>
+
+        {/* Success Modal */}
+        {showSuccessModal && (
+          <SuccessModal onClose={() => setShowSuccessModal(false)} />
+        )}
       </div>
     </div>
   );

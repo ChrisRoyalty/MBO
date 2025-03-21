@@ -230,10 +230,12 @@ const UserDashboard = () => {
           isSidebarOpen ? "absolute md:relative" : "absolute"
         } flex flex-col`}
       >
-        <MdOutlineCancelPresentation
+        <p
           onClick={toggleSidebar}
-          className="text-[#043D12] text-[35px] absolute top-4 right-4 cursor-pointer transition-transform hover:scale-110 lg:hidden"
-        />
+          className="text-gray-400 text-[25px] absolute top-4 right-4 cursor-pointer transition-transform hover:scale-110 lg:hidden"
+        >
+          x
+        </p>
         {/* MBO Header */}
         <motion.strong
           initial={{ opacity: 0, scale: 0.8 }}
@@ -454,7 +456,7 @@ const UserDashboard = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="absolute z-50 top-6 left-4 cursor-pointer border w-fit rounded shadow p-1 bg-white lg:hidden"
+            className="absolute z-50 top-6 lg:left-4 right-4 cursor-pointer border w-fit rounded shadow p-1 bg-white lg:hidden"
           >
             <CgMenuLeftAlt
               onClick={toggleSidebar}

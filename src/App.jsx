@@ -1,7 +1,6 @@
-// src/App.js
-import React from "react";
+import React, { useEffect } from "react"; // Import useEffect
 import { ToastContainer } from "react-toastify";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom"; // Import useLocation
 import PrivateRoute from "./components/PrivateRoute"; // Import PrivateRoute
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
@@ -44,6 +43,13 @@ import SupportFaqs from "./components/admin/support/SupportFaqs";
 import UserHelpAndSupport from "./components/user-dashboard/UserHelpAndSupport";
 
 function App() {
+  const location = useLocation(); // Get the current location
+
+  // Scroll to the top whenever the route changes
+  useEffect(() => {
+    window.scrollTo(0, 0); // Scroll to the top of the page
+  }, [location.pathname]); // Trigger on route change
+
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
@@ -78,17 +84,17 @@ function App() {
         <Route
           path="/business-profile"
           element={
-            <PrivateRoute>
-              <BusinessProfile />
-            </PrivateRoute>
+            // <PrivateRoute>
+            <BusinessProfile />
+            // </PrivateRoute>
           }
         />
         <Route
           path="/business-profile2"
           element={
-            <PrivateRoute>
-              <BusinessProfile2 />
-            </PrivateRoute>
+            // <PrivateRoute>
+            <BusinessProfile2 />
+            // </PrivateRoute>
           }
         />
         <Route

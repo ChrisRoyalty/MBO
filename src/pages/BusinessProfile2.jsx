@@ -170,7 +170,7 @@ const BusinessProfile2 = () => {
         autoClose: 2000,
       });
       sessionStorage.removeItem("businessProfileStep1");
-      setTimeout(() => navigate("/user-dashboard/profile"), 2000);
+      setTimeout(() => navigate("/user-dashboard"), 2000);
     } catch (error) {
       const errorData = error.response?.data;
       const status = errorData?.status;
@@ -180,7 +180,7 @@ const BusinessProfile2 = () => {
           "You already have a profile. Redirecting to your dashboard...",
           { autoClose: 2000 }
         );
-        setTimeout(() => navigate("/user-dashboard/profile"), 1500);
+        setTimeout(() => navigate("/user-dashboard"), 1500);
       } else if (status === 401) {
         toast.error("Session expired. Please log in again.", {
           autoClose: 2000,
@@ -245,7 +245,7 @@ const BusinessProfile2 = () => {
             MBO
           </Link>
           <h4 className="lg:text-[32px] text-[20px] font-medium text-[#043D12] flex items-center gap-2">
-            Business Profile <Hand />
+            Set Up Business Profile <Hand />
           </h4>
           <form
             className="max-lg:w-full flex flex-col gap-6 md:mt-8 mt-16 max-lg:items-center"
@@ -325,7 +325,7 @@ const BusinessProfile2 = () => {
                 placeholder="Phone Number (e.g., +2348012345678)"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
-                className="max-lg:w-full h-full border-none focus:outline-none text-[#6A7368] placeholder-[#6A7368]/70"
+                className="w-full h-full border-none focus:outline-none text-[#6A7368] placeholder-[#6A7368]/70"
               />
             </div>
             <div className="max-lg:w-full border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
@@ -336,7 +336,7 @@ const BusinessProfile2 = () => {
                 placeholder="Location (e.g., Lagos, Nigeria)"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="max-lg:w-full h-full border-none focus:outline-none text-[#6A7368] placeholder-[#6A7368]/70"
+                className="w-full h-full border-none focus:outline-none text-[#6A7368] placeholder-[#6A7368]/70"
               />
             </div>
             <button

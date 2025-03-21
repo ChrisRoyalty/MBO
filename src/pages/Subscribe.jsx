@@ -1,3 +1,4 @@
+// src/pages/Subscribe.jsx
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
@@ -32,11 +33,13 @@ const Subscribe = () => {
       } catch (error) {
         console.error("Invalid token:", error);
         toast.error("Session expired, please log in again.");
+        navigate("/login"); // Redirect to login if token is invalid
       }
     } else {
       toast.error("User not authenticated. Please log in.");
+      navigate("/login"); // Redirect to login if no token
     }
-  }, [token]);
+  }, [token, navigate]);
 
   useEffect(() => {
     const fetchSubscriptions = async () => {
@@ -70,6 +73,7 @@ const Subscribe = () => {
   const handlePayment = async (subscription) => {
     if (!user || !userId) {
       toast.error("User details not found. Please log in.");
+      navigate("/login");
       return;
     }
     setSelectedPlan(subscription.id);
@@ -94,9 +98,27 @@ const Subscribe = () => {
     } catch (error) {
       console.error("Error initiating payment:", error);
       toast.error("Failed to initiate payment. Please try again.");
+      setSelectedPlan(null); // Reset on failure
     } finally {
       setIsLoadingPayment(false);
     }
+  };
+
+  const handlePaymentCallback = (paymentResponse) => {
+    console.log("Flutterwave response:", paymentResponse);
+    if (paymentResponse.status === "successful") {
+      toast.success("Payment successful! Redirecting...");
+      setTimeout(() => {
+        setSelectedPlan(null); // Reset selected plan
+        setTxRef(null); // Reset transaction reference
+        navigate("/business-profile"); // Redirect to business profile
+      }, 2000);
+    } else {
+      toast.error("Payment failed. Please try again.");
+      setSelectedPlan(null); // Reset on failure
+      setTxRef(null);
+    }
+    closePaymentModal(); // Close the Flutterwave modal
   };
 
   return (
@@ -166,6 +188,7 @@ const Subscribe = () => {
                       <button
                         className="cursor-pointer bg-transparent text-white font-medium text-[18px] border-2 border-white px-4 py-2 rounded-lg"
                         onClick={() => handlePayment(subscription)}
+                        disabled={isLoadingPayment}
                       >
                         Subscribe Now
                       </button>
@@ -187,6 +210,7 @@ const Subscribe = () => {
                           amount={subscription.price}
                           currency="NGN"
                           payment_options="card, banktransfer, ussd"
+                          // Remove redirect_url to rely on navigate
                           customer={{
                             email: user?.email || "default@example.com",
                             name: user
@@ -200,25 +224,12 @@ const Subscribe = () => {
                             description: `Payment for ${subscription.name}`,
                             logo: "/mbo-logo.png",
                           }}
-                          callback={(paymentResponse) => {
-                            console.log(
-                              "Flutterwave response:",
-                              paymentResponse
-                            );
-                            if (paymentResponse.status === "successful") {
-                              toast.success(
-                                "Payment successful! Redirecting..."
-                              );
-                              const timer = setTimeout(() => {
-                                navigate("/business-profile");
-                              }, 2000);
-                              return () => clearTimeout(timer);
-                            } else {
-                              toast.error("Payment failed. Please try again.");
-                            }
-                            closePaymentModal();
+                          callback={handlePaymentCallback}
+                          onClose={() => {
+                            console.log("Payment modal closed");
+                            setSelectedPlan(null); // Reset on close
+                            setTxRef(null);
                           }}
-                          onClose={() => console.log("Payment closed")}
                           text="Proceed with Payment"
                         />
                       )}

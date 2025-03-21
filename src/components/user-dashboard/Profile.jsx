@@ -15,12 +15,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import { CiUser } from "react-icons/ci";
-import BusinessImg from "../../assets/businessImg.jpeg"; // Fallback image
+import BusinessImg from "../../assets/businessImg.jpeg";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import ProfileProgressBar from "./ProfileProgressBar";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FiEye, FiEyeOff } from "react-icons/fi"; // For visibility icons
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 const Profile = () => {
   const [timeRange, setTimeRange] = useState("daily");
@@ -33,7 +33,7 @@ const Profile = () => {
     businessName: "User Name",
     category: "Category",
     businesImg: null,
-    id: "", // To store profile ID
+    id: "",
   });
   const [analyticsData, setAnalyticsData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +65,7 @@ const Profile = () => {
   ];
 
   useEffect(() => {
+    console.log("Redux auth state:", { isAuthenticated, user, token });
     if (!isAuthenticated || !token) {
       setError("Not authenticated or missing token!");
       setLoading(false);
@@ -74,7 +75,6 @@ const Profile = () => {
 
     const fetchData = async () => {
       try {
-        // Fetch profile data
         const profileURL = `${import.meta.env.VITE_BASE_URL}/member/my-profile`;
         const profileResponse = await axios.get(profileURL, {
           headers: { Authorization: `Bearer ${token}` },
@@ -91,15 +91,13 @@ const Profile = () => {
             businessName: profile.businessName || "User Name",
             category: profile.categories?.[0]?.name || "Category",
             businesImg: profile.businesImg || BusinessImg,
-            id: profile.id || "", // Store profile ID
+            id: profile.id || "",
           });
-          // Set initial visibility based on deletedAt
           setIsVisible(!profile.deletedAt);
         } else {
           throw new Error("No profile data found in the response.");
         }
 
-        // Fetch analytics data based on timeRange
         const rangeMap = {
           daily: "daily",
           weekly: "weekly",
@@ -166,22 +164,29 @@ const Profile = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isDropdownOpen, isProfileVisibleDropdownOpen]);
 
-  // Toggle visibility and handle hide/restore
   const toggleVisibility = async (action) => {
     if (!profileData.id) {
       toast.error("Profile ID is missing!");
       return;
     }
 
+    if (!token) {
+      toast.error("Authentication token is missing. Please log in again.");
+      navigate("/login", { replace: true });
+      return;
+    }
+
     try {
       if (action === "hide") {
-        // Hide profile using the new endpoint
         const hideURL = `${import.meta.env.VITE_BASE_URL}/member/hide-profile`;
-        const response = await axios.delete(hideURL, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.patch(
+          hideURL,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
-        // Assuming the response contains a success message
         if (response.data.message) {
           setIsVisible(false);
           toast.success("Profile hidden successfully!");
@@ -193,7 +198,6 @@ const Profile = () => {
           throw new Error("Failed to hide profile.");
         }
       } else if (action === "restore") {
-        // Restore profile
         const restoreURL = `${
           import.meta.env.VITE_BASE_URL
         }/admin/restore-profile/${profileData.id}`;
@@ -217,6 +221,11 @@ const Profile = () => {
       }
     } catch (error) {
       console.error("❌ Error Toggling Profile Visibility:", error);
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please log in again.");
+        navigate("/login", { replace: true });
+        return;
+      }
       toast.error(
         error.response?.data?.message || "Failed to update profile visibility."
       );
@@ -536,7 +545,7 @@ const Profile = () => {
                     onClick={() => toggleVisibility("restore")}
                     className="w-full text-left px-4 py-2 text-[#043D12] hover:bg-[#E8ECE8] transition-all text-[12px] sm:text-[14px]"
                   >
-                    Profile Visible
+                    Make Profile Visible
                   </button>
                 )}
               </div>
@@ -545,12 +554,19 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Conditionally Render Content */}
-      <div
-        className={`content-section transition-all duration-300 ${
-          isVisible ? "opacity-100 visible" : "opacity-0 invisible h-0"
-        }`}
-      >
+      {/* Profile Visibility Status Message */}
+      {!isVisible && (
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg mt-4">
+          <p className="text-sm">
+            Your profile is currently hidden from public view. You can still
+            view your dashboard and analytics below. To make your profile
+            visible again, click the "Make Profile Visible" button above.
+          </p>
+        </div>
+      )}
+
+      {/* Dashboard Content (Always Visible) */}
+      <div className="content-section">
         {/* Profile Stats */}
         <div className="mt-8 sm:mt-12">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -562,7 +578,7 @@ const Profile = () => {
                   metric === key
                     ? "bg-[#043D12] text-[#FFFDF2]"
                     : "bg-[#F5F7F5] hover:bg-[#043D12] hover:text-[#FFFDF2]"
-                }`}
+                } ${!isVisible ? "opacity-50" : ""}`}
               >
                 <h5 className="text-start text-[12px] sm:text-[14px] font-semibold">
                   {title}

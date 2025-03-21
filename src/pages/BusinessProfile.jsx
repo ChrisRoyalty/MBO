@@ -131,7 +131,7 @@ const BusinessProfile = () => {
             MBO
           </Link>
           <h4 className="lg:text-[32px] text-[20px] font-medium text-[#043D12] flex items-center gap-2">
-            Business Profile <Hand />
+            Set Up Business Profile <Hand />
           </h4>
           <form
             className="max-lg:w-full flex flex-col gap-6 md:mt-8 mt-16 max-lg:items-center"
@@ -145,7 +145,7 @@ const BusinessProfile = () => {
                 placeholder="Business Name"
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
-                className="max-lg:w-full h-full border-none focus:outline-none text-[#6A7368]"
+                className="w-full h-full border-none focus:outline-none text-[#6A7368]"
               />
             </div>
             <div className="max-lg:w-full border-[1px] rounded-[27px] px-8 border-[#363636] flex flex-col relative">
@@ -204,7 +204,7 @@ const BusinessProfile = () => {
                 placeholder="Enter keywords"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                className="max-lg:w-full h-full border-none focus:outline-none text-[#6A7368]"
+                className="w-full h-full border-none focus:outline-none text-[#6A7368]"
               />
             </div>
             <div className="max-lg:w-full border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
@@ -215,7 +215,7 @@ const BusinessProfile = () => {
                 placeholder="Description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="max-lg:w-full h-full border-none focus:outline-none text-[#6A7368]"
+                className="w-full h-full border-none focus:outline-none text-[#6A7368]"
               />
             </div>
             <button

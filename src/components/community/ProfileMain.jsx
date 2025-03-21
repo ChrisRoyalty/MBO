@@ -8,12 +8,13 @@ import { IoLogoWhatsapp } from "react-icons/io5";
 import { MdOutlineCategory } from "react-icons/md";
 import { BsTiktok } from "react-icons/bs";
 import { CiShare1 } from "react-icons/ci";
-import { BiMessage } from "react-icons/bi";
 import { useParams, useNavigate } from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify"; // Import toast
-import "react-toastify/dist/ReactToastify.css"; // Import toast styles
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import BusinessImg from "../../assets/businessImg.jpeg";
 import NetworkError from "../NetworkError";
+import { Player } from "@lottiefiles/react-lottie-player"; // Import Player from @lottiefiles/react-lottie-player
+import { TfiEmail } from "react-icons/tfi";
 
 // Modal Component (for viewing business details)
 const Modal = ({ business, onClose }) => {
@@ -97,8 +98,6 @@ const Modal = ({ business, onClose }) => {
   );
 };
 
-// Report Modal Component
-// Report Modal Component
 // Report Modal Component
 const ReportModal = ({ profile, onClose }) => {
   const [reportData, setReportData] = useState({
@@ -295,6 +294,7 @@ const ProfileMain = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -362,7 +362,10 @@ const ProfileMain = () => {
         <div className="w-full text-[#043D12] flex flex-col md:flex-row gap-8">
           {/* Aside Section */}
           <aside className="md:w-[25%] flex flex-col gap-8 text-[#6A7368]">
-            <h3 className="lg:text-[32px] text-[#043D12] text-center md:text-left text-[24px] md:text-[28px] font-bold">
+            <h3
+              className="lg:text-[32px] text-[#043D12] text-center md:text-left text-[24px] md:text-[28px] font-bold truncate hover:whitespace-normal hover:overflow-visible hover:z-10 hover:bg-white hover:shadow-lg hover:p-2 hover:rounded-lg"
+              title={profile.businessName}
+            >
               {profile.businessName}
             </h3>
             <div className="contact flex flex-col gap-8">
@@ -521,7 +524,7 @@ const ProfileMain = () => {
                         href={`mailto:${profile.member.email}`}
                         className="cursor-pointer text-[18px]"
                       >
-                        <BiMessage />
+                        <TfiEmail />
                       </a>
                     </div>
                   )}
@@ -548,27 +551,12 @@ const ProfileMain = () => {
                       year: "numeric",
                     })}
                   </h5>
-                  <motion.p
-                    className="text-[16px] text-[#6A7368] cursor-pointer font-bold"
+                  <p
+                    className="text-[16px] text-[#6A7368] cursor-pointer font-bold underline hover:text-[#043D12]"
                     onClick={() => setIsReportModalOpen(true)}
-                    whileHover={{
-                      scale: 1.1,
-                      color: "#032d0e",
-                      fontWeight: 600,
-                    }}
-                    whileTap={{ scale: 0.95 }}
-                    animate={{
-                      scale: [1, 1.05, 1],
-                      transition: {
-                        duration: 1.5,
-                        repeat: Infinity,
-                        repeatType: "reverse",
-                      },
-                    }}
-                    style={{ display: "inline-block" }}
                   >
                     Report
-                  </motion.p>
+                  </p>
                 </div>
               </div>
             </div>
@@ -579,39 +567,62 @@ const ProfileMain = () => {
             <h1 className="border-b-[1px] border-[#6A7368] text-[20px] text-[#6A7368] pb-1 text-center md:text-left">
               Products/Services
             </h1>
-            <div className="w-full grid xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
-              {filteredProducts.map((product, index) => (
-                <motion.div
-                  key={index}
-                  className="flex flex-col gap-1"
-                  initial={{ opacity: 0, y: 50 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: false }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
-                  <figure>
-                    <img
-                      src={product.imageUrl || BusinessImg}
-                      alt={product.name || "Product"}
-                      className="rounded-lg w-full h-[250px] object-cover"
-                      onError={(e) => (e.target.src = BusinessImg)}
-                    />
-                    <figcaption className="flex flex-col gap-4 text-[#043D12] py-2">
-                      <div className="flex flex-col gap-1">
-                        <b className="lg:text-[15px] text-[10px] md:text-[12px]">
-                          {product.name || "Unnamed Product"}
-                        </b>
-                      </div>
-                    </figcaption>
-                  </figure>
-                </motion.div>
-              ))}
-              {filteredProducts.length === 0 && (
-                <p className="text-gray-600 text-[14px] text-center w-full">
-                  No products or services available.
+            {filteredProducts.length > 0 ? (
+              <div className="w-full grid xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
+                {filteredProducts.map((product, index) => (
+                  <motion.div
+                    key={index}
+                    className="flex flex-col gap-1"
+                    initial={{ opacity: 0, y: 50 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: false }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
+                    <figure>
+                      <img
+                        src={product.imageUrl || BusinessImg}
+                        alt={product.name || "Product"}
+                        className="rounded-lg w-full h-[250px] object-cover"
+                        onError={(e) => (e.target.src = BusinessImg)}
+                      />
+                      <figcaption className="flex flex-col gap-4 text-[#043D12] py-2">
+                        <div className="flex flex-col gap-1">
+                          <b
+                            className="lg:text-[15px] text-[10px] md:text-[12px] truncate"
+                            title={product.name || "Unnamed Product"}
+                          >
+                            {product.name || "Unnamed Product"}
+                          </b>
+                        </div>
+                      </figcaption>
+                    </figure>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="w-full flex flex-col items-center justify-center gap-8 py-16">
+                <Player
+                  autoplay
+                  loop
+                  src="https://lottie.host/7fd33a4f-2e59-4f34-ba0c-4af37814586e/Cq1qkcf16G.lottie" // Replace with your Lottie JSON URL
+                  style={{ height: "300px", width: "300px" }}
+                />
+                <h2 className="text-4xl font-bold text-[#043D12]">
+                  No Products Available
+                </h2>
+                <p className="text-lg text-[#6A7368] text-center max-w-2xl">
+                  It looks like this business hasn't added any products or
+                  services yet. Check back later or explore other businesses in
+                  the community!
                 </p>
-              )}
-            </div>
+                <button
+                  className="mt-4 bg-[#043D12] text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-[#032d0e] transition-colors"
+                  onClick={() => navigate("/community")} // Redirect to community page
+                >
+                  Explore Community
+                </button>
+              </div>
+            )}
             <Modal
               business={selectedBusiness}
               onClose={() => setSelectedBusiness(null)}

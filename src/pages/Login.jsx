@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { login } from "../redux/authSlice"; // Change from loginSuccess to login
+import { login } from "../redux/authSlice";
 import { FaRegEnvelope } from "react-icons/fa";
 import { CiLock } from "react-icons/ci";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
@@ -18,6 +18,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loginAttempted, setLoginAttempted] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false); // State for "Remember Me"
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -31,6 +32,19 @@ const Login = () => {
       activeUser: "/user-dashboard",
     },
   };
+
+  // Load saved credentials from localStorage on component mount
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("rememberMeEmail");
+    const savedPassword = localStorage.getItem("rememberMePassword");
+
+    if (savedEmail) {
+      setEmail(savedEmail);
+    }
+    if (savedPassword) {
+      setPassword(savedPassword);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -59,8 +73,18 @@ const Login = () => {
         email: member.email,
       };
 
-      dispatch(login({ token, user })); // Change loginSuccess to login
+      dispatch(login({ token, user }));
       toast.success(response.data.message || "Login successful!");
+
+      // Save credentials to localStorage if "Remember Me" is checked
+      if (rememberMe) {
+        localStorage.setItem("rememberMeEmail", email);
+        localStorage.setItem("rememberMePassword", password);
+      } else {
+        // Clear saved credentials if "Remember Me" is unchecked
+        localStorage.removeItem("rememberMeEmail");
+        localStorage.removeItem("rememberMePassword");
+      }
     } catch (error) {
       const errorResponse = error.response?.data || {};
 
@@ -108,9 +132,9 @@ const Login = () => {
       <div className="w-full h-screen flex justify-center lg:grid grid-cols-2">
         <div className="max-lg:hidden w-full h-full flex justify-center items-center bg-[url('/Group2.svg')] bg-cover bg-center bg-green-800">
           <div className="w-full h-[90%] flex flex-col items-center">
-            <div className="container mx-auto px-[5vw] text-[#FFFDF2] mt-12">
-              <Link to="/" className="lg:text-[50px] text-[32px] font-medium">
-                Welcome to <br /> MBO
+            <div className="container mx-auto px-[5vw] text-[#FFFDF2] ">
+              <Link to="/" className="lg:text-[35px] text-[32px] font-medium">
+                Welcome to <br /> MindPower Business Online
               </Link>
               <p className="text-[18px]">
                 Step into a community that puts your business in the spotlight.
@@ -168,9 +192,14 @@ const Login = () => {
                   <input
                     type="checkbox"
                     name="remember"
-                    className="cursor-pointer w-5 h-5 text-transparent border-2 border-[#043D12] rounded-sm appearance-none focus:ring-2 focus:ring-[#043D12] peer checked:bg-[#043D12]"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="custom-checkbox"
+                    id="rememberMe"
                   />
-                  <label className="text-[#6A7368]">Remember me</label>
+                  <label htmlFor="rememberMe" className="text-[#6A7368]">
+                    Remember me
+                  </label>
                 </div>
                 <Link to="/forgotten-password" className="text-[#6A7368]">
                   Forgot password?

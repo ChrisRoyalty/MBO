@@ -12,7 +12,6 @@ const VerifyEmail = () => {
   const [email, setEmail] = useState("");
 
   useEffect(() => {
-
     if (!token) {
       toast.error("Invalid verification link.");
       setVerificationFailed(true);
@@ -21,11 +20,12 @@ const VerifyEmail = () => {
     }
 
     axios
-    .get(`${import.meta.env.VITE_BASE_URL}/member/verify-email?token=${token}`)
+      .get(
+        `${import.meta.env.VITE_BASE_URL}/member/verify-email?token=${token}`
+      )
       .then((response) => {
         toast.success(response.data.message || "Email verified successfully!");
-        setTimeout(() => navigate(`/subscribe/${userId}`), 100); 
-        
+        setTimeout(() => navigate(`/subscribe`), 100);
       })
       .catch((error) => {
         toast.error(error.response?.data?.error || "Verification failed.");
@@ -43,7 +43,9 @@ const VerifyEmail = () => {
     }
 
     axios
-      .post(`${import.meta.env.VITE_BASE_URL}/member/resend-verification`, { email })
+      .post(`${import.meta.env.VITE_BASE_URL}/member/resend-verification`, {
+        email,
+      })
       .then(() => {
         toast.success("Verification email resent. Check your inbox.");
       })
