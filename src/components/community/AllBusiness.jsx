@@ -13,13 +13,13 @@ import {
 } from "react-icons/fa";
 import ProfilePic from "../../assets/profilepic.svg";
 import NetworkError from "../NetworkError";
-import { Player } from "@lottiefiles/react-lottie-player"; // Import Player for Lottie animations
+import { Player } from "@lottiefiles/react-lottie-player";
 import Start from "../home/Start";
 import Footer from "../Footer";
 
 const BASE_URL = "https://mbo.bookbank.com.ng";
 
-// Contact Dropdown Component
+// Contact Dropdown Component (unchanged)
 const ContactDropdown = ({ socialLinks, onClose }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -82,7 +82,7 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
   );
 };
 
-// Modal Component
+// Modal Component (unchanged)
 const Modal = ({ profile, onClose }) => {
   if (!profile) return null;
 
@@ -233,7 +233,7 @@ const AllBusiness = () => {
   }
 
   if (error) {
-    return <NetworkError message={error} onRetry={fetchProfile} />;
+    return <NetworkError message={error} />;
   }
 
   return (
@@ -258,102 +258,127 @@ const AllBusiness = () => {
         {/* Businesses Section */}
         {filteredProfiles.length > 0 ? (
           <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-10 mb-12">
-            {filteredProfiles.map((profile, index) => (
-              <motion.div
-                key={profile.id}
-                className="relative border-[1px] border-[#6A7368] rounded-[14px] shadow-lg pt-4 pb-8 px-4"
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: false }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                onClick={() => setSelectedProfile(profile)}
-              >
-                {/* Profile Images */}
-                <div className="imgs grid grid-cols-4 gap-4 w-full">
-                  {[0, 1, 2, 3].map((i) => (
-                    <img
-                      key={i}
-                      src={
-                        profile.productImages?.[i]?.imageUrl ||
-                        profile.businesImg ||
-                        BusinessImg
-                      }
-                      alt={profile.businessName}
-                      className={`${
-                        i === 0
-                          ? "rounded-l-[8px]"
-                          : i === 3
-                          ? "rounded-r-[8px]"
-                          : ""
-                      } bg-black/60 object-cover w-full h-[80px]`}
-                      onError={(e) => (e.target.src = BusinessImg)}
-                    />
-                  ))}
-                  <img
-                    src={profile.businesImg || ProfilePic}
-                    alt={profile.businessName}
-                    className="absolute top-[45px] left-1/2 transform -translate-x-1/2 w-[70px] h-[70px] rounded-full object-cover"
-                    onError={(e) => (e.target.src = ProfilePic)}
-                  />
-                </div>
+            {filteredProfiles.map((profile, index) => {
+              // Determine available images
+              const availableImages = (profile.productImages || [])
+                .filter((img) => img?.imageUrl)
+                .slice(0, 4); // Limit to 4 images
+              const imageCount = availableImages.length || 1; // Default to 1 if no product images
 
-                {/* Profile Details */}
-                <figure className="flex flex-col gap-2 items-center mt-[25px] justify-center">
-                  <figcaption className="name text-center flex flex-col gap-4">
-                    <Link
-                      to={`/community/profile/${profile.id}`}
-                      className="cursor-pointer text-[#043D12] text-[16px] font-semibold"
-                    >
-                      {profile.businessName}
-                    </Link>
-                    <p className="flex items-center gap-2 justify-center text-[#6A7368] text-[12px]">
-                      <CiLocationOn />
-                      {profile.location || "Not specified"}
-                    </p>
-                    <p className="text-[#043D12] border-[1px] border-[#6A7368] rounded-[4px] w-fit mx-auto px-4 py-2 text-[10px]">
-                      {profile.categories[0]?.name || "Unknown Category"}
-                    </p>
-                    <div className="details flex items-center justify-center">
-                      <div className="followers px-4 border-r-[1px] border-[#6A736866]">
-                        <h4 className="text-[12px] text-[#043D12] font-bold">
-                          30
-                        </h4>
-                        <p className="text-[8px] text-[#6A7368]">Followers</p>
-                      </div>
-                      <div className="profile px-4">
-                        <h4 className="text-[12px] text-[#043D12] font-bold">
-                          30
-                        </h4>
-                        <p className="text-[8px] text-[#6A7368]">Followers</p>
-                      </div>
-                    </div>
-                    {profile.socialLinks?.whatsapp ? (
-                      <a
-                        href={profile.socialLinks.whatsapp}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-fit text-[#043D12] border-[1px] border-[#6A7368] rounded-[20px] hover:bg-[#043D12] px-12 py-2 hover:text-white flex items-center gap-2"
-                      >
-                        <FaWhatsapp className="text-[20px]" />
-                        Message
-                      </a>
+              return (
+                <motion.div
+                  key={profile.id}
+                  className="relative border-[1px] border-[#6A7368] rounded-[14px] shadow-lg pt-4 pb-8 px-4 overflow-hidden"
+                  initial={{ opacity: 0, y: 50 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: false }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  onClick={() => setSelectedProfile(profile)}
+                >
+                  {/* Profile Images */}
+                  <div
+                    className={`imgs w-full h-[80px] relative ${
+                      imageCount === 1
+                        ? "flex justify-center items-center"
+                        : `grid grid-cols-${imageCount} gap-4`
+                    }`}
+                  >
+                    {imageCount === 1 ? (
+                      <img
+                        src={
+                          availableImages[0]?.imageUrl ||
+                          profile.businesImg ||
+                          BusinessImg
+                        }
+                        alt={profile.businessName}
+                        className="w-full max-w-[200px] h-[80px] object-cover rounded-[8px] shadow-md"
+                        onError={(e) => (e.target.src = BusinessImg)}
+                      />
                     ) : (
-                      <p className="text-gray-600 text-[12px] text-center">
-                        WhatsApp not available
-                      </p>
+                      availableImages.map((img, i) => (
+                        <img
+                          key={i}
+                          src={
+                            img.imageUrl || profile.businesImg || BusinessImg
+                          }
+                          alt={profile.businessName}
+                          className={`w-full h-[80px] object-cover ${
+                            i === 0
+                              ? "rounded-l-[8px]"
+                              : i === imageCount - 1
+                              ? "rounded-r-[8px]"
+                              : ""
+                          }`}
+                          onError={(e) => (e.target.src = BusinessImg)}
+                        />
+                      ))
                     )}
-                  </figcaption>
-                </figure>
-              </motion.div>
-            ))}
+                    {/* Profile Picture Overlay */}
+                    <img
+                      src={profile.businesImg || ProfilePic}
+                      alt={profile.businessName}
+                      className="absolute top-[45px] left-1/2 transform -translate-x-1/2 w-[70px] h-[70px] rounded-full object-cover border-2 border-[#FFFDF2] shadow-lg"
+                      onError={(e) => (e.target.src = ProfilePic)}
+                    />
+                  </div>
+
+                  {/* Profile Details */}
+                  <figure className="flex flex-col gap-2 items-center mt-[40px] justify-center">
+                    <figcaption className="name text-center flex flex-col gap-4">
+                      <Link
+                        to={`/community/profile/${profile.id}`}
+                        className="cursor-pointer text-[#043D12] text-[16px] font-semibold"
+                      >
+                        {profile.businessName}
+                      </Link>
+                      <p className="flex items-center gap-2 justify-center text-[#6A7368] text-[12px]">
+                        <CiLocationOn />
+                        {profile.location || "Not specified"}
+                      </p>
+                      <p className="text-[#043D12] border-[1px] border-[#6A7368] rounded-[4px] w-fit mx-auto px-4 py-2 text-[10px]">
+                        {profile.categories[0]?.name || "Unknown Category"}
+                      </p>
+                      <div className="details flex items-center justify-center">
+                        <div className="followers px-4 border-r-[1px] border-[#6A736866]">
+                          <h4 className="text-[12px] text-[#043D12] font-bold">
+                            30
+                          </h4>
+                          <p className="text-[8px] text-[#6A7368]">Followers</p>
+                        </div>
+                        <div className="profile px-4">
+                          <h4 className="text-[12px] text-[#043D12] font-bold">
+                            30
+                          </h4>
+                          <p className="text-[8px] text-[#6A7368]">Followers</p>
+                        </div>
+                      </div>
+                      {profile.socialLinks?.whatsapp ? (
+                        <a
+                          href={profile.socialLinks.whatsapp}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-fit text-[#043D12] border-[1px] border-[#6A7368] rounded-[20px] hover:bg-[#043D12] px-12 py-2 hover:text-white flex items-center gap-2"
+                        >
+                          <FaWhatsapp className="text-[20px]" />
+                          Message
+                        </a>
+                      ) : (
+                        <p className="text-gray-600 text-[12px] text-center">
+                          WhatsApp not available
+                        </p>
+                      )}
+                    </figcaption>
+                  </figure>
+                </motion.div>
+              );
+            })}
           </div>
         ) : (
-          // Fallback UI for No Results
           <div className="w-full flex flex-col items-center justify-center gap-8 py-16">
             <Player
               autoplay
               loop
-              src="https://lottie.host/7fd33a4f-2e59-4f34-ba0c-4af37814586e/Cq1qkcf16G.lottie" // Replace with your Lottie JSON URL
+              src="https://lottie.host/7fd33a4f-2e59-4f34-ba0c-4af37814586e/Cq1qkcf16G.lottie"
               style={{ height: "300px", width: "300px" }}
             />
             <h2 className="text-4xl font-bold text-[#043D12]">
@@ -366,7 +391,7 @@ const AllBusiness = () => {
             </p>
             <button
               className="mt-4 bg-[#043D12] text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-[#032d0e] transition-colors"
-              onClick={() => setSearchQuery("")} // Clear search query
+              onClick={() => setSearchQuery("")}
             >
               Clear Search
             </button>

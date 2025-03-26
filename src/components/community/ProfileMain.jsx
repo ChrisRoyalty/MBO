@@ -555,7 +555,7 @@ const ProfileMain = () => {
                     className="text-[16px] text-[#6A7368] cursor-pointer font-bold underline hover:text-[#043D12]"
                     onClick={() => setIsReportModalOpen(true)}
                   >
-                    Report
+                    Report business
                   </p>
                 </div>
               </div>

@@ -1,85 +1,15 @@
-// src/components/BusinessProfile.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate, useLocation } from "react-router-dom"; // Added useLocation
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { BsPerson } from "react-icons/bs";
 import { MdOutlineCategory } from "react-icons/md";
-import { VscSymbolKeyword } from "react-icons/vsc";
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
-import { CiLock } from "react-icons/ci";
+import { FaPen, FaPlus, FaTimes } from "react-icons/fa";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Hand from "../components/svgs/Hand";
-
-// CongratsModal Component (embedded here for simplicity)
-const CongratsModal = ({ onClose }) => {
-  const navigate = useNavigate();
-
-  const handleProceed = () => {
-    onClose(); // Close the modal
-    // No navigation needed here since we're already on /business-profile
-  };
-
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
-      <div
-        className="bg-gradient-to-br from-[#043D12] via-[#1A5A2C] to-[#FFFDF2] rounded-3xl p-8 max-w-lg w-full text-center shadow-2xl transform transition-all duration-500 scale-100 hover:scale-105"
-        style={{ animation: "fadeIn 0.5s ease-in-out" }}
-      >
-        {/* Animated Icon */}
-        <div className="mb-6">
-          <svg
-            className="w-16 h-16 mx-auto animate-bounce text-[#FFFDF2]"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-        </div>
-
-        {/* Title */}
-        <h2 className="text-3xl font-extrabold text-[#FFFDF2] mb-4 tracking-wide">
-          Congratulations!
-        </h2>
-
-        {/* Message */}
-        <p className="text-lg text-[#D1D5DB] mb-8 leading-relaxed">
-          You’ve successfully subscribed! Your business is ready to shine. Let’s
-          get started with your profile.
-        </p>
-
-        {/* Button */}
-        <button
-          onClick={handleProceed}
-          className="bg-[#FFFDF2] text-[#043D12] font-semibold rounded-full px-8 py-3 hover:bg-[#043D12] hover:text-[#FFFDF2] transition-all duration-300 shadow-lg"
-        >
-          Start Creating Your Profile
-        </button>
-      </div>
-
-      {/* CSS Animation */}
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-      `}</style>
-    </div>
-  );
-};
+import { TbFileDescription } from "react-icons/tb";
 
 const BusinessProfile = () => {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -89,42 +19,38 @@ const BusinessProfile = () => {
   });
   const [categories, setCategories] = useState([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
-  const [error, setError] = useState("");
   const [businessName, setBusinessName] = useState("");
-  const [keyword, setKeyword] = useState("");
+  const [keywords, setKeywords] = useState([]);
+  const [currentKeyword, setCurrentKeyword] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showCongratsModal, setShowCongratsModal] = useState(false); // Added for modal
+  const [validationErrors, setValidationErrors] = useState({
+    businessName: false,
+    category: false,
+    keywords: false,
+    description: false,
+  });
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation(); // Added to access navigation state
+  const location = useLocation();
   const token = useSelector((state) => state.auth.token);
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-  useEffect(() => {
-    // Check for subscription success from navigation state
-    if (location.state?.subscriptionSuccess) {
-      setShowCongratsModal(true);
-      // Clear the state to prevent re-triggering on refresh
-      window.history.replaceState({}, document.title, "/business-profile");
-    }
-  }, [location.state]);
+  const dropdownRef = useRef(null);
+  const formRef = useRef(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_BASE_URL}/member/all-category`
-        );
+        const response = await axios.get(`${BASE_URL}/member/all-category`);
         setCategories(response.data.category || response.data.categories || []);
         setIsLoadingCategories(false);
       } catch (error) {
-        console.error(
-          "Error fetching categories:",
-          error.response?.data || error
-        );
-        toast.error("Failed to load categories. Please try again.");
+        toast.error("Failed to load categories. Please try again.", {
+          position: "top-center",
+          autoClose: 3000,
+        });
         setCategories([]);
         setIsLoadingCategories(false);
       }
@@ -132,55 +58,135 @@ const BusinessProfile = () => {
     fetchCategories();
   }, [BASE_URL]);
 
-  const toggleDropdown = () => {
-    setShowDropdown(!showDropdown);
-  };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    if (showDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showDropdown]);
 
+  const toggleDropdown = () => setShowDropdown(!showDropdown);
   const handleCategorySelect = (id, name) => {
     setSelectedCategory({ id, name });
     setShowDropdown(false);
+    setValidationErrors((prev) => ({ ...prev, category: false }));
+  };
+
+  const addKeyword = () => {
+    if (currentKeyword.trim() && keywords.length < 10) {
+      setKeywords([...keywords, currentKeyword.trim()]);
+      setCurrentKeyword("");
+      setValidationErrors((prev) => ({ ...prev, keywords: false }));
+    } else if (keywords.length >= 10) {
+      toast.error("Maximum of 10 keywords allowed.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+    }
+  };
+
+  const removeKeyword = (index) => {
+    setKeywords(keywords.filter((_, i) => i !== index));
+  };
+
+  const validateForm = () => {
+    const errors = {
+      businessName: !businessName.trim(),
+      category: !selectedCategory.id,
+      keywords: keywords.length < 5 || keywords.length > 10,
+      description: !description.trim(),
+    };
+
+    setValidationErrors(errors);
+
+    if (errors.businessName) {
+      toast.error("Business name is required.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      formRef.current?.querySelector('input[name="businessName"]')?.focus();
+      return false;
+    }
+
+    if (errors.category) {
+      toast.error("Please select a business category.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      return false;
+    }
+
+    if (keywords.length < 5) {
+      toast.error("Please enter at least 5 keywords.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      formRef.current?.querySelector('input[name="keyword"]')?.focus();
+      return false;
+    }
+
+    if (keywords.length > 10) {
+      toast.error("Maximum of 10 keywords allowed.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      return false;
+    }
+
+    if (errors.description) {
+      toast.error("Description is required.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      formRef.current?.querySelector('textarea[name="description"]')?.focus();
+      return false;
+    }
+
+    if (!token) {
+      toast.error("Token missing. Please log in again.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      navigate("/login");
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("BusinessProfile submitted", {
-      businessName,
-      selectedCategory,
-      keyword,
-      description,
-    });
 
-    if (!businessName.trim()) {
-      toast.error("Business name is required.");
-      return;
-    }
-    if (!selectedCategory.id) {
-      toast.error("Please select a business category.");
-      return;
-    }
-    if (!token) {
-      toast.error("Token missing. Please log in again.");
-      navigate("/login");
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
     const step1Data = {
       businessName,
       categoryId: selectedCategory.id,
-      keyword,
+      keyword: keywords.join(", "),
       description,
     };
+
     sessionStorage.setItem("businessProfileStep1", JSON.stringify(step1Data));
-    console.log("Step 1 data stored:", step1Data);
+
     setTimeout(() => {
       setLoading(false);
       navigate("/business-profile2");
     }, 500);
   };
 
-  const handleCloseCongratsModal = () => {
-    setShowCongratsModal(false);
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addKeyword();
+    }
   };
 
   return (
@@ -196,7 +202,6 @@ const BusinessProfile = () => {
             </Link>
             <p className="text-[18px]">
               Step into a community that puts your business in the spotlight.
-              Showcase your brand, find new customers, and grow together.
             </p>
           </div>
         </div>
@@ -216,21 +221,39 @@ const BusinessProfile = () => {
             Set Up Business Profile <Hand />
           </h4>
           <form
+            ref={formRef}
             className="max-lg:w-full flex flex-col gap-6 md:mt-8 mt-16 max-lg:items-center"
             onSubmit={handleSubmit}
           >
-            <div className="max-lg:w-full border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
+            <div
+              className={`max-lg:w-full border-[1px] rounded-[27px] px-8 border-[${
+                validationErrors.businessName ? "#FF0000" : "#363636"
+              }] flex items-center gap-2 lg:h-[60px] h-[48px]`}
+            >
               <BsPerson className="text-[#6A7368]" />
               <input
                 type="text"
+                name="businessName"
                 required
                 placeholder="Business Name"
                 value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
+                onChange={(e) => {
+                  setBusinessName(e.target.value);
+                  setValidationErrors((prev) => ({
+                    ...prev,
+                    businessName: false,
+                  }));
+                }}
                 className="w-full h-full border-none focus:outline-none text-[#6A7368]"
               />
             </div>
-            <div className="max-lg:w-full border-[1px] rounded-[27px] px-8 border-[#363636] flex flex-col relative">
+
+            <div
+              className={`max-lg:w-full border-[1px] rounded-[27px] px-8 border-[${
+                validationErrors.category ? "#FF0000" : "#363636"
+              }] flex flex-col relative`}
+              ref={dropdownRef}
+            >
               <button
                 type="button"
                 className="flex items-center justify-between text-[#6A7368] w-full h-[48px] focus:outline-none"
@@ -243,9 +266,9 @@ const BusinessProfile = () => {
                   </span>
                 </div>
                 {showDropdown ? (
-                  <IoMdArrowDropup className="text-[#6A7368] cursor-pointer" />
+                  <IoMdArrowDropup className="text-[#6A7368]" />
                 ) : (
-                  <IoMdArrowDropdown className="text-[#6A7368] cursor-pointer" />
+                  <IoMdArrowDropdown className="text-[#6A7368]" />
                 )}
               </button>
               {showDropdown && isLoadingCategories ? (
@@ -253,7 +276,7 @@ const BusinessProfile = () => {
                   Loading categories...
                 </p>
               ) : showDropdown && categories.length > 0 ? (
-                <ul className="absolute top-[50px] border-4 border-[#043D12] left-0 w-full bg-[#FFFDF2] text-[#043D12] rounded-[25px] mt-2 p-2 shadow-lg max-h-[200px] overflow-y-auto">
+                <ul className="absolute top-[50px] border-4 border-[#043D12] left-0 w-full bg-[#FFFDF2] text-[#043D12] rounded-[25px] mt-2 p-2 shadow-lg max-h-[200px] overflow-y-auto z-10">
                   {categories.map((category) => (
                     <li
                       key={category.id}
@@ -277,29 +300,73 @@ const BusinessProfile = () => {
                 </p>
               ) : null}
             </div>
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-            <div className="max-lg:w-full border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
-              <VscSymbolKeyword className="text-[#6A7368]" />
-              <input
-                type="text"
-                required
-                placeholder="Enter keywords"
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                className="w-full h-full border-none focus:outline-none text-[#6A7368]"
-              />
+
+            <div className="max-lg:w-full flex flex-col gap-2">
+              <div className="flex flex-wrap gap-2">
+                {keywords.map((keyword, index) => (
+                  <div
+                    key={index}
+                    className="bg-[#043D12] text-[#FFFDF2] rounded-full px-3 py-1 flex items-center gap-1 text-sm shadow-md transition-all duration-200 hover:bg-[#1A5A2C]"
+                  >
+                    {keyword}
+                    <FaTimes
+                      className="cursor-pointer text-[#FFFDF2] hover:text-red-300"
+                      onClick={() => removeKeyword(index)}
+                    />
+                  </div>
+                ))}
+              </div>
+              {keywords.length < 10 && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    name="keyword"
+                    placeholder="Add keyword"
+                    value={currentKeyword}
+                    onChange={(e) => setCurrentKeyword(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    className="border-[1px] rounded-[20px] px-4 py-2 border-[#363636] text-[#6A7368] focus:outline-none w-40 h-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={addKeyword}
+                    className="bg-[#043D12] text-[#FFFDF2] rounded-full p-2 hover:bg-[#1A5A2C] transition-all duration-200"
+                  >
+                    <FaPlus />
+                  </button>
+                </div>
+              )}
+              <p
+                className={`text-xs ${
+                  validationErrors.keywords ? "text-red-500" : "text-[#6A7368]"
+                } mt-1`}
+              >
+                {keywords.length}/10 keywords added (min 5, max 10)
+              </p>
             </div>
-            <div className="max-lg:w-full border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
-              <CiLock className="text-[#6A7368]" />
-              <input
-                type="text"
+
+            <div
+              className={`max-lg:w-full border-[1px] rounded-[27px] px-8 py-4 border-[${
+                validationErrors.description ? "#FF0000" : "#363636"
+              }] flex items-start gap-2`}
+            >
+              <TbFileDescription className="text-[#6A7368] mt-1" />
+              <textarea
+                name="description"
                 required
                 placeholder="Description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full h-full border-none focus:outline-none text-[#6A7368]"
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  setValidationErrors((prev) => ({
+                    ...prev,
+                    description: false,
+                  }));
+                }}
+                className="w-full h-24 border-none focus:outline-none text-[#6A7368] resize-none bg-transparent"
               />
             </div>
+
             <button
               type="submit"
               disabled={loading}
@@ -310,11 +377,6 @@ const BusinessProfile = () => {
           </form>
         </div>
       </div>
-
-      {/* Render CongratsModal if subscription was successful */}
-      {showCongratsModal && (
-        <CongratsModal onClose={handleCloseCongratsModal} />
-      )}
     </div>
   );
 };

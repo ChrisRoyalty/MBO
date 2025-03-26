@@ -22,7 +22,7 @@ const fadeInVariants = {
 
 const Benefits = () => {
   return (
-    <div className="w-full flex justify-center items-center py-18 lg:bg-[#FFFFFF] bg-[#FAFEF4] overflow-hidden">
+    <div className="w-full flex justify-center items-center py-18 bg-[#FFFDF2] overflow-hidden">
       <motion.div
         className="container mx-auto px-[5vw] flex flex-col gap-14 text-[#043D12]"
         initial="hidden"

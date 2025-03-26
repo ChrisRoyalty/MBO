@@ -84,32 +84,3 @@ const VerifyEmail = () => {
 };
 
 export default VerifyEmail;
-
-/*
-
-{
-    "message": "Sign up successful. Please check your email to verify your account.",
-    "newMember": {
-        "id": "9eb5d2b6-b2df-4b52-bf95-1d7916c3bac8",
-        "role": "user",
-        "subscriptionStatus": "inactive",
-        "isActive": false,
-        "lastLogin": null,
-        "firstName": "Benjamin",
-        "lastName": "Ikpeazu",
-        "email": "benikpe@example.com",
-        "password": "$2a$10$c4PLsdrZRC/GF4Azf83Rveqodqepvpf8UfWMvWZikZxqEK4Nm8zzW",
-        "resetToken": "$2a$10$2sXxoVQ0359.8HkquVBHVeLPeNT4DhPyxxEFmKyKt91KbuMnYao/W",
-        "resetTokenExpiry": "2025-02-23T16:39:21.243Z",
-        "updatedAt": "2025-02-23T16:27:06.944Z",
-        "createdAt": "2025-02-23T16:27:06.944Z"
-    }
-}
-
-
-
-
-
-
-
-*/

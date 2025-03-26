@@ -352,7 +352,7 @@ const NewBusinesses = () => {
         <div className="all-business flex flex-col gap-24">
           <div>
             <h1 className="text-[#043D12] lg:text-[32px] text-[24px] font-medium">
-              Newly Added
+              Newly Added Businesses
             </h1>
             <div className="w-full grid xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
               {filteredNewProfiles.map((profile, index) => (

@@ -9,36 +9,8 @@ import Good from "../components/svgs/Good";
 import { useNavigate } from "react-router-dom";
 
 const PUBLIC_KEY = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
-
-// SuccessModal in Subscribe component
-const SuccessModal = ({ onClose }) => {
-  const navigate = useNavigate();
-
-  const handleAcknowledge = () => {
-    onClose(); // Close the modal
-    navigate("/business-profile", { state: { subscriptionSuccess: true } }); // Pass success flag
-  };
-
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/60 bg-opacity-50 z-50">
-      <div className="bg-[#FFFDF2] rounded-[27px] p-8 max-w-md w-full text-center shadow-lg">
-        <h2 className="text-[24px] font-bold text-[#043D12] mb-4">
-          🎉 Payment Successful!
-        </h2>
-        <p className="text-[#6A7368] mb-6">
-          Thank you for subscribing! Your payment was successful. Click below to
-          access your business profile.
-        </p>
-        <button
-          onClick={handleAcknowledge}
-          className="bg-[#043D12] text-[#FFFDF2] rounded-[27px] px-6 py-2 hover:bg-[#043D12]/75 transition-colors"
-        >
-          Go to Business Profile
-        </button>
-      </div>
-    </div>
-  );
-};
+const FRONT_URL = import.meta.env.VITE_BASE_URL_LOCAL;
+const MAIN_URL = import.meta.env.VITE_BASE_URL_MAIN;
 
 const Subscribe = () => {
   const navigate = useNavigate();
@@ -134,27 +106,95 @@ const Subscribe = () => {
     }
   };
 
-  const handlePaymentCallback = (paymentResponse) => {
+  // Updated SuccessModal with a modern, elegant design
+  const SuccessModal = ({ onClose, userName }) => {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 animate-fadeIn">
+        <div className="bg-gradient-to-br from-[#FFFDF2] to-[#E8F5E9] rounded-[30px] p-8 max-w-lg w-full text-center shadow-2xl transform transition-all duration-500 scale-100 hover:scale-105">
+          <div className="relative">
+            <div className="absolute inset-0 bg-confetti bg-cover opacity-20 rounded-[30px]"></div>
+            <h2 className="text-[28px] font-extrabold text-[#043D12] mb-4 relative z-10 animate-bounceIn">
+              🎉 Congratulations, {userName}!
+            </h2>
+            <p className="text-[#6A7368] text-[18px] mb-6 relative z-10">
+              You’ve successfully subscribed! Take the next step to unlock your
+              full potential by setting up your business profile. We’re excited
+              to see you shine!
+            </p>
+            <div className="flex justify-center gap-4 relative z-10">
+              <button
+                onClick={() => {
+                  onClose();
+                  navigate("/business-profile", {
+                    state: { subscriptionSuccess: true },
+                  });
+                }}
+                className="bg-[#043D12] text-[#FFFDF2] rounded-full px-6 py-3 font-medium text-[16px] hover:bg-[#043D12]/85 transition-all duration-300 shadow-md"
+              >
+                Set Up My Profile
+              </button>
+              <button
+                onClick={() => {
+                  onClose();
+                  navigate("/");
+                }}
+                className="bg-transparent border-2 border-[#043D12] text-[#043D12] rounded-full px-6 py-3 font-medium text-[16px] hover:bg-[#043D12]/10 transition-all duration-300"
+              >
+                Back to Home
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const handlePaymentCallback = async (paymentResponse) => {
     console.log("Flutterwave response:", paymentResponse);
-    if (paymentResponse.status === "successful") {
-      setShowSuccessModal(true);
+    if (
+      paymentResponse.status === "completed" ||
+      paymentResponse.status === "successful"
+    ) {
+      try {
+        const verificationResponse = await axios.post(
+          `${import.meta.env.VITE_BASE_URL}/admin/verify-payment`,
+          {
+            transactionId: paymentResponse.transaction_id,
+            txRef: paymentResponse.tx_ref,
+            userId,
+            planId: selectedPlan,
+          }
+        );
+        console.log("Verification response:", verificationResponse.data);
+        if (verificationResponse.data.success) {
+          setShowSuccessModal(true); // Show the updated modal
+        } else {
+          throw new Error("Payment verification failed");
+        }
+      } catch (error) {
+        console.error(
+          "Error verifying payment:",
+          error.response?.data || error
+        );
+        toast.error("Payment verification failed. Contact support.");
+      }
     } else {
       toast.error("Payment failed. Please try again.");
-      setSelectedPlan(null);
-      setTxRef(null);
     }
+    setSelectedPlan(null);
+    setTxRef(null);
     closePaymentModal();
   };
 
   return (
-    <div className="bg-[#043D12] w-full h-screen py-16 flex flex-col justify-center items-center">
+    <div className="bg-[#043D12] w-full lg:h-screen h-fit overflow-y-auto py-16 flex flex-col justify-center items-center">
       <div className="container mx-auto px-[5vw] flex flex-col items-center gap-4">
         <h1 className="text-[#B4B3B3] lg:text-[30px] text-[20px] w-[90%] md:w-[60%] mx-auto text-center">
           Stay Connected, Stay Promoted: <br className="max-lg:hidden" /> Your
           All-in-One Plan
         </h1>
 
-        <div className="w-[90%] md:w-[70%] overflow-x-auto whitespace-nowrap flex gap-6 py-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 items-center justify-center">
+        <div className="w-[90%] overflow-x-auto whitespace-nowrap flex gap-6 py-4 items-center justify-center">
           {isLoadingSubscriptions ? (
             <p className="text-white">Loading subscriptions...</p>
           ) : subscriptions.length > 0 ? (
@@ -234,14 +274,11 @@ const Subscribe = () => {
                           tx_ref={txRef}
                           amount={subscription.price}
                           currency="NGN"
-                          payment_options="banktransfer, card, ussd" // Updated here
+                          redirect_url={`${MAIN_URL}/business-profile`}
+                          payment_options="banktransfer, card, ussd"
                           customer={{
-                            email: user?.email || "default@example.com",
-                            name: user
-                              ? `${user.firstName || ""} ${
-                                  user.lastName || ""
-                                }`.trim() || "Anonymous"
-                              : "Anonymous",
+                            email: user.email,
+                            name: `${user.firstName} ${user.lastName}`,
                           }}
                           customizations={{
                             title: "MBO Subscription",
@@ -268,7 +305,10 @@ const Subscribe = () => {
       </div>
 
       {showSuccessModal && (
-        <SuccessModal onClose={() => setShowSuccessModal(false)} />
+        <SuccessModal
+          onClose={() => setShowSuccessModal(false)}
+          userName={`${user?.firstName} ${user?.lastName}`}
+        />
       )}
     </div>
   );

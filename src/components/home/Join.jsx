@@ -99,7 +99,7 @@ const Join = () => {
                   width={193} // From JSON: w: 193
                 />
               ),
-              title: <Link to="/subscribe">SUBSCRIBE</Link>,
+              title: <Link to="/create-account">SUBSCRIBE</Link>,
               description:
                 "Choose a single annual plan for access and promotion.",
               animationVariant: animations.slideUp,
@@ -112,7 +112,7 @@ const Join = () => {
                   width={224} // From JSON: w: 224
                 />
               ),
-              title: <Link to="/business-profile">GROW</Link>,
+              title: <Link to="/create-account">GROW</Link>,
               description:
                 "Share your profile, connect with customers, and track your growth.",
               animationVariant: animations.slideRight,

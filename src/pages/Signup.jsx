@@ -22,18 +22,24 @@ const SuccessModal = ({ onClose }) => {
     <div className="fixed inset-0 flex items-center justify-center bg-black/60 bg-opacity-50 z-50">
       <div className="bg-[#FFFDF2] rounded-[27px] p-8 max-w-md w-full text-center shadow-lg">
         <h2 className="text-[24px] font-bold text-[#043D12] mb-4">
-          🎉 Signup Successful!
+          🎉Sign up successful.
         </h2>
         <p className="text-[#6A7368] mb-6">
-          Welcome to MBO! Your account has been created successfully. Click
-          below to log in and get started.
+          Please check your email to verify your account.
         </p>
-        <button
+        {/* <button
           onClick={handleAcknowledge}
           className="bg-[#043D12] text-[#FFFDF2] rounded-[27px] px-6 py-2 hover:bg-[#043D12]/75 transition-colors"
         >
           Go to Login
-        </button>
+        </button> */}
+        <Link
+          // onClick={handleAcknowledge}
+          to="/"
+          className="bg-[#043D12] text-[#FFFDF2] rounded-[27px] px-6 py-2 hover:bg-[#043D12]/75 transition-colors"
+        >
+          Close
+        </Link>
       </div>
     </div>
   );
@@ -71,7 +77,7 @@ const Signup = () => {
     try {
       const apiUrl = `${import.meta.env.VITE_BASE_URL}/member/sign-up`;
       const response = await axios.post(apiUrl, formData);
-      toast.success(response.data.message || "Signup successful!");
+      // toast.success(response.data.message || "Signup successful!");
       setFormData({
         firstName: "",
         lastName: "",
@@ -132,7 +138,7 @@ const Signup = () => {
         <div className="container mx-auto px-[5vw] h-fit max-lg:mt-16">
           <Link
             to="/"
-            className="lg:text-[50px] text-[32px] font-bold text-[#363636]"
+            className="lg:text-[50px] text-[32px] font-bold text-[#363636] hover:border-b-1 "
           >
             MBO
           </Link>
