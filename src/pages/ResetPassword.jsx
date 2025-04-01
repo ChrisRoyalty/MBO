@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom"; // Import useLocation for query params
 import { CiLock } from "react-icons/ci";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import Hand from "../components/svgs/Hand";
@@ -12,8 +13,12 @@ const ResetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { token } = useParams(); // Extract token from URL
   const navigate = useNavigate();
+  const location = useLocation(); // Use location to get query params
+
+  // Extract token from query string
+  const queryParams = new URLSearchParams(location.search);
+  const token = queryParams.get("token");
 
   const togglePasswordVisibility = () => {
     setShowPassword((prev) => !prev);
@@ -27,11 +32,16 @@ const ResetPassword = () => {
       return;
     }
 
+    if (!token) {
+      toast.error("Invalid or missing reset token!");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const response = await axios.patch(
-        `${import.meta.env.VITE_BASE_URL}/reset-password?token=${token}`, // Token in URL
+        `${import.meta.env.VITE_BASE_URL}/member/reset-password?token=${token}`, // Token as query param
         { password, confirmPassword }
       );
 
@@ -89,7 +99,7 @@ const ResetPassword = () => {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter Password"
+                  placeholder="Enter New Password"
                   className="bg-transparent w-full h-full border-none focus:outline-none text-[#043D12]"
                   required
                 />
@@ -108,7 +118,7 @@ const ResetPassword = () => {
                   type={showPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm Password"
+                  placeholder="Confirm New Password"
                   className="bg-transparent w-full h-full border-none focus:outline-none text-[#043D12]"
                   required
                 />

@@ -202,7 +202,7 @@ const ContactAndSocials = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-[#FFFDF2]">
+      <div className="flex justify-center items-center h-screen bg-white">
         <Loader />
       </div>
     );

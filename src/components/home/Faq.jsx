@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
-import FaqIcon from "../../assets/faqIcon.svg";
+import React, { useState, useRef } from "react";
+import FaqIcon from "../../assets/faq.png";
 import { RiArrowDropDownLine, RiArrowDropUpLine } from "react-icons/ri";
 
 const Faq = () => {
   const [activeIndex, setActiveIndex] = useState(null);
   const faqRefs = useRef([]);
-  const imageRef = useRef(null);
 
   const handleToggle = (index) => {
     setActiveIndex(activeIndex === index ? null : index);
@@ -70,52 +69,17 @@ const Faq = () => {
     },
   ];
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("fade-in");
-          } else {
-            entry.target.classList.remove("fade-in");
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-
-    faqRefs.current.forEach((el) => {
-      if (el) observer.observe(el); // Ensure `el` is not null
-    });
-    if (imageRef.current) observer.observe(imageRef.current);
-
-    return () => {
-      faqRefs.current.forEach((el) => {
-        if (el) observer.unobserve(el); // Only unobserve valid elements
-      });
-      if (imageRef.current) observer.unobserve(imageRef.current);
-    };
-  }, []);
-
   return (
-    <div className="w-full bg-[#FAFEF4] md:py-18 py-10">
+    <div className="w-full bg-[#FFFDF2] md:py-18 py-10">
       <div className="container mx-auto px-[5vw] flex flex-col gap-10">
-        <div className="intro text-center">
-          <h1 className="lg:text-[40px] text-[32px] text-[#6A7368]">
-            Frequently Asked Questions
-          </h1>
-          <p className="md:text-[20px] text-[18px] text-[#6A7368]">
-            Common questions you might want to ask
-          </p>
-        </div>
-        <div className="w-full flex flex-col lg:gap-4 gap-16 ">
-          <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-12 ">
+        <div className="w-full flex flex-col lg:gap-4 gap-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-12">
             {/* FAQ Questions */}
-            <div className="lg:order-2 lg:h-[500px] lg:overflow-y-auto">
+            <div className="order-2 lg:h-[500px] lg:overflow-y-auto modern-scrollbar lg:pr-4 lg:py-8">
               {faqItems.map((item, index) => (
                 <figure
                   key={index}
-                  className="rounded-[26px] my-6 faq-item"
+                  className="rounded-[26px] my-6"
                   ref={(el) => (faqRefs.current[index] = el)}
                 >
                   <div
@@ -126,7 +90,7 @@ const Faq = () => {
                     }`}
                   >
                     <button
-                      className={`flex justify-between items-center ${
+                      className={`flex justify-between items-center text-start ${
                         activeIndex === index
                           ? "bg-[#043D12] text-white"
                           : "bg-[#B5BBB4] text-[#043D12]"
@@ -164,14 +128,19 @@ const Faq = () => {
               ))}
             </div>
             {/* FAQ Image */}
-            <div
-              className="lg:order-1 self-start lg:self-center max-lg:flex justify-center"
-              ref={imageRef}
-            >
+            <div className="order-1 self-start lg:self-center flex flex-col justify-center items-center gap-8">
+              <div className="intro max-lg:text-center">
+                <h1 className="lg:text-[40px] text-[30px] text-[#6A7368]">
+                  Frequently Asked Questions
+                </h1>
+                <p className="md:text-[20px] text-[18px] text-[#6A7368]">
+                  Common questions you might want to ask
+                </p>
+              </div>
               <img
                 src={FaqIcon}
                 alt="FAQ_Img"
-                className="w-full max-w-[400px] fade-in"
+                className="w-full max-w-[400px]"
               />
             </div>
           </div>
@@ -179,20 +148,31 @@ const Faq = () => {
       </div>
       <style>
         {`
-    /* CSS for fade-in effect */
-    .faq-item,
-    .faq-question-container,
-    .fade-in {
-      opacity: 4;
-      transform: translateY(30px);
-      transition: opacity 0.6s ease, transform 0.6s ease;
-    }
+          /* Modern, tiny scrollbar styling with space */
+          .modern-scrollbar::-webkit-scrollbar {
+            width: 6px; /* Very thin scrollbar */
+          }
 
-    .fade-in {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  `}
+          .modern-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1; /* Light track */
+            border-radius: 10px;
+          }
+
+          .modern-scrollbar::-webkit-scrollbar-thumb {
+            background: #043D121A; /* Semi-transparent dark green */
+            border-radius: 10px;
+          }
+
+          .modern-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #6A7368; /* Lighter hover effect */
+          }
+
+          /* Firefox scrollbar styling */
+          .modern-scrollbar {
+            scrollbar-width: thin; /* Thin scrollbar */
+            scrollbar-color: #043D121A #f1f1f1; /* Thumb and track colors */
+          }
+        `}
       </style>
     </div>
   );

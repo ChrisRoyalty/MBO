@@ -12,6 +12,11 @@ import { CgMenuLeftAlt } from "react-icons/cg";
 import { MdOutlineCancelPresentation } from "react-icons/md";
 import BusinessImg from "../../assets/businessImg.jpeg";
 import { motion } from "framer-motion";
+import ManageIcon from "../../assets/manage.svg";
+import AnalyticsIcon from "../../assets/analytics.svg";
+import LogoutIcon from "../../assets/logout.svg";
+import SupportIcon from "../../assets/support.svg";
+import NotificationIcon from "../../assets/notification.svg";
 
 const navItems = [
   // First container items
@@ -21,7 +26,7 @@ const navItems = [
     label: "Home",
   },
   {
-    icon: <IoSettingsOutline className="text-[25px]" />,
+    icon: <img src={ManageIcon} alt="Manage" className="w-6 h-6" />,
     label: "Manage",
     subItems: [
       { to: "/admin/manage-admins", label: "Admin" },
@@ -29,14 +34,14 @@ const navItems = [
       { to: "/admin/manage-subscriptions", label: "Subscription" },
     ],
   },
-  {
-    to: "/admin/analytics",
-    icon: <TbChartBar className="text-[25px]" />,
-    label: "Analytics",
-  },
+  // {
+  //   to: "/admin/analytics",
+  //   icon: <img src={AnalyticsIcon} alt="Analytics" className="w-6 h-6" />,
+  //   label: "Analytics",
+  // },
   {
     to: "/admin/manage-notifications",
-    icon: <IoNotificationsOutline className="text-[25px]" />,
+    icon: <img src={NotificationIcon} alt="Notification" className="w-6 h-6" />,
     label: "Notification",
   },
 ];
@@ -45,12 +50,12 @@ const navItems = [
 const secondaryNavItems = [
   {
     to: "/admin/support",
-    icon: <MdHeadset className="text-[25px]" />,
+    icon: <img src={SupportIcon} alt="Support" className="w-6 h-6" />,
     label: "Support",
   },
   {
     to: "/login",
-    icon: <IoCodeSlash className="text-[25px]" />,
+    icon: <img src={LogoutIcon} alt="Logout" className="w-6 h-6" />,
     label: "Logout",
   },
 ];
@@ -101,7 +106,7 @@ const AdminDashboard = () => {
           x: isSidebarOpen || window.innerWidth >= 1024 ? "0%" : "-100%",
         }}
         transition={{ duration: 0.5, ease: "easeInOut" }}
-        className={`fixed lg:static z-50 top-0 left-0 lg:w-[25%] max-md:h-screen py-14 px-10 md:h-full h-auto overflow-y-auto bg-[#F0F5F2] border-r border-black shadow-2xl 
+        className={`fixed lg:static z-50 top-0 left-0 lg:w-[25%] max-md:h-screen py-14 px-10 md:h-full h-auto overflow-y-auto bg-[#F2F5F3] shadow-2xl 
           ${isSidebarOpen ? "absolute md:relative" : "absolute"}`}
       >
         {/* Close Sidebar Button (hidden on large screens) */}
@@ -137,13 +142,13 @@ const AdminDashboard = () => {
                         onClick={toggleManageDropdown}
                         className={`text-[15px] flex items-center gap-4 px-6 py-2 rounded-[11px] transition-all duration-300 w-full text-left ${
                           location.pathname.startsWith("/admin/manage-")
-                            ? "bg-[#C8E6C9] text-[#043D12] shadow-lg"
+                            ? "bg-[#043D121A] text-[#043D12] shadow-lg"
                             : "text-[#6A7368] hover:bg-gray-200"
                         }`}
                       >
                         {item.icon}
                         <span className="flex-1">{item.label}</span>
-                        <span className="ml-auto">
+                        <span className="ml-auto text-sm">
                           {isManageDropdownOpen ? "▲" : "▼"}
                         </span>
                       </button>
@@ -155,7 +160,7 @@ const AdminDashboard = () => {
                               to={subItem.to}
                               className={`text-[14px] flex items-center gap-2 px-4 py-1 rounded-[8px] transition-all duration-300 ${
                                 location.pathname === subItem.to
-                                  ? "bg-[#A5D6A7] text-[#043D12]"
+                                  ? "bg-[#043D121A] text-[#043D12]"
                                   : "text-[#6A7368] hover:bg-gray-100"
                               }`}
                             >
@@ -170,7 +175,7 @@ const AdminDashboard = () => {
                       to={item.to}
                       className={`text-[15px] flex items-center gap-4 px-6 py-2 rounded-[11px] transition-all duration-300 relative overflow-hidden ${
                         location.pathname === item.to
-                          ? "bg-[#C8E6C9] text-[#043D12] shadow-lg"
+                          ? "bg-[#043D121A] text-[#043D12] shadow-lg"
                           : "text-[#6A7368] hover:bg-gray-200"
                       }`}
                     >
@@ -207,7 +212,7 @@ const AdminDashboard = () => {
                     to={item.to}
                     onClick={item.label === "Logout" ? handleLogout : null}
                     className={`text-[14px] flex items-center gap-4 px-6 py-2 rounded-[11px] transition-all duration-300 relative overflow-hidden ${
-                      location.pathname === item.to
+                      location.pathname.startsWith(item.to) // Use startsWith instead of ===
                         ? "bg-[#C8E6C9] text-[#043D12] shadow-lg"
                         : "text-[#6A7368] hover:bg-gray-200"
                     }`}

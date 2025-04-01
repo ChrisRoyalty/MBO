@@ -1,4 +1,3 @@
-// src/pages/SearchPage.jsx
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
@@ -20,7 +19,9 @@ import {
   FaInstagram,
 } from "react-icons/fa";
 import NetworkError from "../components/NetworkError";
-const BASE_URL = "https://mbo.bookbank.com.ng";
+import { Player } from "@lottiefiles/react-lottie-player";
+import Start from "../components/home/Start";
+import Footer from "../components/Footer";
 
 // Contact Dropdown Component
 const ContactDropdown = ({ socialLinks, onClose }) => {
@@ -170,6 +171,7 @@ const Modal = ({ profile, onClose }) => {
   );
 };
 
+// SearchPage Component
 const SearchPage = () => {
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [profiles, setProfiles] = useState([]);
@@ -186,8 +188,7 @@ const SearchPage = () => {
       try {
         const API_URL = `${
           import.meta.env.VITE_BASE_URL
-        }/member/random-profiles`; // Replace BASE_URL
-
+        }/member/random-profiles`;
         const response = await axios.get(API_URL);
         if (response.data && response.data.success && response.data.profiles) {
           setProfiles(response.data.profiles);
@@ -248,6 +249,9 @@ const SearchPage = () => {
           .includes(searchQuery.toLowerCase()) ||
         profile.categories?.some((cat) =>
           cat.name.toLowerCase().includes(searchQuery.toLowerCase())
+        ) ||
+        profile.keyword?.some((keyword) =>
+          keyword.toLowerCase().includes(searchQuery.toLowerCase())
         );
       return matchesCategory && matchesLocation && matchesSearch;
     });
@@ -289,7 +293,7 @@ const SearchPage = () => {
             <input
               type="text"
               className="h-full outline-0 w-full bg-transparent"
-              placeholder="Search Businesses or services"
+              placeholder="Search businesses or services"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -299,7 +303,7 @@ const SearchPage = () => {
             to="/community/all-businesses"
             className="w-fit h-[70px] px-8 rounded-[39px] shadow-lg bg-[#043D12] text-[#FFFDF2] flex items-center justify-center hover:bg-[#02530c] transition-all duration-300"
           >
-            Explore all Businesses
+            Explore All Businesses
           </Link>
         </header>
 
@@ -408,54 +412,83 @@ const SearchPage = () => {
           <div className="h-full overflow-y-auto flex-1">
             <div className="w-full h-fit py-16 flex justify-center bg-[#FFFDF2]">
               <div className="w-[85%] max-sm:w-full h-fit flex flex-col gap-8">
-                <div className="w-full grid lg:grid-cols-3 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
-                  {filteredProfiles.map((profile, index) => (
-                    <motion.div
-                      key={profile.id}
-                      className="flex flex-col gap-1 cursor-pointer"
-                      initial={{ opacity: 0, y: 50 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: false }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                      onClick={() => setSelectedProfile(profile)}
+                {filteredProfiles.length > 0 ? (
+                  <div className="w-full grid lg:grid-cols-3 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
+                    {filteredProfiles.map((profile, index) => (
+                      <motion.div
+                        key={profile.id}
+                        className="flex flex-col gap-1 cursor-pointer"
+                        initial={{ opacity: 0, y: 50 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: false }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                        onClick={() => setSelectedProfile(profile)}
+                      >
+                        <div className="profile flex items-center gap-2">
+                          <img
+                            src={profile.businesImg || BusinessImg}
+                            alt={profile.businessName}
+                            className="w-8 h-8 rounded-full object-cover"
+                            onError={(e) => (e.target.src = BusinessImg)}
+                          />
+                          <p className="text-[12px] text-[#043D12]">
+                            {profile.businessName}
+                          </p>
+                        </div>
+                        <figure>
+                          <img
+                            src={
+                              profile.productImages?.[0]?.imageUrl ||
+                              profile.businesImg ||
+                              BusinessImg
+                            }
+                            alt={profile.businessName}
+                            className="rounded-lg w-full h-[250px] object-cover"
+                            onError={(e) => (e.target.src = BusinessImg)}
+                          />
+                          <figcaption className="flex flex-col gap-4 text-[#043D12] py-2">
+                            <div className="flex flex-col gap-1">
+                              <b className="lg:text-[15px] text-[10px]">
+                                {profile.businessName}
+                              </b>
+                              <p className="text-[8px]">
+                                {profile.categories[0]?.name ||
+                                  "Unknown Category"}
+                              </p>
+                            </div>
+                          </figcaption>
+                        </figure>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="w-full flex flex-col items-center justify-center gap-8 py-16">
+                    <Player
+                      autoplay
+                      loop
+                      src="https://lottie.host/7fd33a4f-2e59-4f34-ba0c-4af37814586e/Cq1qkcf16G.lottie" // Replace with your Lottie JSON URL
+                      style={{ height: "300px", width: "300px" }}
+                    />
+                    <h2 className="text-4xl font-bold text-[#043D12]">
+                      No Results Found
+                    </h2>
+                    <p className="text-lg text-[#6A7368] text-center max-w-2xl">
+                      It looks like there are no businesses or services matching
+                      your search criteria. Try adjusting your filters or
+                      explore other businesses in the community!
+                    </p>
+                    <button
+                      className="mt-4 bg-[#043D12] text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-[#032d0e] transition-colors"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setFilterCategory("");
+                        setFilterLocation("");
+                      }}
                     >
-                      <div className="profile flex items-center gap-2">
-                        <img
-                          src={profile.businesImg || BusinessImg}
-                          alt={profile.businessName}
-                          className="w-8 h-8 rounded-full object-cover"
-                          onError={(e) => (e.target.src = BusinessImg)}
-                        />
-                        <p className="text-[12px] text-[#043D12]">
-                          {profile.businessName}
-                        </p>
-                      </div>
-                      <figure>
-                        <img
-                          src={
-                            profile.productImages?.[0]?.imageUrl ||
-                            profile.businesImg ||
-                            BusinessImg
-                          }
-                          alt={profile.businessName}
-                          className="rounded-lg w-full h-[250px] object-cover"
-                          onError={(e) => (e.target.src = BusinessImg)}
-                        />
-                        <figcaption className="flex flex-col gap-4 text-[#043D12] py-2">
-                          <div className="flex flex-col gap-1">
-                            <b className="lg:text-[15px] text-[10px]">
-                              {profile.businessName}
-                            </b>
-                            <p className="text-[8px]">
-                              {profile.categories[0]?.name ||
-                                "Unknown Category"}
-                            </p>
-                          </div>
-                        </figcaption>
-                      </figure>
-                    </motion.div>
-                  ))}
-                </div>
+                      Clear Filters
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -465,6 +498,8 @@ const SearchPage = () => {
         profile={selectedProfile}
         onClose={() => setSelectedProfile(null)}
       />
+      <Start />
+      <Footer />
     </div>
   );
 };

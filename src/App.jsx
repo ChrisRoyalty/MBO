@@ -1,7 +1,6 @@
-// src/App.js
-import React from "react";
+import React, { useEffect } from "react"; // Import useEffect
 import { ToastContainer } from "react-toastify";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom"; // Import useLocation
 import PrivateRoute from "./components/PrivateRoute"; // Import PrivateRoute
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
@@ -17,7 +16,7 @@ import SearchPage from "./pages/SearchPage";
 import UserDashboard from "./pages/UserDashboard";
 import CreateProfile from "./components/user-dashboard/CreateProfile";
 import Profile from "./components/user-dashboard/Profile";
-import Analytics from "./components/user-dashboard/Analytics";
+import Analytics from "./components/user-dashboard/HelpAndSupport";
 import ProductAndServices from "./components/user-dashboard/ProductAndServices";
 import ContactAndSocials from "./components/user-dashboard/ContactAndSocials";
 import Subscription from "./components/user-dashboard/Subscription";
@@ -34,8 +33,23 @@ import ManageUsers from "./components/admin/ManageUsers";
 import ManageSubscription from "./components/admin/ManageSubscription";
 import Support from "./components/admin/Support";
 import Notification from "./components/admin/Notification";
+import HelpAndSupport from "./pages/HelpAndSupport";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import AllTickets from "./components/admin/support/AllTickets";
+import PendingTickets from "./components/admin/support/PendingTickets";
+import ResolvedTickets from "./components/admin/support/ResolvedTickets";
+import SupportFaqs from "./components/admin/support/SupportFaqs";
+import UserHelpAndSupport from "./components/user-dashboard/UserHelpAndSupport";
 
 function App() {
+  const location = useLocation(); // Get the current location
+
+  // Scroll to the top whenever the route changes
+  useEffect(() => {
+    window.scrollTo(0, 0); // Scroll to the top of the page
+  }, [location.pathname]); // Trigger on route change
+
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
@@ -43,8 +57,12 @@ function App() {
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/create-account" element={<Signup />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
+          <Route path="/help-and-support" element={<HelpAndSupport />} />
           <Route path="community" element={<Community />}>
             <Route index element={<CommunityMain />} />
             <Route path="all-businesses" element={<AllBusiness />} />
@@ -53,6 +71,7 @@ function App() {
             {/* Updated to dynamic route with :id */}
           </Route>
         </Route>
+
         {/* Protected Routes */}
         <Route
           path="/subscribe"
@@ -65,41 +84,34 @@ function App() {
         <Route
           path="/business-profile"
           element={
-            <PrivateRoute>
-              <BusinessProfile />
-            </PrivateRoute>
+            // <PrivateRoute>
+            <BusinessProfile />
+            // </PrivateRoute>
           }
         />
         <Route
           path="/business-profile2"
           element={
-            <PrivateRoute>
-              <BusinessProfile2 />
-            </PrivateRoute>
+            // <PrivateRoute>
+            <BusinessProfile2 />
+            // </PrivateRoute>
           }
         />
         <Route
           path="/verify-email"
           element={
-            <PrivateRoute>
-              <VerifyEmail />
-            </PrivateRoute>
+            // <PrivateRoute>
+            <VerifyEmail />
+            // </PrivateRoute>
           }
         />
+        <Route path="/forgotten-password" element={<ForgottenPassword />} />
         <Route
-          path="/forgotten-password"
+          path="/reset-password"
           element={
-            <PrivateRoute>
-              <ForgottenPassword />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/reset-password/:token"
-          element={
-            <PrivateRoute>
-              <ResetPassword />
-            </PrivateRoute>
+            // <PrivateRoute>
+            <ResetPassword />
+            // </PrivateRoute>
           }
         />
         <Route
@@ -133,7 +145,9 @@ function App() {
             <Route path="subscription" element={<Subscription />} />
             <Route path="password" element={<Password />} />
           </Route>
-          <Route path="analytics" element={<Analytics />} />
+          <Route path="help-and-support" element={<UserHelpAndSupport />} />
+
+          {/* <Route path="help" element={<HelpAndSupport />} /> */}
           <Route path="create-profile" element={<CreateProfile />} />
         </Route>
 
@@ -152,7 +166,12 @@ function App() {
           <Route path="manage-subscriptions" element={<ManageSubscription />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="manage-notifications" element={<Notification />} />
-          <Route path="support" element={<Support />} />
+          <Route path="support/*" element={<Support />}>
+            <Route path="all-tickets" element={<AllTickets />} />
+            <Route path="pending-tickets" element={<PendingTickets />} />
+            <Route path="resolved-tickets" element={<ResolvedTickets />} />
+            <Route path="faqs" element={<SupportFaqs />} />
+          </Route>
           <Route path="manage-users" element={<ManageUsers />} />
         </Route>
       </Routes>

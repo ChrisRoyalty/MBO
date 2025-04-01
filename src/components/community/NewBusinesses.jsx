@@ -94,7 +94,7 @@ const Modal = ({ profile, onClose }) => {
         onClick={onClose}
       >
         <motion.div
-          className="bg-white px-6 py-8 rounded-lg shadow-lg w-[90%] max-w-3xl flex flex-col md:flex-row gap-6 items-start overflow-y-auto max-h-[90vh] relative"
+          className="bg-white px-6 py-8 rounded-lg shadow-lg container mx-[10vw] flex flex-col md:flex-row gap-6 items-start overflow-y-auto h-[70vh] relative"
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
           exit={{ scale: 0.8 }}
@@ -113,7 +113,7 @@ const Modal = ({ profile, onClose }) => {
               BusinessImg
             }
             alt={profile.businessName}
-            className="w-full md:w-1/2 h-[350px] object-cover rounded-lg"
+            className="w-full md:w-1/2 h-full  object-cover rounded-lg"
             initial={{ x: -50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.5 }}
@@ -352,7 +352,7 @@ const NewBusinesses = () => {
         <div className="all-business flex flex-col gap-24">
           <div>
             <h1 className="text-[#043D12] lg:text-[32px] text-[24px] font-medium">
-              Newly Added
+              Newly Added Businesses
             </h1>
             <div className="w-full grid xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
               {filteredNewProfiles.map((profile, index) => (

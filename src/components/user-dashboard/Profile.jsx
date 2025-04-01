@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import {
   LineChart,
@@ -12,29 +12,40 @@ import {
 } from "recharts";
 import { IoIosNotificationsOutline } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { login } from "../../redux/authSlice";
 import { motion } from "framer-motion";
 import { CiUser } from "react-icons/ci";
-import BusinessImg from "../../assets/businessImg.jpeg"; // Fallback image
+import BusinessImg from "../../assets/businessImg.jpeg";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import ProfileProgressBar from "./ProfileProgressBar";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 const Profile = () => {
-  const [timeRange, setTimeRange] = useState("daily"); // Default to "daily" for endpoint compatibility
+  const [timeRange, setTimeRange] = useState("daily");
   const [metric, setMetric] = useState("ProfileViews");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isProfileVisibleDropdownOpen, setIsProfileVisibleDropdownOpen] =
+    useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [profileData, setProfileData] = useState({
     businessName: "User Name",
     category: "Category",
     businesImg: null,
+    id: "",
+    subscriptionStatus: "Unknown",
+    views: 0,
+    whatsappClicks: 0,
+    sharedClicks: 0,
   });
-  const [analyticsData, setAnalyticsData] = useState([]); // State for analytics
+  const [analyticsData, setAnalyticsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isFirstVisit, setIsFirstVisit] = useState(true);
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { isAuthenticated, user, token } = useSelector((state) => state.auth);
 
   const METRICS = [
@@ -42,338 +53,300 @@ const Profile = () => {
       title: "Profile Views",
       key: "ProfileViews",
       label: "Number of people that visited your profile",
-      value: (data) => data?.views || 0,
+      value: (data) => data.views,
     },
     {
       title: "Shared Links",
       key: "sharedLinks",
       label: "Number of links shared",
-      value: (data) => data?.sharedClicks || 0,
+      value: (data) => data.sharedClicks,
     },
     {
       title: "Social Clicks",
       key: "socialClicks",
       label: "Clicks on social media links (e.g., WhatsApp)",
-      value: (data) => data?.whatsappClicks || 0,
+      value: (data) => data.whatsappClicks,
     },
   ];
 
+  const TIME_RANGES = {
+    daily: { label: "Daily", limit: 7 },
+    weekly: { label: "Weekly", limit: 4 },
+    monthly: { label: "Monthly", limit: 6 },
+    yearly: { label: "Yearly", limit: 5 },
+  };
+
+  // Date formatting utilities
+  const formatDateForRange = (dateStr, range) => {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      console.log("Invalid date detected:", dateStr, "for range:", range); // Debug
+      const now = new Date(); // Fallback to today
+      switch (range) {
+        case "daily":
+          return now.toLocaleDateString("en-US", { weekday: "short" });
+        case "weekly":
+          return `Week ${getWeekNumber(now)} ${now.getFullYear()}`;
+        case "monthly":
+          return now.toLocaleString("default", {
+            month: "short",
+            year: "numeric",
+          });
+        case "yearly":
+          return now.getFullYear().toString();
+        default:
+          return now.toISOString().split("T")[0];
+      }
+    }
+    switch (range) {
+      case "daily":
+        return date.toLocaleDateString("en-US", { weekday: "short" });
+      case "weekly":
+        return `Week ${getWeekNumber(date)} ${date.getFullYear()}`;
+      case "monthly":
+        return date.toLocaleString("default", {
+          month: "short",
+          year: "numeric",
+        });
+      case "yearly":
+        return date.getFullYear().toString();
+      default:
+        return date.toISOString().split("T")[0];
+    }
+  };
+
+  const getWeekNumber = (date) => {
+    const startOfYear = new Date(date.getFullYear(), 0, 1);
+    const diff =
+      date -
+      startOfYear +
+      (startOfYear.getTimezoneOffset() - date.getTimezoneOffset()) * 60 * 1000;
+    const oneWeek = 1000 * 60 * 60 * 24 * 7;
+    return Math.floor(diff / oneWeek) + 1;
+  };
+
+  // Generate graph data
+  const generateGraphData = useMemo(() => {
+    const metricKey = {
+      ProfileViews: "views",
+      sharedLinks: "sharedClicks",
+      socialClicks: "whatsappClicks",
+    }[metric];
+    const { limit } = TIME_RANGES[timeRange];
+
+    if (!analyticsData.length) {
+      return Array.from({ length: limit }, (_, i) => {
+        const date = new Date();
+        date.setDate(
+          date.getDate() -
+            i *
+              (timeRange === "daily"
+                ? 1
+                : timeRange === "weekly"
+                ? 7
+                : timeRange === "monthly"
+                ? 30
+                : 365)
+        );
+        return { date: formatDateForRange(date, timeRange), value: 0 };
+      }).reverse();
+    }
+
+    const graphData = analyticsData
+      .map((item) => {
+        if (!item || !item.date) {
+          console.log("Missing or invalid item in analyticsData:", item);
+          return null;
+        }
+        return {
+          date: formatDateForRange(item.date, timeRange),
+          value: item[metricKey] || 0,
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return (
+          (isNaN(dateA.getTime()) ? 0 : dateA) -
+          (isNaN(dateB.getTime()) ? 0 : dateB)
+        );
+      })
+      .slice(-limit);
+
+    if (graphData.length < limit) {
+      let lastDate = new Date(
+        graphData[graphData.length - 1]?.date || Date.now()
+      ); // Changed to let
+      if (isNaN(lastDate.getTime())) {
+        console.log("Invalid lastDate, using now:", lastDate);
+        lastDate = new Date(); // Now legal with let
+      }
+      const filler = Array.from(
+        { length: limit - graphData.length },
+        (_, i) => {
+          const newDate = new Date(lastDate);
+          newDate.setDate(
+            newDate.getDate() -
+              (i + 1) *
+                (timeRange === "daily"
+                  ? 1
+                  : timeRange === "weekly"
+                  ? 7
+                  : timeRange === "monthly"
+                  ? 30
+                  : 365)
+          );
+          return { date: formatDateForRange(newDate, timeRange), value: 0 };
+        }
+      ).reverse();
+      return [...filler, ...graphData];
+    }
+
+    return graphData;
+  }, [analyticsData, metric, timeRange]);
+  // Fetch profile and analytics data
   useEffect(() => {
     if (!isAuthenticated || !token) {
-      setError("Not authenticated or missing token!");
+      setError("Please log in to view your profile.");
       setLoading(false);
       navigate("/login", { replace: true });
       return;
     }
 
-    const fetchData = async () => {
+    const fetchProfileData = async () => {
       try {
-        // Fetch profile data
-        const profileURL = `${import.meta.env.VITE_BASE_URL}/member/my-profile`;
-        const profileResponse = await axios.get(profileURL, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/member/my-profile`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const { data } = response.data;
+        if (!data) throw new Error("No profile data found.");
 
-        if (
-          profileResponse.data &&
-          profileResponse.data.success &&
-          profileResponse.data.data
-        ) {
-          const profile = profileResponse.data.data;
-          setProfileData({
-            ...profile,
-            businessName: profile.businessName || "User Name",
-            category: profile.categories?.[0]?.name || "Category",
-            businesImg: profile.businesImg || BusinessImg,
-          });
-        } else {
-          throw new Error("No profile data found in the response.");
-        }
-
-        // Fetch analytics data based on timeRange
-        const rangeMap = {
-          daily: "daily",
-          weekly: "weekly",
-          monthly: "monthly",
-          yearly: "yearly",
+        const memberData = data.member || {};
+        const newUserData = {
+          ...user, // Existing user from Redux
+          ...memberData, // New data from API
+          subscriptionStatus: memberData.subscriptionStatus || "Unknown",
         };
-        const currentTimeRange = timeRange.toLowerCase(); // Use current timeRange, normalized
-        const selectedRange = rangeMap[currentTimeRange] || "daily"; // Ensure lowercase mapping
-        console.log(
-          "Current timeRange:",
-          currentTimeRange,
-          "Selected range for API:",
-          selectedRange
-        ); // Debugging
-        const analyticsURL = `${
-          import.meta.env.VITE_BASE_URL
-        }/member/get-analytics?range=${selectedRange}`;
-        console.log("API URL:", analyticsURL); // Debugging
-        const analyticsResponse = await axios.get(analyticsURL, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
 
-        if (
-          analyticsResponse.data &&
-          analyticsResponse.data.success &&
-          analyticsResponse.data.data
-        ) {
-          setAnalyticsData(analyticsResponse.data.data);
-          console.log("Analytics Data received:", analyticsResponse.data.data);
-        } else {
-          throw new Error("No analytics data found in the response.");
+        // Only dispatch if user data has changed
+        if (JSON.stringify(user) !== JSON.stringify(newUserData)) {
+          dispatch(login({ token, user: newUserData }));
         }
-      } catch (error) {
-        console.error("❌ Error Fetching Data:", error);
-        if (
-          error.response?.status === 404 ||
-          error.response?.data?.message?.includes("foreign key constraint") ||
-          error.response?.data?.message?.includes("not found")
-        ) {
-          setError(
-            "Analytics or profile not found. Please ensure your profile is set up."
-          );
+
+        setProfileData({
+          businessName: data.businessName || "User Name",
+          category: data.categories?.[0]?.name || "Category",
+          businesImg: data.businesImg || BusinessImg,
+          id: data.id || "",
+          subscriptionStatus: memberData.subscriptionStatus || "Unknown",
+          views: data.views || 0,
+          whatsappClicks: data.whatsappClicks || 0,
+          sharedClicks: data.sharedClicks || 0,
+        });
+        setIsVisible(!data.deletedAt);
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to load profile data.");
+        if (err.response?.status === 404)
           navigate("/business-profile", { replace: true });
-        } else {
-          setError(
-            error.response?.data?.message ||
-              "Failed to fetch profile or analytics data."
-          );
-        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, [isAuthenticated, token, navigate, timeRange]); // Ensure timeRange triggers re-fetch
+    fetchProfileData();
+  }, [isAuthenticated, token, dispatch, navigate, user]); // Include 'user' in dependencies
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (isDropdownOpen && !e.target.closest(".dropdown-container")) {
-        setIsDropdownOpen(false);
+    if (!isAuthenticated || !token || loading) return;
+
+    const fetchAnalyticsData = async () => {
+      try {
+        const response = await axios.get(
+          `${
+            import.meta.env.VITE_BASE_URL
+          }/member/get-analytics?range=${timeRange}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (!response.data.success || !Array.isArray(response.data.data)) {
+          throw new Error("Invalid analytics data received.");
+        }
+        setAnalyticsData(response.data.data);
+      } catch (err) {
+        setError(
+          err.response?.data?.message || "Failed to load analytics data."
+        );
+        setAnalyticsData([]);
       }
     };
 
+    fetchAnalyticsData();
+  }, [isAuthenticated, token, timeRange, loading]);
+
+  // Dropdown and visibility handlers
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (isDropdownOpen && !e.target.closest(".dropdown-container"))
+        setIsDropdownOpen(false);
+      if (
+        isProfileVisibleDropdownOpen &&
+        !e.target.closest(".profile-visible-dropdown")
+      )
+        setIsProfileVisibleDropdownOpen(false);
+    };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isDropdownOpen]);
+  }, [isDropdownOpen, isProfileVisibleDropdownOpen]);
 
-  const toggleVisibility = () => setIsVisible((prevState) => !prevState);
+  const toggleVisibility = async (action) => {
+    if (!profileData.id || !token) {
+      toast.error("Missing profile ID or token.");
+      return;
+    }
 
-  const handleContainerClick = (selectedMetric) => {
-    setMetric(selectedMetric);
-    setIsFirstVisit(false);
+    try {
+      const url = `${import.meta.env.VITE_BASE_URL}/member/${
+        action === "hide" ? "hide" : "unhide"
+      }-profile`;
+      const response = await axios.patch(
+        url,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.success) {
+        setIsVisible(action === "restore");
+        toast.success(
+          `Profile ${action === "hide" ? "hidden" : "restored"} successfully!`
+        );
+        setProfileData((prev) => ({
+          ...prev,
+          deletedAt: action === "hide" ? new Date().toISOString() : null,
+        }));
+      }
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message || "Failed to update visibility."
+      );
+      if (err.response?.status === 401) navigate("/login", { replace: true });
+    } finally {
+      setIsProfileVisibleDropdownOpen(false);
+    }
   };
 
+  const handleMetricChange = (selectedMetric) => setMetric(selectedMetric);
   const handleTimeRangeChange = (range) => {
-    // Normalize range to lowercase to ensure consistency
-    const normalizedRange = range.toLowerCase();
-    setTimeRange(normalizedRange);
+    setTimeRange(range);
     setIsDropdownOpen(false);
-    console.log("Time range changed to:", normalizedRange); // Debugging
-  };
-
-  const generateGraphData = () => {
-    console.log("Analytics Data:", analyticsData, "Time Range:", timeRange);
-    if (!analyticsData || analyticsData.length === 0) {
-      console.warn("No analytics data available, showing placeholder.");
-      const rangeLimit =
-        timeRange === "daily"
-          ? 7
-          : timeRange === "weekly"
-          ? 4
-          : timeRange === "monthly"
-          ? 6
-          : 5;
-      return Array.from({ length: rangeLimit }, (_, index) => ({
-        date: getDefaultDate(index, timeRange),
-        value: Math.floor(Math.random() * 10) + 1, // Random values (1-10) for visibility
-      }));
-    }
-
-    const metricMap = {
-      ProfileViews: "views",
-      sharedLinks: "sharedClicks",
-      socialClicks: "whatsappClicks",
-    };
-
-    const metricKey = metricMap[metric] || "views";
-    const rangeLimit =
-      timeRange === "daily"
-        ? 7
-        : timeRange === "weekly"
-        ? 4
-        : timeRange === "monthly"
-        ? 6
-        : 5;
-
-    const graphData = analyticsData
-      .map((item) => {
-        if (!item || !item.date || item[metricKey] === undefined) {
-          console.warn("Invalid item in analytics data:", item);
-          return null;
-        }
-        // Ensure date is a valid ISO string before processing
-        const dateStr = item.date;
-        const date = new Date(dateStr);
-        if (isNaN(date.getTime())) {
-          console.warn(
-            "Invalid date in analytics data:",
-            dateStr,
-            "using fallback."
-          );
-          return null; // Skip invalid dates
-        }
-        return {
-          date: formatDateForRange(dateStr, timeRange),
-          value: item[metricKey] || 0,
-        };
-      })
-      .filter((item) => item !== null)
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    // If less than 2 points, pad with mock data to ensure a visible line
-    if (graphData.length < 2) {
-      console.warn("Insufficient data points, adding mock data.");
-      let lastDate = graphData.length
-        ? new Date(graphData[0]?.date || new Date())
-        : new Date();
-      if (isNaN(lastDate.getTime())) {
-        console.warn("Invalid lastDate, using current date as fallback.");
-        lastDate = new Date();
-      }
-      const mockPoints = Array.from(
-        { length: rangeLimit - graphData.length },
-        (_, index) => {
-          const newDate = new Date(lastDate);
-          try {
-            if (timeRange === "daily")
-              newDate.setDate(newDate.getDate() - (index + 1));
-            else if (timeRange === "weekly")
-              newDate.setDate(newDate.getDate() - (index + 1) * 7);
-            else if (timeRange === "monthly")
-              newDate.setMonth(newDate.getMonth() - (index + 1));
-            else newDate.setFullYear(newDate.getFullYear() - (index + 1));
-            if (isNaN(newDate.getTime())) {
-              throw new Error("Invalid date generated");
-            }
-            return {
-              date: newDate.toISOString().split("T")[0],
-              value: Math.floor(Math.random() * 10) + 1, // Random values (1-10) for visibility
-            };
-          } catch (error) {
-            console.error("Error generating mock date:", error);
-            return {
-              date: new Date(lastDate.getTime() - (index + 1) * 86400000)
-                .toISOString()
-                .split("T")[0], // Fallback to daily decrement
-              value: Math.floor(Math.random() * 10) + 1,
-            };
-          }
-        }
-      );
-      return [...graphData, ...mockPoints]
-        .sort((a, b) => new Date(a.date) - new Date(b.date))
-        .slice(-rangeLimit);
-    }
-
-    console.log("Generated Graph Data:", graphData);
-    return graphData.slice(-rangeLimit);
-  };
-
-  const formatDateForRange = (dateStr, range) => {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) {
-      console.warn(
-        "Invalid date string:",
-        dateStr,
-        "using current date as fallback."
-      );
-      return new Date().toISOString().split("T")[0];
-    }
-    if (range === "daily") {
-      return date.toLocaleDateString("en-US", { weekday: "short" }); // e.g., "Mon", "Tue", etc.
-    }
-    if (range === "weekly") {
-      const week = getWeekNumber(date);
-      return `Week ${week} ${date.getFullYear()}`;
-    }
-    if (range === "monthly") {
-      return date.toLocaleString("default", {
-        month: "short",
-        year: "numeric",
-      }); // e.g., "Mar 2025"
-    }
-    if (range === "yearly") return date.getFullYear().toString(); // e.g., "2025"
-    return date.toISOString().split("T")[0]; // Fallback (YYYY-MM-DD)
-  };
-
-  const getWeekNumber = (date) => {
-    if (isNaN(date.getTime())) {
-      console.warn("Invalid date for week number, using current date.");
-      date = new Date();
-    }
-    const startOfYear = new Date(date.getFullYear(), 0, 1);
-    const diff = date - startOfYear;
-    const oneWeek = 1000 * 60 * 60 * 24 * 7;
-    return Math.floor(diff / oneWeek) + 1;
-  };
-
-  const getDefaultDate = (index, range) => {
-    const now = new Date();
-    if (isNaN(now.getTime())) {
-      console.error("Current date is invalid, using fallback.");
-      return "Day 1"; // Fallback default
-    }
-    if (range === "daily") {
-      const newDate = new Date(now);
-      newDate.setDate(now.getDate() - index);
-      if (isNaN(newDate.getTime())) {
-        console.warn(
-          `Invalid date for index ${index} in daily, using fallback.`
-        );
-        return now.toLocaleDateString("en-US", { weekday: "short" });
-      }
-      return newDate.toLocaleDateString("en-US", { weekday: "short" }); // e.g., "Mon", "Sun"
-    }
-    if (range === "weekly") {
-      const newDate = new Date(now);
-      newDate.setDate(now.getDate() - index * 7);
-      if (isNaN(newDate.getTime())) {
-        console.warn(
-          `Invalid date for index ${index} in weekly, using fallback.`
-        );
-        return `Week ${getWeekNumber(now)} ${now.getFullYear()}`;
-      }
-      const week = getWeekNumber(newDate);
-      return `Week ${week} ${newDate.getFullYear()}`;
-    }
-    if (range === "monthly") {
-      const newDate = new Date(now);
-      newDate.setMonth(now.getMonth() - index);
-      if (isNaN(newDate.getTime())) {
-        console.warn(
-          `Invalid date for index ${index} in monthly, using fallback.`
-        );
-        return now.toLocaleString("default", { month: "short" });
-      }
-      return newDate.toLocaleString("default", { month: "short" });
-    }
-    const newDate = new Date(now);
-    newDate.setFullYear(now.getFullYear() - index);
-    if (isNaN(newDate.getTime())) {
-      console.warn(
-        `Invalid date for index ${index} in yearly, using fallback.`
-      );
-      return now.getFullYear().toString();
-    }
-    return newDate.getFullYear().toString(); // Yearly
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-[#FFFDF2]">
+      <div className="flex justify-center items-center h-screen bg-white">
         <div className="flex space-x-2">
           <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce"></div>
           <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce delay-200"></div>
@@ -387,7 +360,7 @@ const Profile = () => {
     return (
       <div className="text-red-600 p-4 text-center">
         <p>{error}</p>
-        {error.includes("create one") && (
+        {error.includes("profile") && (
           <Link
             to="/business-profile"
             className="text-blue-600 underline hover:text-blue-800"
@@ -400,17 +373,23 @@ const Profile = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4 relative pb-16 px-8 overflow-y-auto z-0">
-      {/* Header */}
-      <div className="h-[12vh] p-8 text-[#6A7368] flex justify-between items-center gap-2">
+    <div className="flex flex-col gap-4 relative pb-16 px-4 sm:px-8 overflow-y-auto z-0">
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+      />
+      <header className="h-[12vh] p-4 sm:p-8 text-[#6A7368] flex justify-between items-center gap-2">
         <strong className="text-[16px]">Dashboard</strong>
-        <div className="flex items-center md:gap-4 px-4">
+        <div className="flex items-center gap-2 sm:gap-4 px-2 sm:px-4">
           <Link to="/">
-            <IoIosNotificationsOutline className="text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
+            <IoIosNotificationsOutline className="text-[24px] sm:text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
           </Link>
           <Link to="/user-dashboard/profile">
             <motion.figure
-              className="flex items-center bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200"
+              className="flex items-center bg-white rounded-full p-1 sm:p-2 shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200"
               whileHover={{ scale: 1.05 }}
               animate={{ opacity: [1, 0.8, 1] }}
               transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
@@ -418,14 +397,14 @@ const Profile = () => {
               {profileData.businesImg ? (
                 <img
                   src={profileData.businesImg}
-                  alt="Business-img"
-                  className="rounded-full w-[32px] h-[32px] object-cover border-2 border-[#043D12]"
+                  alt="Business"
+                  className="rounded-full w-[24px] h-[24px] sm:w-[32px] sm:h-[32px] object-cover border-2 border-[#043D12]"
                   onError={(e) => (e.target.src = BusinessImg)}
                 />
               ) : (
-                <CiUser className="text-[32px] text-[#043D12] bg-gray-100 rounded-full p-1" />
+                <CiUser className="text-[24px] sm:text-[32px] text-[#043D12] bg-gray-100 rounded-full p-1" />
               )}
-              <figcaption className="ml-2 text-[#6A7368] max-md:hidden">
+              <figcaption className="ml-2 text-[#6A7368] hidden sm:block">
                 <h3 className="text-[12px] font-semibold">
                   {profileData.businessName}
                 </h3>
@@ -434,142 +413,172 @@ const Profile = () => {
             </motion.figure>
           </Link>
         </div>
-      </div>
+      </header>
 
-      {/* Welcome Section */}
-      <div className="welcome flex max-lg:flex-col max-lg:justify-center justify-between items-center gap-4">
-        <div className="text-[#6A7368]">
-          <h2 className="text-[20px]">
-            {isFirstVisit ? "Welcome" : "Welcome back"},{" "}
-            {profileData.businessName || user?.firstname || "User"}
+      <section className="welcome flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 px-2 sm:px-0">
+        <div className="text-[#6A7368] text-center sm:text-left">
+          <h2 className="text-[16px] sm:text-[20px]">
+            Welcome back, {profileData.businessName}
           </h2>
-          <p className="text-[10px] max-lg:text-center">
+          <p className="text-[10px]">
             Subscription Status:{" "}
             <span
               className={
-                user?.subscriptionStatus === "active"
+                profileData.subscriptionStatus === "active"
                   ? "text-green-600"
                   : "text-red-600"
               }
             >
-              {user?.subscriptionStatus || "Unknown"}
+              {profileData.subscriptionStatus}
             </span>
           </p>
         </div>
-        <ProfileProgressBar />
-        <div>
-          <button
-            onClick={toggleVisibility}
-            className="bg-[#043D12] text-white px-4 py-2 rounded-lg hover:bg-[#03500F] transition-all"
-          >
-            {isVisible ? "Hide Profile" : "Show Profile"}
-          </button>
-        </div>
-      </div>
-
-      {/* Conditionally Render Content */}
-      <div
-        className={`content-section transition-all duration-300 ${
-          isVisible ? "opacity-100 visible" : "opacity-0 invisible h-0"
-        }`}
-      >
-        {/* Profile Stats */}
-        <div className="mt-12">
-          <div className="grid lg:grid-cols-3 md:grid-cols-3 grid-cols-1 w-full gap-4">
-            {METRICS.map(({ title, key, label, value }) => (
-              <div
-                key={key}
-                onClick={() => handleContainerClick(key)}
-                className={`lg:px-6 px-2 py-4 text-[14px] text-[#6A7368] hover:text-white hover:bg-[#043D12] rounded-[11px] flex flex-col gap-4 text-center cursor-pointer ${
-                  metric === key
-                    ? "lg:col-span-1 md:col-span-1 col-span-2 bg-[#043D12] text-[#FFFDF2]"
-                    : "bg-gray-200"
-                }`}
-              >
-                <h5 className="text-start max-lg:text-[12px]">{title}</h5>
-                <figcaption className="text-[14px]">{label}</figcaption>
-                <h3 className="count text-[32px]">{value(profileData)}</h3>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="max-lg:hidden">
+            <ProfileProgressBar />
+          </div>
+          <div className="relative profile-visible-dropdown max-lg:mx-auto">
+            <button
+              onClick={() =>
+                setIsProfileVisibleDropdownOpen(!isProfileVisibleDropdownOpen)
+              }
+              className="flex items-center gap-2 px-3 py-2 bg-[#F5F7F5] text-[#043D12] rounded-lg shadow-md hover:bg-[#E8ECE8] transition-all text-[12px] sm:text-[14px]"
+            >
+              {isVisible ? (
+                <FiEye className="text-[16px]" />
+              ) : (
+                <FiEyeOff className="text-[16px]" />
+              )}
+              <span>{isVisible ? "Profile Visible" : "Profile Hidden"}</span>
+              <RiArrowDropDownLine className="text-[20px]" />
+            </button>
+            {isProfileVisibleDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 bg-white border border-[#6A7368] rounded-lg shadow-lg w-[150px] sm:w-[180px] z-10">
+                {isVisible ? (
+                  <>
+                    <button
+                      onClick={() => toggleVisibility("hide")}
+                      className="w-full text-left px-4 py-2 text-[#043D12] hover:bg-[#E8ECE8] transition-all text-[12px] sm:text-[14px]"
+                    >
+                      Hide Profile
+                    </button>
+                    <Link
+                      to={`/community/profile/${profileData.id}`}
+                      className="block w-full text-left px-4 py-2 text-[#043D12] hover:bg-[#E8ECE8] transition-all text-[12px] sm:text-[14px]"
+                      onClick={() => setIsProfileVisibleDropdownOpen(false)}
+                    >
+                      Preview Profile
+                    </Link>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => toggleVisibility("restore")}
+                    className="w-full text-left px-4 py-2 text-[#043D12] hover:bg-[#E8ECE8] transition-all text-[12px] sm:text-[14px]"
+                  >
+                    Make Profile Visible
+                  </button>
+                )}
               </div>
-            ))}
+            )}
           </div>
         </div>
+      </section>
 
-        {/* Graph */}
-        <div className="mt-8 border-[1px] border-[#6A7368] rounded-[30px] shadow-lg p-4 z-20">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[16px] text-[#6A7368]">
-              {metric === "ProfileViews"
-                ? "Profile Performance is Active"
-                : metric === "sharedLinks"
-                ? "Shared Links Performance is Active"
-                : "Social Clicks Performance is Active"}
+      {!isVisible && (
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg mt-4">
+          <p className="text-sm">
+            Your profile is hidden. Restore visibility above to make it public
+            again.
+          </p>
+        </div>
+      )}
+
+      <section className="content-section mt-8 sm:mt-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {METRICS.map(({ title, key, label, value }) => (
+            <div
+              key={key}
+              onClick={() => handleMetricChange(key)}
+              className={`p-4 sm:p-6 text-[#6A7368] rounded-[11px] flex flex-col gap-2 sm:gap-4 text-center cursor-pointer shadow-md transition-all ${
+                metric === key
+                  ? "bg-[#043D12] text-[#FFFDF2]"
+                  : "bg-[#F5F7F5] hover:bg-[#043D12] hover:text-[#FFFDF2]"
+              } ${!isVisible ? "opacity-50" : ""}`}
+            >
+              <h5 className="text-start text-[12px] sm:text-[14px] font-semibold">
+                {title}
+              </h5>
+              <figcaption className="text-[10px] sm:text-[12px]">
+                {label}
+              </figcaption>
+              <h3 className="count text-[24px] sm:text-[32px] font-bold">
+                {value(profileData)}
+              </h3>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 border-[1px] border-[#6A7368] rounded-[20px] sm:rounded-[30px] shadow-lg p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h3 className="text-[14px] sm:text-[16px] text-[#6A7368]">
+              {METRICS.find((m) => m.key === metric)?.title} Performance
             </h3>
-            <div className="mt-4 relative border-[1px] rounded-lg dropdown-container">
+            <div className="relative border-[1px] rounded-lg dropdown-container">
               <div
-                className="flex items-center gap-4 cursor-pointer rounded-lg px-2 py-1"
+                className="flex items-center gap-2 sm:gap-4 cursor-pointer rounded-lg px-2 py-1"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               >
-                <span className="text-[14px] text-[#6A7368]">
-                  {timeRange.charAt(0).toUpperCase() + timeRange.slice(1)}
+                <span className="text-[12px] sm:text-[14px] text-[#6A7368]">
+                  {TIME_RANGES[timeRange].label}
                 </span>
-                <RiArrowDropDownLine className="text-[20px]" />
+                <RiArrowDropDownLine className="text-[16px] sm:text-[20px]" />
               </div>
               {isDropdownOpen && (
-                <div className="absolute left-0 top-full mt-2 bg-white shadow-lg rounded-md w-full z-30">
-                  {["daily", "weekly", "monthly", "yearly"].map((range) => (
+                <div className="absolute right-0 top-full mt-2 bg-white shadow-lg rounded-md w-[120px] sm:w-[140px] z-30">
+                  {Object.entries(TIME_RANGES).map(([range, { label }]) => (
                     <div
                       key={range}
-                      className="p-2 cursor-pointer hover:bg-gray-100"
+                      className="p-2 cursor-pointer hover:bg-gray-100 text-[12px] sm:text-[14px]"
                       onClick={() => handleTimeRangeChange(range)}
                     >
-                      {range.charAt(0).toUpperCase() + range.slice(1)}
+                      {label}
                     </div>
                   ))}
                 </div>
               )}
             </div>
           </div>
-          <div className="mt-8 w-full h-[300px] relative z-30">
+          <div className="mt-6 sm:mt-8 w-full h-[250px] sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              {generateGraphData().length > 0 ? (
-                <LineChart
-                  data={generateGraphData()}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
-                >
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <CartesianGrid strokeDasharray="3 3" />{" "}
-                  {/* Grid for visibility */}
-                  <Tooltip
-                    content={({ payload }) => {
-                      console.log("Tooltip Payload:", payload);
-                      return payload && payload.length ? (
-                        <div className="bg-white p-2 border border-gray-300 rounded shadow">
-                          <p>{payload[0].payload.date}</p>
-                          <p>{payload[0].value}</p>
-                        </div>
-                      ) : (
-                        <div>No data available</div>
-                      );
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#82ca9d" // Green, visible against #FFFDF2
-                    activeDot={{ r: 8 }}
-                  />
-                  <Legend verticalAlign="top" align="right" />
-                </LineChart>
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  No data available for this range
-                </div>
-              )}
+              <LineChart
+                data={generateGraphData}
+                margin={{ top: 20, right: 20, left: 0, bottom: 10 }}
+              >
+                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <CartesianGrid strokeDasharray="3 3" />
+                <Tooltip
+                  content={({ payload }) =>
+                    payload?.length ? (
+                      <div className="bg-white p-2 border border-gray-300 rounded shadow">
+                        <p>{payload[0].payload.date}</p>
+                        <p>{payload[0].value}</p>
+                      </div>
+                    ) : null
+                  }
+                />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#82ca9d"
+                  activeDot={{ r: 8 }}
+                />
+                <Legend verticalAlign="top" align="right" />
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 };

@@ -20,27 +20,68 @@ const navItemVariants = {
 };
 
 const Header = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { id } = useParams();
+  const [isOpen, setIsOpen] = useState(false);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [hasBusinessProfile, setHasBusinessProfile] = useState(false);
+  const [isStatusLoading, setIsStatusLoading] = useState(false);
 
   const auth = useSelector(selectAuth);
   const dispatch = useDispatch();
   const isAuthenticated = auth.isAuthenticated;
-  const userRole = auth.user?.role; // Access role from user object
+  const userRole = auth.user?.role;
   const lastDashboard = auth.lastDashboard;
 
-  // Debug logs to trace state and routing
-  console.log("Header - Full auth state:", auth);
-  console.log("Header - userRole:", userRole);
-  console.log("Header - lastDashboard:", lastDashboard);
-
+  // Fetch user's subscription and profile status from /member/my-profile
   useEffect(() => {
-    // Update lastDashboard when navigating to a dashboard
+    if (isAuthenticated) {
+      const fetchMyProfile = async () => {
+        setIsStatusLoading(true);
+        try {
+          const API_URL = `${import.meta.env.VITE_BASE_URL}/member/my-profile`;
+          const response = await axios.get(API_URL, {
+            headers: { Authorization: `Bearer ${auth.token}` }, // Adjust if token is elsewhere
+          });
+
+          const { data } = response.data;
+
+          // Check subscription status
+          const subStatus = data.member.subscriptionStatus === "active";
+          const startDate = new Date(data.member.subscriptionStartDate);
+          const endDate = new Date(data.member.subscriptionEndDate);
+          const today = new Date();
+          const isSubActive =
+            subStatus && today >= startDate && today <= endDate;
+          setIsSubscribed(isSubActive);
+
+          // Check if business profile exists
+          const hasProfile =
+            !!data.businessName && data.businessName.trim() !== "";
+          setHasBusinessProfile(hasProfile);
+        } catch (error) {
+          console.error("❌ Error Fetching My Profile:", error);
+          setIsSubscribed(false);
+          setHasBusinessProfile(false);
+          // Optional: toast.error("Failed to load profile status.");
+        } finally {
+          setIsStatusLoading(false);
+        }
+      };
+      fetchMyProfile();
+    } else {
+      setIsSubscribed(false);
+      setHasBusinessProfile(false);
+      setIsStatusLoading(false);
+    }
+  }, [isAuthenticated, auth.token]);
+
+  // Handle lastDashboard updates and community profile fetching
+  useEffect(() => {
     if (location.pathname === "/admin") {
       dispatch(setLastDashboard("/admin"));
     } else if (location.pathname === "/user-dashboard") {
@@ -55,7 +96,6 @@ const Header = () => {
             import.meta.env.VITE_BASE_URL
           }/member/get-profile/${id}`;
           const response = await axios.get(API_URL);
-
           if (response.data && response.data.profile) {
             setProfile(response.data.profile);
           } else {
@@ -70,17 +110,11 @@ const Header = () => {
           setLoading(false);
         }
       };
-
       fetchProfile();
     } else {
       setProfile(null);
     }
   }, [location.pathname, id, dispatch]);
-
-  useEffect(() => {
-    console.log("Header rendered, current path:", location.pathname);
-    console.log("Profile data:", profile);
-  }, [location.pathname, profile]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -91,15 +125,14 @@ const Header = () => {
     setIsOpen(false);
   };
 
-  // Determine dashboard route, prioritizing lastDashboard
   const dashboardRoute =
     lastDashboard || (userRole === "admin" ? "/admin" : "/user-dashboard");
-  console.log("Header - Final dashboardRoute:", dashboardRoute); // Debug final route
 
+  // Simplified navItems: Only "Log In" or "Dashboard" based on all conditions
   const navItems = [
     { name: "Home", path: "/" },
     { name: "Community", path: "/community" },
-    isAuthenticated
+    isAuthenticated && isSubscribed && hasBusinessProfile && !isStatusLoading
       ? {
           name: "Dashboard",
           path: dashboardRoute,
@@ -175,30 +208,19 @@ const Header = () => {
                       exit="hidden"
                       custom={index}
                     >
-                      {item.onClick ? (
-                        <button
-                          onClick={item.onClick}
-                          className={`text-[20px] font-medium px-8 py-2 transition ${
-                            item.className || ""
-                          }`}
-                        >
-                          {item.name}
-                        </button>
-                      ) : (
-                        <Link
-                          to={item.path}
-                          onClick={() => setIsOpen(false)}
-                          className={`text-[20px] font-medium px-8 py-2 transition ${
-                            (item.path === "/community" &&
-                              location.pathname.startsWith("/community")) ||
-                            location.pathname === item.path
-                              ? "text-[#02530c] font-bold border-b-2 border-[#02530c]"
-                              : "text-[#043D12] hover:text-[#02530c]"
-                          } ${item.className || ""}`}
-                        >
-                          {item.name}
-                        </Link>
-                      )}
+                      <Link
+                        to={item.path}
+                        onClick={() => setIsOpen(false)}
+                        className={`text-[20px] font-medium px-8 py-2 transition ${
+                          (item.path === "/community" &&
+                            location.pathname.startsWith("/community")) ||
+                          location.pathname === item.path
+                            ? "text-[#02530c] font-bold border-b-2 border-[#02530c]"
+                            : "text-[#043D12] hover:text-[#02530c]"
+                        } ${item.className || ""}`}
+                      >
+                        {item.name}
+                      </Link>
                     </motion.div>
                   ))}
                 </nav>
@@ -208,41 +230,29 @@ const Header = () => {
           <div className="hidden md:flex gap-8 items-center text-white">
             {navItems.map((item) => (
               <motion.div key={item.path} className="relative group">
-                {item.onClick ? (
-                  <button
-                    onClick={item.onClick}
-                    className={`relative text-[20px] transition-all duration-300 ${
-                      item.className || ""
-                    }`}
-                  >
-                    {item.name}
-                  </button>
-                ) : (
-                  <Link
-                    to={item.path}
-                    className={`relative text-[20px] transition-all duration-300 ${
-                      (item.path === "/community" &&
-                        location.pathname.startsWith("/community")) ||
-                      location.pathname === item.path
-                        ? "text-[#FFCF00] font-bold"
-                        : "hover:text-[#FFCF00]"
-                    } ${item.className || ""}`}
-                  >
-                    {item.name}
-                    {item.path !== "/login" && (
-                      <motion.div
-                        className="absolute bottom-[-3px] left-0 h-[3px] bg-[#FFCF00] origin-left"
-                        initial={{ width: 0 }}
-                        animate={{
-                          width:
-                            location.pathname === item.path ? "100%" : "0%",
-                        }}
-                        whileHover={{ width: "100%" }}
-                        transition={{ duration: 0.4, ease: "easeInOut" }}
-                      />
-                    )}
-                  </Link>
-                )}
+                <Link
+                  to={item.path}
+                  className={`relative text-[20px] transition-all duration-300 ${
+                    (item.path === "/community" &&
+                      location.pathname.startsWith("/community")) ||
+                    location.pathname === item.path
+                      ? "text-[#FFCF00] font-bold"
+                      : "hover:text-[#FFCF00]"
+                  } ${item.className || ""}`}
+                >
+                  {item.name}
+                  {item.path !== "/login" && (
+                    <motion.div
+                      className="absolute bottom-[-3px] left-0 h-[3px] bg-[#FFCF00] origin-left"
+                      initial={{ width: 0 }}
+                      animate={{
+                        width: location.pathname === item.path ? "100%" : "0%",
+                      }}
+                      whileHover={{ width: "100%" }}
+                      transition={{ duration: 0.4, ease: "easeInOut" }}
+                    />
+                  )}
+                </Link>
               </motion.div>
             ))}
           </div>

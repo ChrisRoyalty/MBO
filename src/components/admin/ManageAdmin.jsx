@@ -21,7 +21,8 @@ import {
   FiCheckCircle,
 } from "react-icons/fi";
 import { AiOutlineClose } from "react-icons/ai";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify"; // Added ToastContainer
+import "react-toastify/dist/ReactToastify.css";
 
 const ManageAdmin = () => {
   const [admins, setAdmins] = useState([]);
@@ -36,6 +37,7 @@ const ManageAdmin = () => {
   const [showResetButton, setShowResetButton] = useState(false);
   const [deleteAdmin, setDeleteAdmin] = useState(null);
   const [resetUser, setResetUser] = useState(null);
+
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
@@ -54,11 +56,13 @@ const ManageAdmin = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [passwordValidation, setPasswordValidation] = useState("");
-  // Define profileData state
   const [profileData, setProfileData] = useState({
     firstname: "",
     lastname: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false); // Added for loader
+  const [currentPage, setCurrentPage] = useState(1); // Pagination state
+  const [itemsPerPage] = useState(10); // Items per page
 
   const navigate = useNavigate();
   const { isAuthenticated, user, token } = useSelector((state) => state.auth);
@@ -75,7 +79,7 @@ const ManageAdmin = () => {
       setError("Not authenticated or missing token!");
       setLoading(false);
       navigate("/login", { replace: true });
-      toast.error("Not authenticated or missing token!");
+      toast.info("Redirecting to login...");
       return;
     }
 
@@ -104,26 +108,18 @@ const ManageAdmin = () => {
         if (response.data && Array.isArray(response.data.members)) {
           setAdmins(response.data.members);
           setFilteredAdmins(response.data.members);
-          toast.success("Admins fetched successfully!");
+          console.log("Admins fetched successfully!");
         } else {
           throw new Error("No admin data found in the response.");
         }
       } catch (error) {
         console.error("❌ Error Fetching Admins:", error);
-        if (
-          error.response?.status === 404 ||
-          error.response?.data?.message?.includes("not found")
-        ) {
-          setError("No admins found.");
-          toast.error("No admins found.");
-        } else {
-          setError(
-            error.response?.data?.message || "Failed to fetch admin data."
-          );
-          toast.error(
-            error.response?.data?.message || "Failed to fetch admin data."
-          );
-        }
+        setError(
+          error.response?.data?.message || "Failed to fetch admin data."
+        );
+        toast.error(
+          error.response?.data?.message || "Failed to fetch admin data."
+        );
       } finally {
         setLoading(false);
       }
@@ -337,6 +333,7 @@ const ManageAdmin = () => {
       toast.error("New passwords do not match.");
       return;
     }
+    setIsSubmitting(true);
     try {
       const response = await axios.patch(
         `${import.meta.env.VITE_BASE_URL}/member/change-password`,
@@ -365,6 +362,8 @@ const ManageAdmin = () => {
       toast.error(
         error.response?.data?.message || "Failed to change password."
       );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -383,9 +382,17 @@ const ManageAdmin = () => {
     return { top: "100%", bottom: "auto" };
   };
 
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentAdmins = filteredAdmins.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredAdmins.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-[#FFFDF2]">
+      <div className="flex justify-center items-center h-screen bg-white">
         <div className="flex space-x-2">
           <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce"></div>
           <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce delay-200"></div>
@@ -404,24 +411,38 @@ const ManageAdmin = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4 relative pb-16 px-12 pt-8 overflow-y-auto z-0">
-      <div className="h-[12vh] text-[#6A7368] flex justify-between items-center gap-2">
-        <div className="welcome flex max-lg:flex-col max-lg:justify-center justify-between items-center gap-4">
-          <div className="border-[1px] border-[#6A7368] flex items-center gap-2 px-4 rounded-[11px] shadow-lg">
-            <BiSearch />
+    <div className="flex flex-col gap-4 relative pb-16 px-4 sm:px-12 pt-6 overflow-y-auto z-0 min-h-screen">
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        style={{ zIndex: 9999 }}
+      />
+
+      {/* Header */}
+      <div className="text-[#6A7368] flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-4">
+          <div className="border-[1px] border-[#6A7368] flex items-center gap-2 px-3 py-2 rounded-[11px] shadow-lg w-full sm:w-[350px]">
+            <BiSearch className="text-lg" />
             <input
               type="text"
               placeholder="Search by name or email"
-              className="h-[42px] w-[350px] outline-0 border-0 bg-transparent"
+              className="h-10 w-full outline-0 border-0 bg-transparent text-sm sm:text-base"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <RiEqualizerLine />
+            <RiEqualizerLine className="text-lg" />
           </div>
         </div>
-        <div className="flex items-center md:gap-4 px-4 relative">
-          <Link to="/">
-            <IoIosNotificationsOutline className="text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
+        <div className="flex items-center gap-3 sm:gap-4 px-2 relative">
+          <Link to="/admin/manage-notifications">
+            <IoIosNotificationsOutline className="text-2xl sm:text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
           </Link>
           <div className="relative">
             <motion.figure
@@ -431,9 +452,9 @@ const ManageAdmin = () => {
               transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
               onClick={toggleResetButton}
             >
-              <CiUser className="text-[32px] text-[#043D12] bg-gray-100 rounded-full p-1" />
-              <figcaption className="ml-2 text-[#6A7368] max-md:hidden">
-                <h3 className="text-[12px] font-semibold">
+              <CiUser className="text-2xl text-[#043D12] bg-gray-100 rounded-full p-1" />
+              <figcaption className="ml-2 text-[#6A7368] hidden sm:block">
+                <h3 className="text-xs sm:text-[12px] font-semibold">
                   {profileData.firstname} {profileData.lastname}
                 </h3>
               </figcaption>
@@ -441,13 +462,13 @@ const ManageAdmin = () => {
             {showResetButton && (
               <div
                 ref={resetButtonRef}
-                className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50"
+                className="absolute right-0 mt-2 w-40 sm:w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50"
               >
                 <button
-                  className="w-full text-left px-4 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100"
+                  className="w-full text-left px-3 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100 text-sm"
                   onClick={handleResetPassword}
                 >
-                  <FiLock /> Reset Password
+                  <FiLock /> Change Password
                 </button>
               </div>
             )}
@@ -455,11 +476,12 @@ const ManageAdmin = () => {
         </div>
       </div>
 
-      <main className="text-[#6A7368]">
-        <div className="intro flex items-center justify-between mb-6">
-          <p className="text-[20px] font-semibold">Admin</p>
+      {/* Main Content */}
+      <main className="text-[#6A7368] container">
+        <div className="intro flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+          <p className="text-lg sm:text-[20px] font-semibold">Admin</p>
           <button
-            className="flex items-center gap-2 border-[1px] border-[#6A7368] px-4 py-2 rounded-[11px] bg-white hover:bg-[#043D12] hover:text-[#FFFDF2] transition-colors shadow-md"
+            className="flex items-center gap-2 border-[1px] border-[#6A7368] px-4 py-2 rounded-[11px] bg-white hover:bg-[#043D12] hover:text-[#FFFDF2] transition-colors shadow-md text-sm sm:text-base"
             onClick={openModal}
           >
             <BiPlus />
@@ -467,7 +489,8 @@ const ManageAdmin = () => {
           </button>
         </div>
 
-        <div className="overflow-x-auto rounded-[11px] shadow-lg">
+        {/* Table for Desktop */}
+        <div className="hidden sm:block overflow-x-auto rounded-[11px] shadow-lg">
           <table className="w-full border-collapse text-[14px] bg-white">
             <thead>
               <tr className="bg-[#F0F5F2] border-b-2 border-[#6A7368]">
@@ -483,8 +506,8 @@ const ManageAdmin = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredAdmins.length > 0 ? (
-                filteredAdmins.map((admin, index) => (
+              {currentAdmins.length > 0 ? (
+                currentAdmins.map((admin, index) => (
                   <tr
                     key={index}
                     className={`border-b border-gray-200 ${
@@ -493,36 +516,34 @@ const ManageAdmin = () => {
                   >
                     <td className="py-4 px-6">{`${admin.firstname} ${admin.lastname}`}</td>
                     <td className="py-4 px-6">{admin.email}</td>
-                    <td className="py-4 px-6 relative">
-                      <div className="flex items-center gap-2">
-                        {formatDate(admin.lastLogin)}
-                        <div
-                          ref={(el) => (dropdownRefs.current[index] = el)}
-                          className="relative"
-                        >
-                          <BsThreeDots
-                            className="text-[18px] cursor-pointer hover:text-[#043D12] transition-colors"
-                            onClick={() => toggleMenu(index)}
-                          />
-                          {activeMenuIndex === index && (
-                            <div
-                              ref={dropdownRef}
-                              className="absolute right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-40 overflow-y-auto"
-                              style={{
-                                minWidth: "160px",
-                                top: getDropdownPosition(index).top,
-                                bottom: getDropdownPosition(index).bottom,
-                              }}
+                    <td className="py-4 px-6 flex justify-between items-center">
+                      {formatDate(admin.lastLogin)}
+                      <div
+                        ref={(el) => (dropdownRefs.current[index] = el)}
+                        className="relative"
+                      >
+                        <BsThreeDots
+                          className="text-[18px] cursor-pointer hover:text-[#043D12] transition-colors"
+                          onClick={() => toggleMenu(index)}
+                        />
+                        {activeMenuIndex === index && (
+                          <div
+                            ref={dropdownRef}
+                            className="absolute right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-40 overflow-y-auto"
+                            style={{
+                              minWidth: "160px",
+                              top: getDropdownPosition(index).top,
+                              bottom: getDropdownPosition(index).bottom,
+                            }}
+                          >
+                            <button
+                              className="w-full text-left px-4 py-2 text-red-600 flex items-center gap-2 hover:bg-gray-100"
+                              onClick={() => openDeleteModal(admin)}
                             >
-                              <button
-                                className="w-full text-left px-4 py-2 text-red-600 flex items-center gap-2 hover:bg-gray-100"
-                                onClick={() => openDeleteModal(admin)}
-                              >
-                                <FiTrash2 /> Remove Admin
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                              <FiTrash2 /> Remove Admin
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -540,27 +561,103 @@ const ManageAdmin = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Card Layout for Mobile */}
+        <div className="sm:hidden space-y-4">
+          {currentAdmins.length > 0 ? (
+            currentAdmins.map((admin, index) => (
+              <div
+                key={index}
+                className="border border-gray-200 rounded-[11px] p-4 bg-white shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-semibold">{`${admin.firstname} ${admin.lastname}`}</span>
+                  <BsThreeDots
+                    className="text-lg cursor-pointer hover:text-[#043D12]"
+                    onClick={() => toggleMenu(index)}
+                  />
+                </div>
+                <div className="mt-2 text-sm space-y-1">
+                  <p>
+                    <strong>Email:</strong> {admin.email}
+                  </p>
+                  <p>
+                    <strong>Last Login:</strong> {formatDate(admin.lastLogin)}
+                  </p>
+                </div>
+                {activeMenuIndex === index && (
+                  <div className="mt-2 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                    <button
+                      className="w-full text-left px-3 py-2 text-red-600 flex items-center gap-2 hover:bg-gray-100 text-sm"
+                      onClick={() => openDeleteModal(admin)}
+                    >
+                      <FiTrash2 /> Remove Admin
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <p className="text-center text-gray-500 text-sm">
+              No admins found matching your search.
+            </p>
+          )}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-4 gap-2">
+            <button
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 bg-[#043D12] text-[#FFFDF2] rounded-[11px] disabled:bg-gray-300"
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => paginate(page)}
+                className={`px-3 py-1 rounded-[11px] ${
+                  currentPage === page
+                    ? "bg-[#043D12] text-[#FFFDF2]"
+                    : "bg-white text-[#6A7368] border border-[#6A7368]"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 bg-[#043D12] text-[#FFFDF2] rounded-[11px] disabled:bg-gray-300"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </main>
 
+      {/* Add Admin Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div
             ref={modalRef}
-            className="bg-white rounded-[11px] shadow-lg w-[400px] p-6"
+            className="bg-white rounded-[11px] shadow-lg w-full max-w-md sm:w-[400px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-[20px] font-semibold text-[#6A7368]">
+              <h2 className="text-lg sm:text-[20px] font-semibold text-[#6A7368]">
                 New Admin
               </h2>
               <AiOutlineClose
-                className="text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
+                className="text-xl sm:text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
                 onClick={closeModal}
               />
             </div>
             <form onSubmit={handleAddAdmin}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     First Name
                   </label>
                   <div className="relative">
@@ -570,15 +667,14 @@ const ManageAdmin = () => {
                       value={formData.firstname}
                       onChange={handleInputChange}
                       placeholder="Enter first name"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
                     <FiUser className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     Last Name
                   </label>
                   <div className="relative">
@@ -588,15 +684,14 @@ const ManageAdmin = () => {
                       value={formData.lastname}
                       onChange={handleInputChange}
                       placeholder="Enter last name"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
                     <FiUser className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     Email
                   </label>
                   <div className="relative">
@@ -606,15 +701,14 @@ const ManageAdmin = () => {
                       value={formData.email}
                       onChange={handleInputChange}
                       placeholder="Enter email"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
                     <FiMail className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     Password
                   </label>
                   <div className="relative">
@@ -624,7 +718,7 @@ const ManageAdmin = () => {
                       value={formData.password}
                       onChange={handleInputChange}
                       placeholder="Enter password"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
                     <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
@@ -636,9 +730,8 @@ const ManageAdmin = () => {
                     </span>
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     Confirm Password
                   </label>
                   <div className="relative">
@@ -648,7 +741,7 @@ const ManageAdmin = () => {
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       placeholder="Confirm password"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
                     <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
@@ -662,10 +755,9 @@ const ManageAdmin = () => {
                     </span>
                   </div>
                 </div>
-
                 <button
                   type="submit"
-                  className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-[11px] hover:bg-[#032d0e] transition-colors"
+                  className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-[11px] hover:bg-[#032d0e] transition-colors text-sm sm:text-base"
                 >
                   Add Admin
                 </button>
@@ -675,15 +767,16 @@ const ManageAdmin = () => {
         </div>
       )}
 
+      {/* Delete Admin Modal */}
       {isDeleteModalOpen && deleteAdmin && (
-        <div className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div
             ref={deleteModalRef}
-            className="bg-white rounded-[11px] shadow-lg w-[400px] p-6"
+            className="bg-white rounded-[11px] shadow-lg w-full max-w-md sm:w-[400px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex justify-end mb-4">
               <AiOutlineClose
-                className="text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
+                className="text-xl sm:text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
                 onClick={() => {
                   setIsDeleteModalOpen(false);
                   setDeleteAdmin(null);
@@ -696,7 +789,7 @@ const ManageAdmin = () => {
               </div>
             </div>
             <div className="text-center mb-4">
-              <p className="text-[16px] text-[#6A7368]">
+              <p className="text-sm sm:text-[16px] text-[#6A7368]">
                 Are you sure you want to remove{" "}
                 <span className="font-semibold">
                   {`${deleteAdmin.firstname} ${deleteAdmin.lastname}`}
@@ -704,9 +797,9 @@ const ManageAdmin = () => {
                 ?
               </p>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-2">
               <button
-                className="px-4 py-2 bg-gray-200 text-[#6A7368] rounded-[11px] hover:bg-gray-300 transition-colors"
+                className="w-full px-4 py-2 bg-gray-200 text-[#6A7368] rounded-[11px] hover:bg-gray-300 transition-colors text-sm sm:text-base"
                 onClick={() => {
                   setIsDeleteModalOpen(false);
                   setDeleteAdmin(null);
@@ -715,7 +808,7 @@ const ManageAdmin = () => {
                 Cancel
               </button>
               <button
-                className="px-4 py-2 bg-red-600 text-[#FFFDF2] rounded-[11px] hover:bg-red-700 transition-colors"
+                className="w-full px-4 py-2 bg-red-600 text-[#FFFDF2] rounded-[11px] hover:bg-red-700 transition-colors text-sm sm:text-base"
                 onClick={handleRemoveAdmin}
               >
                 Remove
@@ -725,18 +818,19 @@ const ManageAdmin = () => {
         </div>
       )}
 
+      {/* Reset Password Modal */}
       {isResetModalOpen && resetUser && (
-        <div className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div
             ref={resetModalRef}
-            className="bg-white rounded-[11px] shadow-lg w-[400px] p-6"
+            className="bg-white rounded-[11px] shadow-lg w-full max-w-md sm:w-[400px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-[20px] font-semibold text-[#6A7368]">
+              <h2 className="text-lg sm:text-[20px] font-semibold text-[#6A7368]">
                 Change Password
               </h2>
               <AiOutlineClose
-                className="text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
+                className="text-xl sm:text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
                 onClick={() => {
                   setIsResetModalOpen(false);
                   setResetUser(null);
@@ -752,7 +846,7 @@ const ManageAdmin = () => {
             <form onSubmit={handleResetPasswordSubmit}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     Current Password
                   </label>
                   <div className="relative">
@@ -762,7 +856,7 @@ const ManageAdmin = () => {
                       value={resetFormData.oldPassword}
                       onChange={handleResetInputChange}
                       placeholder="Enter current password"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
                     <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
@@ -776,9 +870,8 @@ const ManageAdmin = () => {
                     </span>
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     New Password
                   </label>
                   <div className="relative">
@@ -788,7 +881,7 @@ const ManageAdmin = () => {
                       value={resetFormData.newPassword}
                       onChange={handleResetInputChange}
                       placeholder="Enter new password"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
                     <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
@@ -800,9 +893,8 @@ const ManageAdmin = () => {
                     </span>
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-[14px] text-[#6A7368] mb-1">
+                  <label className="block text-sm sm:text-[14px] text-[#6A7368] mb-1">
                     Confirm New Password
                   </label>
                   <div className="relative">
@@ -812,7 +904,7 @@ const ManageAdmin = () => {
                       value={resetFormData.confirmNewPassword}
                       onChange={handleResetInputChange}
                       placeholder="Confirm new password"
-                      className="w-full h-[42px] px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent"
+                      className="w-full h-10 sm:h-[42px] px-3 sm:px-4 border-[1px] border-[#6A7368] rounded-[11px] outline-0 bg-transparent text-sm sm:text-base"
                       required
                     />
                     <FiKey className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#6A7368]" />
@@ -826,7 +918,6 @@ const ManageAdmin = () => {
                     </span>
                   </div>
                 </div>
-
                 {passwordValidation && (
                   <div className="flex items-center gap-2">
                     {passwordValidation === "Password is valid" ? (
@@ -837,21 +928,48 @@ const ManageAdmin = () => {
                     <span
                       className={
                         passwordValidation === "Password is valid"
-                          ? "text-green-600"
-                          : "text-red-600"
+                          ? "text-green-600 text-sm"
+                          : "text-red-600 text-sm"
                       }
                     >
                       {passwordValidation}
                     </span>
                   </div>
                 )}
-
                 <button
                   type="submit"
-                  className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-[11px] hover:bg-[#032d0e] transition-colors"
-                  disabled={passwordValidation !== "Password is valid"}
+                  className="w-full mt-4 px-4 py-2 bg-[#043D12] text-[#FFFDF2] rounded-[11px] hover:bg-[#032d0e] transition-colors text-sm sm:text-base flex items-center justify-center"
+                  disabled={
+                    passwordValidation !== "Password is valid" || isSubmitting
+                  }
                 >
-                  Save Password
+                  {isSubmitting ? (
+                    <span className="flex items-center gap-2">
+                      <svg
+                        className="animate-spin h-5 w-5 text-[#FFFDF2]"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Saving...
+                    </span>
+                  ) : (
+                    "Save Password"
+                  )}
                 </button>
               </div>
             </form>

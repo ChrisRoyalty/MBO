@@ -84,11 +84,14 @@ const Footer = () => {
             <Link className="hover:text-[17px]" to="/community">
               Community
             </Link>
-            <Link to="privacy-policy" className="hover:text-[17px]">
+            <Link to="/privacy-policy" className="hover:text-[17px]">
               Privacy Policy
             </Link>
-            <Link to="terms-of-service" className="hover:text-[17px]">
+            <Link to="/terms-of-service" className="hover:text-[17px]">
               Terms of service
+            </Link>
+            <Link to="/help-and-support" className="hover:text-[17px]">
+              Help & Support
             </Link>
           </div>
         </motion.nav>
