@@ -14,7 +14,7 @@ const Subscribe = () => {
   const navigate = useNavigate();
   const [subscriptions, setSubscriptions] = useState([]);
   const [userId, setUserId] = useState(null);
-  const [txRef, setTxRef] = useState(""); // Initialize as an empty string
+  const [txRef, setTxRef] = useState(""); 
   const [selectedPlan, setSelectedPlan] = useState(null); // T
 
   const user = useSelector((state) => state.auth.user);
