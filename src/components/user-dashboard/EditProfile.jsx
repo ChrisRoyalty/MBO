@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useSelector } from "react-redux";
-import ProfileImg from "../../assets/DefaultProfileImg.svg";
+import ProfileImg from "../../assets/user-photo.svg";
 import ProfileBg from "../../assets/DefaultProfileBg.svg";
 import { FiEdit3, FiCopy } from "react-icons/fi";
 import { TiArrowForwardOutline } from "react-icons/ti";
@@ -11,6 +11,7 @@ import { TbLayoutGrid } from "react-icons/tb";
 import { MdOutlineCategory } from "react-icons/md";
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 import { FaWhatsapp, FaFacebook, FaTwitter, FaLinkedin } from "react-icons/fa";
+import EditHeader from "./EditHeader";
 
 const EditProfile = () => {
   const [profileData, setProfileData] = useState({
@@ -504,6 +505,7 @@ const EditProfile = () => {
 
   return (
     <div className="relative w-full mx-auto">
+      <EditHeader />
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -515,493 +517,505 @@ const EditProfile = () => {
         draggable
         pauseOnHover
       />
-      <div className="relative w-full h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px] overflow-hidden">
-        <img
-          src={
-            imagePreviews.backgroundImg ||
-            profileData.backgroundImg ||
-            ProfileBg
-          }
-          className="w-full h-full object-cover object-center"
-          alt="Background"
-        />
-        <FiEdit3
-          className="absolute right-4 top-4 text-white text-[20px] sm:text-[24px] cursor-pointer z-10 bg-black bg-opacity-50 p-1 rounded-full"
-          onClick={() => {
-            const fileInput = document.createElement("input");
-            fileInput.type = "file";
-            fileInput.accept = "image/*";
-            fileInput.onchange = (e) =>
-              handleImageUpload("backgroundImg", e.target.files[0]);
-            fileInput.click();
-          }}
-        />
-      </div>
 
-      <div className="relative w-full max-w-5xl mx-auto -mt-16 sm:-mt-20 md:-mt-24 lg:-mt-28 px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center sm:flex-row sm:items-end sm:justify-between">
-          <figure className="relative flex flex-col items-center">
-            <img
-              src={
-                imagePreviews.businesImg || profileData.businesImg || ProfileImg
-              }
-              alt="Profile-photo"
-              className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-full object-cover border-4 border-white shadow-lg"
-            />
-            <figcaption className="text-center mt-2 text-[#6A7368]">
-              <h4 className="text-sm sm:text-base md:text-lg font-semibold">
-                {profileData.businessName}
-              </h4>
-              <p className="text-xs sm:text-sm">
-                {selectedCategory.name || "Select a category"}
-              </p>
-            </figcaption>
-          </figure>
-
-          <button
-            className={`mt-4 sm:mt-0 border rounded-[11px] text-[10px] sm:text-sm px-4 sm:px-6 py-2 sm:py-3 shadow-lg transition-transform ${
-              buttonActive.changeImage
-                ? "scale-95 bg-[#043D12] text-white"
-                : "hover:bg-[#043D12] hover:text-white"
-            }`}
+      <div className="container px-[5vw] mx-auto mt-8">
+        <div className="relative w-full h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px] overflow-hidden">
+          <img
+            src={
+              imagePreviews.backgroundImg ||
+              profileData.backgroundImg ||
+              ProfileBg
+            }
+            className="w-full h-full object-cover object-center"
+            alt="Background"
+          />
+          <FiEdit3
+            className="absolute right-4 top-4 text-white text-[20px] sm:text-[24px] cursor-pointer z-10 bg-black bg-opacity-50 p-1 rounded-full"
             onClick={() => {
-              setButtonActive((prev) => ({ ...prev, changeImage: true }));
               const fileInput = document.createElement("input");
               fileInput.type = "file";
               fileInput.accept = "image/*";
               fileInput.onchange = (e) =>
-                handleImageUpload("businesImg", e.target.files[0]);
+                handleImageUpload("backgroundImg", e.target.files[0]);
               fileInput.click();
-              setTimeout(
-                () =>
-                  setButtonActive((prev) => ({ ...prev, changeImage: false })),
-                200
-              );
             }}
-          >
-            Change Profile Image
-          </button>
+          />
         </div>
 
-        <form onSubmit={(e) => handleSubmit(e, "personal")} className="mt-8">
-          <h2 className="text-[12px] sm:text-sm border-b-[1px] border-[#6A7368] pb-1 w-fit px-2">
-            Personal Information
-          </h2>
-          <div className="w-full flex flex-col sm:flex-row items-center gap-6 sm:gap-12 mt-4">
-            <div className="w-full flex flex-col gap-6 sm:gap-8">
-              <div className="text-[#6A7368] flex flex-col gap-2">
-                <label className="text-sm">First Name</label>
-                <div className="flex justify-between gap-4">
-                  <input
-                    type="text"
-                    ref={inputRefs.firstName}
-                    disabled={editField !== "firstName"}
-                    value={profileData.firstName || ""}
-                    onChange={(e) =>
-                      handleInputChange("firstName", e.target.value)
-                    }
-                    className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
-                      editField === "firstName"
-                        ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
-                        : "border-[#6A7368]"
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleEditClick("firstName")}
-                    className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
-                      buttonActive.firstName
-                        ? "scale-95 bg-[#043D12] text-white"
-                        : "hover:bg-[#043D12] hover:text-white"
-                    }`}
-                  >
-                    <FiEdit3 className="text-[18px]" />
-                    Edit
-                  </button>
-                </div>
-              </div>
-              <div className="w-full text-[#6A7368] flex flex-col gap-2">
-                <label className="text-sm">Last Name</label>
-                <div className="flex justify-between gap-4">
-                  <input
-                    type="text"
-                    ref={inputRefs.lastName}
-                    disabled={editField !== "lastName"}
-                    value={profileData.lastName || ""}
-                    onChange={(e) =>
-                      handleInputChange("lastName", e.target.value)
-                    }
-                    className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
-                      editField === "lastName"
-                        ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
-                        : "border-[#6A7368]"
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleEditClick("lastName")}
-                    className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
-                      buttonActive.lastName
-                        ? "scale-95 bg-[#043D12] text-white"
-                        : "hover:bg-[#043D12] hover:text-white"
-                    }`}
-                  >
-                    <FiEdit3 className="text-[18px]" />
-                    Edit
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div className="w-full flex flex-col gap-6 sm:gap-8">
-              <div className="account-details text-[#6A7368] border rounded-[11px] shadow w-full flex flex-col justify-center px-4 py-2 gap-6 sm:gap-8">
-                <div>
-                  <TbLayoutGrid className="text-[24px] sm:text-[30px]" />
-                  <p className="text-[12px] sm:text-[14px]">Account Created</p>
-                </div>
-                <p className="date text-[12px] sm:text-[14px]">
-                  {new Date(profileData.createdAt).toLocaleDateString()}
+        <div className="relative w-full max-w-5xl mx-auto mt-16 sm:-mt-20 md:-mt-24 lg:-mt-28 px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-center sm:flex-row sm:items-end sm:justify-between">
+            <figure className="relative flex flex-col items-center">
+              <img
+                src={
+                  imagePreviews.businesImg ||
+                  profileData.businesImg ||
+                  ProfileImg
+                }
+                alt="Profile-photo"
+                className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-full object-cover border-4 border-white shadow-lg"
+              />
+              <figcaption className="text-center mt-2 text-[#6A7368]">
+                <h4 className="text-sm sm:text-base md:text-lg font-semibold">
+                  {profileData.businessName}
+                </h4>
+                <p className="text-xs sm:text-sm">
+                  {selectedCategory.name || "Select a category"}
                 </p>
-              </div>
-              <div className="flex justify-between gap-4 relative">
-                <button
-                  type="button"
-                  className="w-full h-[46px] px-4 rounded-[11px] border-[1px] border-[#6A7368] text-[#6A7368] text-[12px] sm:text-sm overflow-hidden text-ellipsis whitespace-nowrap"
-                  onClick={copyToClipboard}
-                  disabled={!shareableLink}
-                  title={shareableLink || "Generating shareable link..."}
-                >
-                  {copied ? "Copied!" : "Copy Profile Link"}
-                </button>
-                <button
-                  type="button"
-                  className="rounded-[11px] text-[14px] px-4 sm:px-6 py-1 shadow-lg border-[1px] border-[#6A7368] flex items-center justify-center"
-                  onClick={handleShareClick}
-                >
-                  <TiArrowForwardOutline className="text-[20px] sm:text-[22px]" />
-                </button>
-                {showShareOptions && (
-                  <div className="absolute right-0 top-[50px] bg-white border border-[#6A7368] rounded-lg shadow-lg p-2 flex gap-2 z-10">
-                    <button
-                      type="button"
-                      onClick={() => shareToSocialMedia("whatsapp")}
-                      title="Share on WhatsApp"
-                    >
-                      <FaWhatsapp className="text-[20px] text-green-500 hover:text-green-600" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => shareToSocialMedia("facebook")}
-                      title="Share on Facebook"
-                    >
-                      <FaFacebook className="text-[20px] text-blue-600 hover:text-blue-700" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => shareToSocialMedia("twitter")}
-                      title="Share on Twitter"
-                    >
-                      <FaTwitter className="text-[20px] text-blue-400 hover:text-blue-500" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => shareToSocialMedia("linkedin")}
-                      title="Share on LinkedIn"
-                    >
-                      <FaLinkedin className="text-[20px] text-blue-700 hover:text-blue-800" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="btns flex justify-end pt-12 sm:pt-20 pb-8 sm:pb-12">
-            <div className="w-fit flex items-center gap-4 sm:gap-6">
-              <button
-                type="button"
-                onClick={() => handleDiscardChanges("personal")}
-                className={`border-[1px] border-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform ${
-                  buttonActive.personalSubmit
-                    ? "text-[#6A7368] hover:bg-gray-200"
-                    : "bg-[#043D12] text-white hover:bg-[#032b0e]"
-                }`}
-              >
-                Discard Changes
-              </button>
-              <button
-                type="submit"
-                className={`border-[1px] border-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform flex items-center justify-center gap-2 ${
-                  buttonActive.personalSubmit
-                    ? "scale-95 bg-[#043D12] text-white"
-                    : "text-[#6A7368] hover:bg-[#043D12] hover:text-white"
-                }`}
-                disabled={buttonActive.personalSubmit}
-              >
-                {buttonActive.personalSubmit ? (
-                  <LoaderWithText />
-                ) : (
-                  "Save Changes"
-                )}
-              </button>
-            </div>
-          </div>
-        </form>
+              </figcaption>
+            </figure>
 
-        <form onSubmit={(e) => handleSubmit(e, "business")}>
-          <h2 className="text-[12px] sm:text-sm border-b-[1px] border-[#6A7368] pb-1 w-fit px-2">
-            Business Information
-          </h2>
-          <div className="mt-4 flex flex-col gap-6 sm:gap-8">
-            <div className="text-[#6A7368] flex flex-col gap-2">
-              <label className="text-sm">Business Name</label>
-              <div className="flex justify-between gap-4">
-                <input
-                  type="text"
-                  ref={inputRefs.businessName}
-                  disabled={editField !== "businessName"}
-                  value={profileData.businessName || ""}
-                  onChange={(e) =>
-                    handleInputChange("businessName", e.target.value)
-                  }
-                  className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
-                    editField === "businessName"
-                      ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
-                      : "border-[#6A7368]"
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => handleEditClick("businessName")}
-                  className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
-                    buttonActive.businessName
-                      ? "scale-95 bg-[#043D12] text-white"
-                      : "hover:bg-[#043D12] hover:text-white"
-                  }`}
-                >
-                  <FiEdit3 className="text-[18px]" />
-                  Edit
-                </button>
+            <button
+              className={`mt-4 sm:mt-0 border rounded-[11px] text-[10px] sm:text-sm px-4 sm:px-6 py-2 sm:py-3 shadow-lg transition-transform ${
+                buttonActive.changeImage
+                  ? "scale-95 bg-[#043D12] text-white"
+                  : "hover:bg-[#043D12] hover:text-white"
+              }`}
+              onClick={() => {
+                setButtonActive((prev) => ({ ...prev, changeImage: true }));
+                const fileInput = document.createElement("input");
+                fileInput.type = "file";
+                fileInput.accept = "image/*";
+                fileInput.onchange = (e) =>
+                  handleImageUpload("businesImg", e.target.files[0]);
+                fileInput.click();
+                setTimeout(
+                  () =>
+                    setButtonActive((prev) => ({
+                      ...prev,
+                      changeImage: false,
+                    })),
+                  200
+                );
+              }}
+            >
+              Change Profile Image
+            </button>
+          </div>
+
+          <form onSubmit={(e) => handleSubmit(e, "personal")} className="mt-8">
+            <h2 className="text-[12px] sm:text-sm border-b-[1px] border-[#6A7368] pb-1 w-fit px-2">
+              Personal Information
+            </h2>
+            <div className="w-full flex flex-col sm:flex-row items-center gap-6 sm:gap-12 mt-4">
+              <div className="w-full flex flex-col gap-6 sm:gap-8">
+                <div className="text-[#6A7368] flex flex-col gap-2">
+                  <label className="text-sm">First Name</label>
+                  <div className="flex justify-between gap-4">
+                    <input
+                      type="text"
+                      ref={inputRefs.firstName}
+                      disabled={editField !== "firstName"}
+                      value={profileData.firstName || ""}
+                      onChange={(e) =>
+                        handleInputChange("firstName", e.target.value)
+                      }
+                      className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
+                        editField === "firstName"
+                          ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
+                          : "border-[#6A7368]"
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleEditClick("firstName")}
+                      className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
+                        buttonActive.firstName
+                          ? "scale-95 bg-[#043D12] text-white"
+                          : "hover:bg-[#043D12] hover:text-white"
+                      }`}
+                    >
+                      <FiEdit3 className="text-[18px]" />
+                      Edit
+                    </button>
+                  </div>
+                </div>
+                <div className="w-full text-[#6A7368] flex flex-col gap-2">
+                  <label className="text-sm">Last Name</label>
+                  <div className="flex justify-between gap-4">
+                    <input
+                      type="text"
+                      ref={inputRefs.lastName}
+                      disabled={editField !== "lastName"}
+                      value={profileData.lastName || ""}
+                      onChange={(e) =>
+                        handleInputChange("lastName", e.target.value)
+                      }
+                      className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
+                        editField === "lastName"
+                          ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
+                          : "border-[#6A7368]"
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleEditClick("lastName")}
+                      className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
+                        buttonActive.lastName
+                          ? "scale-95 bg-[#043D12] text-white"
+                          : "hover:bg-[#043D12] hover:text-white"
+                      }`}
+                    >
+                      <FiEdit3 className="text-[18px]" />
+                      Edit
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="w-full flex flex-col gap-6 sm:gap-8">
+                <div className="account-details text-[#6A7368] border rounded-[11px] shadow w-full flex flex-col justify-center px-4 py-2 gap-6 sm:gap-8">
+                  <div>
+                    <TbLayoutGrid className="text-[24px] sm:text-[30px]" />
+                    <p className="text-[12px] sm:text-[14px]">
+                      Account Created
+                    </p>
+                  </div>
+                  <p className="date text-[12px] sm:text-[14px]">
+                    {new Date(profileData.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex justify-between gap-4 relative">
+                  <button
+                    type="button"
+                    className="w-full h-[46px] px-4 rounded-[11px] border-[1px] border-[#6A7368] text-[#6A7368] text-[12px] sm:text-sm overflow-hidden text-ellipsis whitespace-nowrap"
+                    onClick={copyToClipboard}
+                    disabled={!shareableLink}
+                    title={shareableLink || "Generating shareable link..."}
+                  >
+                    {copied ? "Copied!" : "Copy Profile Link"}
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-[11px] text-[14px] px-4 sm:px-6 py-1 shadow-lg border-[1px] border-[#6A7368] flex items-center justify-center"
+                    onClick={handleShareClick}
+                  >
+                    <TiArrowForwardOutline className="text-[20px] sm:text-[22px]" />
+                  </button>
+                  {showShareOptions && (
+                    <div className="absolute right-0 top-[50px] bg-white border border-[#6A7368] rounded-lg shadow-lg p-2 flex gap-2 z-10">
+                      <button
+                        type="button"
+                        onClick={() => shareToSocialMedia("whatsapp")}
+                        title="Share on WhatsApp"
+                      >
+                        <FaWhatsapp className="text-[20px] text-green-500 hover:text-green-600" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => shareToSocialMedia("facebook")}
+                        title="Share on Facebook"
+                      >
+                        <FaFacebook className="text-[20px] text-blue-600 hover:text-blue-700" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => shareToSocialMedia("twitter")}
+                        title="Share on Twitter"
+                      >
+                        <FaTwitter className="text-[20px] text-blue-400 hover:text-blue-500" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => shareToSocialMedia("linkedin")}
+                        title="Share on LinkedIn"
+                      >
+                        <FaLinkedin className="text-[20px] text-blue-700 hover:text-blue-800" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="text-[#6A7368] flex flex-col gap-2">
-              <label className="text-sm">Category</label>
-              <div className="flex justify-between gap-4 relative">
+            <div className="btns flex justify-end pt-12 sm:pt-20 pb-8 sm:pb-12">
+              <div className="w-fit flex items-center gap-4 sm:gap-6">
                 <button
                   type="button"
-                  onClick={toggleDropdown}
-                  className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] border-[#6A7368] flex items-center justify-between text-left text-[#6A7368] focus:outline-none ${
-                    editField === "category"
-                      ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
-                      : "border-[#6A7368]"
+                  onClick={() => handleDiscardChanges("personal")}
+                  className={`border-[1px] border-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform ${
+                    buttonActive.personalSubmit
+                      ? "text-[#6A7368] hover:bg-gray-200"
+                      : "bg-[#043D12] text-white hover:bg-[#032b0e]"
                   }`}
-                  disabled={editField !== "category"}
                 >
-                  <div className="flex items-center gap-2 flex-grow">
-                    <MdOutlineCategory className="text-[#6A7368] text-[18px]" />
-                    <span className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">
-                      {selectedCategory.name || "Select Business Category"}
-                    </span>
-                  </div>
-                  {showDropdown ? (
-                    <IoMdArrowDropup className="text-[#6A7368] cursor-pointer" />
+                  Discard Changes
+                </button>
+                <button
+                  type="submit"
+                  className={`border-[1px] border-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform flex items-center justify-center gap-2 ${
+                    buttonActive.personalSubmit
+                      ? "scale-95 bg-[#043D12] text-white"
+                      : "text-[#6A7368] hover:bg-[#043D12] hover:text-white"
+                  }`}
+                  disabled={buttonActive.personalSubmit}
+                >
+                  {buttonActive.personalSubmit ? (
+                    <LoaderWithText />
                   ) : (
-                    <IoMdArrowDropdown className="text-[#6A7368] cursor-pointer" />
+                    "Save Changes"
                   )}
                 </button>
-                {showDropdown && isLoadingCategories ? (
-                  <p className="absolute top-[50px] left-0 w-full bg-[#FFFDF2] text-[#043D12] p-2 z-10 text-sm">
-                    Loading categories...
-                  </p>
-                ) : showDropdown && categories.length > 0 ? (
-                  <ul className="absolute top-[50px] left-0 w-full bg-[#FFFDF2] text-[#043D12] border-4 border-[#043D12] rounded-[25px] mt-2 p-2 shadow-lg max-h-[200px] overflow-y-auto z-10">
-                    {categories.map((category) => (
-                      <li
-                        key={category.id}
-                        className="py-2 px-4 cursor-pointer hover:bg-[#043D12]/30 rounded-[20px] text-sm"
-                        onClick={() =>
-                          handleCategorySelect(category.id, category.name)
-                        }
-                      >
-                        {category.name}
-                        {category.description && (
-                          <p className="text-xs text-[#043D12]/90">
-                            {category.description}
-                          </p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                ) : showDropdown ? (
-                  <p className="absolute top-[50px] left-0 w-full bg-[#FFFDF2] text-[#043D12] p-2 z-10 text-sm">
-                    No categories available.
-                  </p>
-                ) : null}
+              </div>
+            </div>
+          </form>
+
+          <form onSubmit={(e) => handleSubmit(e, "business")}>
+            <h2 className="text-[12px] sm:text-sm border-b-[1px] border-[#6A7368] pb-1 w-fit px-2">
+              Business Information
+            </h2>
+            <div className="mt-4 flex flex-col gap-6 sm:gap-8">
+              <div className="text-[#6A7368] flex flex-col gap-2">
+                <label className="text-sm">Business Name</label>
+                <div className="flex justify-between gap-4">
+                  <input
+                    type="text"
+                    ref={inputRefs.businessName}
+                    disabled={editField !== "businessName"}
+                    value={profileData.businessName || ""}
+                    onChange={(e) =>
+                      handleInputChange("businessName", e.target.value)
+                    }
+                    className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
+                      editField === "businessName"
+                        ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
+                        : "border-[#6A7368]"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleEditClick("businessName")}
+                    className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
+                      buttonActive.businessName
+                        ? "scale-95 bg-[#043D12] text-white"
+                        : "hover:bg-[#043D12] hover:text-white"
+                    }`}
+                  >
+                    <FiEdit3 className="text-[18px]" />
+                    Edit
+                  </button>
+                </div>
+              </div>
+              <div className="text-[#6A7368] flex flex-col gap-2">
+                <label className="text-sm">Category</label>
+                <div className="flex justify-between gap-4 relative">
+                  <button
+                    type="button"
+                    onClick={toggleDropdown}
+                    className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] border-[#6A7368] flex items-center justify-between text-left text-[#6A7368] focus:outline-none ${
+                      editField === "category"
+                        ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
+                        : "border-[#6A7368]"
+                    }`}
+                    disabled={editField !== "category"}
+                  >
+                    <div className="flex items-center gap-2 flex-grow">
+                      <MdOutlineCategory className="text-[#6A7368] text-[18px]" />
+                      <span className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+                        {selectedCategory.name || "Select Business Category"}
+                      </span>
+                    </div>
+                    {showDropdown ? (
+                      <IoMdArrowDropup className="text-[#6A7368] cursor-pointer" />
+                    ) : (
+                      <IoMdArrowDropdown className="text-[#6A7368] cursor-pointer" />
+                    )}
+                  </button>
+                  {showDropdown && isLoadingCategories ? (
+                    <p className="absolute top-[50px] left-0 w-full bg-[#FFFDF2] text-[#043D12] p-2 z-10 text-sm">
+                      Loading categories...
+                    </p>
+                  ) : showDropdown && categories.length > 0 ? (
+                    <ul className="absolute top-[50px] left-0 w-full bg-[#FFFDF2] text-[#043D12] border-4 border-[#043D12] rounded-[25px] mt-2 p-2 shadow-lg max-h-[200px] overflow-y-auto z-10">
+                      {categories.map((category) => (
+                        <li
+                          key={category.id}
+                          className="py-2 px-4 cursor-pointer hover:bg-[#043D12]/30 rounded-[20px] text-sm"
+                          onClick={() =>
+                            handleCategorySelect(category.id, category.name)
+                          }
+                        >
+                          {category.name}
+                          {category.description && (
+                            <p className="text-xs text-[#043D12]/90">
+                              {category.description}
+                            </p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : showDropdown ? (
+                    <p className="absolute top-[50px] left-0 w-full bg-[#FFFDF2] text-[#043D12] p-2 z-10 text-sm">
+                      No categories available.
+                    </p>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => handleEditClick("category")}
+                    className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
+                      buttonActive.category
+                        ? "scale-95 bg-[#043D12] text-white"
+                        : "hover:bg-[#043D12] hover:text-white"
+                    }`}
+                  >
+                    <FiEdit3 className="text-[18px]" />
+                    Edit
+                  </button>
+                </div>
+              </div>
+              <div className="text-[#6A7368] flex flex-col gap-2">
+                <label className="text-sm">Keywords</label>
+                <div className="flex justify-between gap-4">
+                  <input
+                    type="text"
+                    ref={inputRefs.keyword}
+                    disabled={editField !== "keyword"}
+                    value={profileData.keyword.join(",") || ""}
+                    onChange={(e) =>
+                      handleInputChange("keyword", e.target.value)
+                    }
+                    className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
+                      editField === "keyword"
+                        ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
+                        : "border-[#6A7368]"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleEditClick("keyword")}
+                    className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
+                      buttonActive.keyword
+                        ? "scale-95 bg-[#043D12] text-white"
+                        : "hover:bg-[#043D12] hover:text-white"
+                    }`}
+                  >
+                    <FiEdit3 className="text-[18px]" />
+                    Edit
+                  </button>
+                </div>
+              </div>
+              <div className="text-[#6A7368] flex flex-col gap-2">
+                <label className="text-sm">Location</label>
+                <div className="flex justify-between gap-4">
+                  <input
+                    type="text"
+                    ref={inputRefs.location}
+                    disabled={editField !== "location"}
+                    value={profileData.location || ""}
+                    onChange={(e) =>
+                      handleInputChange("location", e.target.value)
+                    }
+                    className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
+                      editField === "location"
+                        ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
+                        : "border-[#6A7368]"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleEditClick("location")}
+                    className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
+                      buttonActive.location
+                        ? "scale-95 bg-[#043D12] text-white"
+                        : "hover:bg-[#043D12] hover:text-white"
+                    }`}
+                  >
+                    <FiEdit3 className="text-[18px]" />
+                    Edit
+                  </button>
+                </div>
+              </div>
+              <div className="text-[#6A7368] flex flex-col gap-2">
+                <label className="text-sm">Contact Number</label>
+                <div className="flex justify-between gap-4">
+                  <input
+                    type="text"
+                    ref={inputRefs.contactNo}
+                    disabled={editField !== "contactNo"}
+                    value={profileData.contactNo.join(",") || ""}
+                    onChange={(e) =>
+                      handleInputChange("contactNo", e.target.value)
+                    }
+                    className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
+                      editField === "contactNo"
+                        ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
+                        : "border-[#6A7368]"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleEditClick("contactNo")}
+                    className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
+                      buttonActive.contactNo
+                        ? "scale-95 bg-[#043D12] text-white"
+                        : "hover:bg-[#043D12] hover:text-white"
+                    }`}
+                  >
+                    <FiEdit3 className="text-[18px]" />
+                    Edit
+                  </button>
+                </div>
+              </div>
+              <div className="text-[#6A7368] flex flex-col gap-2">
+                <label className="text-sm">Description</label>
+                <div className="flex justify-between gap-4">
+                  <textarea
+                    ref={inputRefs.description}
+                    disabled={editField !== "description"}
+                    value={profileData.description || ""}
+                    onChange={(e) =>
+                      handleInputChange("description", e.target.value)
+                    }
+                    className={`w-full h-[100px] px-4 py-2 rounded-[11px] border-[1px] ${
+                      editField === "description"
+                        ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
+                        : "border-[#6A7368]"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleEditClick("description")}
+                    className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
+                      buttonActive.description
+                        ? "scale-95 bg-[#043D12] text-white"
+                        : "hover:bg-[#043D12] hover:text-white"
+                    }`}
+                  >
+                    <FiEdit3 className="text-[18px]" />
+                    Edit
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="btns flex justify-end pt-12 sm:pt-20 pb-8 sm:pb-12">
+              <div className="w-fit flex items-center gap-4 sm:gap-6">
                 <button
                   type="button"
-                  onClick={() => handleEditClick("category")}
-                  className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
-                    buttonActive.category
-                      ? "scale-95 bg-[#043D12] text-white"
-                      : "hover:bg-[#043D12] hover:text-white"
+                  onClick={() => handleDiscardChanges("business")}
+                  className={`border-[1px] border-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform ${
+                    buttonActive.businessSubmit
+                      ? "text-[#6A7368] hover:bg-gray-200"
+                      : "bg-[#043D12] text-white hover:bg-[#032b0e]"
                   }`}
                 >
-                  <FiEdit3 className="text-[18px]" />
-                  Edit
+                  Discard Changes
+                </button>
+                <button
+                  type="submit"
+                  className={`border-[1px] border-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform flex items-center justify-center gap-2 ${
+                    buttonActive.businessSubmit
+                      ? "scale-95 bg-[#043D12] text-white"
+                      : "text-[#6A7368] hover:bg-[#043D12] hover:text-white"
+                  }`}
+                  disabled={buttonActive.businessSubmit}
+                >
+                  {buttonActive.businessSubmit ? (
+                    <LoaderWithText />
+                  ) : (
+                    "Save Changes"
+                  )}
                 </button>
               </div>
             </div>
-            <div className="text-[#6A7368] flex flex-col gap-2">
-              <label className="text-sm">Keywords</label>
-              <div className="flex justify-between gap-4">
-                <input
-                  type="text"
-                  ref={inputRefs.keyword}
-                  disabled={editField !== "keyword"}
-                  value={profileData.keyword.join(",") || ""}
-                  onChange={(e) => handleInputChange("keyword", e.target.value)}
-                  className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
-                    editField === "keyword"
-                      ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
-                      : "border-[#6A7368]"
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => handleEditClick("keyword")}
-                  className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
-                    buttonActive.keyword
-                      ? "scale-95 bg-[#043D12] text-white"
-                      : "hover:bg-[#043D12] hover:text-white"
-                  }`}
-                >
-                  <FiEdit3 className="text-[18px]" />
-                  Edit
-                </button>
-              </div>
-            </div>
-            <div className="text-[#6A7368] flex flex-col gap-2">
-              <label className="text-sm">Location</label>
-              <div className="flex justify-between gap-4">
-                <input
-                  type="text"
-                  ref={inputRefs.location}
-                  disabled={editField !== "location"}
-                  value={profileData.location || ""}
-                  onChange={(e) =>
-                    handleInputChange("location", e.target.value)
-                  }
-                  className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
-                    editField === "location"
-                      ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
-                      : "border-[#6A7368]"
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => handleEditClick("location")}
-                  className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
-                    buttonActive.location
-                      ? "scale-95 bg-[#043D12] text-white"
-                      : "hover:bg-[#043D12] hover:text-white"
-                  }`}
-                >
-                  <FiEdit3 className="text-[18px]" />
-                  Edit
-                </button>
-              </div>
-            </div>
-            <div className="text-[#6A7368] flex flex-col gap-2">
-              <label className="text-sm">Contact Number</label>
-              <div className="flex justify-between gap-4">
-                <input
-                  type="text"
-                  ref={inputRefs.contactNo}
-                  disabled={editField !== "contactNo"}
-                  value={profileData.contactNo.join(",") || ""}
-                  onChange={(e) =>
-                    handleInputChange("contactNo", e.target.value)
-                  }
-                  className={`w-full h-[46px] px-4 rounded-[11px] border-[1px] ${
-                    editField === "contactNo"
-                      ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
-                      : "border-[#6A7368]"
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => handleEditClick("contactNo")}
-                  className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
-                    buttonActive.contactNo
-                      ? "scale-95 bg-[#043D12] text-white"
-                      : "hover:bg-[#043D12] hover:text-white"
-                  }`}
-                >
-                  <FiEdit3 className="text-[18px]" />
-                  Edit
-                </button>
-              </div>
-            </div>
-            <div className="text-[#6A7368] flex flex-col gap-2">
-              <label className="text-sm">Description</label>
-              <div className="flex justify-between gap-4">
-                <textarea
-                  ref={inputRefs.description}
-                  disabled={editField !== "description"}
-                  value={profileData.description || ""}
-                  onChange={(e) =>
-                    handleInputChange("description", e.target.value)
-                  }
-                  className={`w-full h-[100px] px-4 py-2 rounded-[11px] border-[1px] ${
-                    editField === "description"
-                      ? "border-[#043D12] bg-green-50 focus:ring-2 focus:ring-[#043D12]"
-                      : "border-[#6A7368]"
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => handleEditClick("description")}
-                  className={`rounded-[11px] text-[14px] px-4 py-2 shadow-lg flex items-center justify-between gap-2 border-[1px] border-[#6A7368] transition-transform ${
-                    buttonActive.description
-                      ? "scale-95 bg-[#043D12] text-white"
-                      : "hover:bg-[#043D12] hover:text-white"
-                  }`}
-                >
-                  <FiEdit3 className="text-[18px]" />
-                  Edit
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="btns flex justify-end pt-12 sm:pt-20 pb-8 sm:pb-12">
-            <div className="w-fit flex items-center gap-4 sm:gap-6">
-              <button
-                type="button"
-                onClick={() => handleDiscardChanges("business")}
-                className={`border-[1px] border-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform ${
-                  buttonActive.businessSubmit
-                    ? "text-[#6A7368] hover:bg-gray-200"
-                    : "bg-[#043D12] text-white hover:bg-[#032b0e]"
-                }`}
-              >
-                Discard Changes
-              </button>
-              <button
-                type="submit"
-                className={`border-[1px] border-[#6A7368] rounded-[11px] text-[12px] sm:text-[15px] px-4 sm:px-8 py-2 sm:py-3 shadow-lg transition-transform flex items-center justify-center gap-2 ${
-                  buttonActive.businessSubmit
-                    ? "scale-95 bg-[#043D12] text-white"
-                    : "text-[#6A7368] hover:bg-[#043D12] hover:text-white"
-                }`}
-                disabled={buttonActive.businessSubmit}
-              >
-                {buttonActive.businessSubmit ? (
-                  <LoaderWithText />
-                ) : (
-                  "Save Changes"
-                )}
-              </button>
-            </div>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

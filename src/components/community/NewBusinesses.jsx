@@ -1,9 +1,8 @@
-// src/components/community/NewBusinesses.jsx
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
-import BusinessImg from "../../assets/businessImg.jpeg";
+import BusinessImg from "../../assets/user-photo.svg";
 import {
   FaTimes,
   FaWhatsapp,
@@ -11,7 +10,8 @@ import {
   FaFacebook,
   FaInstagram,
 } from "react-icons/fa";
-import NetworkError from "../NetworkError"; // Import the new component
+import NetworkError from "../NetworkError";
+import { Player } from "@lottiefiles/react-lottie-player";
 
 // Contact Dropdown Component (unchanged)
 const ContactDropdown = ({ socialLinks, onClose }) => {
@@ -32,7 +32,7 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-fit border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-4 py-2 shadow-lg hover:bg-[#043D12] hover:text-white text-center flex items-center gap-2"
+        className="w-fit border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[12px] md:text-[15px] px-2 md:px-4 py-2 shadow-lg hover:bg-[#043D12] hover:text-white text-center flex items-center gap-2"
       >
         Contact Us
         <span>{isOpen ? "▲" : "▼"}</span>
@@ -102,7 +102,7 @@ const Modal = ({ profile, onClose }) => {
         >
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-[#6A7368] hover:text-[#043D12] text-xl"
+            className="absolute top-2 right-4 text-[#6A7368] hover:text-[#043D12] text-xl"
           >
             <FaTimes />
           </button>
@@ -113,7 +113,7 @@ const Modal = ({ profile, onClose }) => {
               BusinessImg
             }
             alt={profile.businessName}
-            className="w-full md:w-1/2 h-full  object-cover rounded-lg"
+            className="w-full md:w-1/2 h-full object-cover rounded-lg"
             initial={{ x: -50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.5 }}
@@ -141,7 +141,7 @@ const Modal = ({ profile, onClose }) => {
             <div className="flex gap-4 items-center mt-4">
               <button
                 onClick={handleViewProfile}
-                className="w-fit border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-4 py-2 shadow-lg hover:bg-[#043D12] hover:text-white text-center"
+                className="w-fit border-[1px] border-[#6A7368] text-[#6A7368] text-[12px] rounded-[11px] md:text-[15px] px-2 md:px-4 py-2 shadow-lg hover:bg-[#043D12] hover:text-white text-center"
               >
                 View Profile
               </button>
@@ -157,7 +157,7 @@ const Modal = ({ profile, onClose }) => {
   );
 };
 
-// Main Component with Enhanced Error Handling
+// Main Component with Enhanced Error Handling and No Results Design
 const NewBusinesses = () => {
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [newProfiles, setNewProfiles] = useState([]);
@@ -173,7 +173,7 @@ const NewBusinesses = () => {
     setLoading(true);
     setError(null); // Reset error before fetching
     try {
-      const newURL = `${import.meta.env.VITE_BASE_URL}/member/all-profiles`; // Replace BASE_URL
+      const newURL = `${import.meta.env.VITE_BASE_URL}/member/all-profiles`;
       const newResponse = await axios.get(newURL);
       if (
         newResponse.data &&
@@ -186,7 +186,7 @@ const NewBusinesses = () => {
       }
       const trendingURL = `${
         import.meta.env.VITE_BASE_URL
-      }/member/all-trending`; // Replace BASE_URL
+      }/member/all-trending`;
       const trendingResponse = await axios.get(trendingURL);
       if (
         trendingResponse.data &&
@@ -349,113 +349,143 @@ const NewBusinesses = () => {
           </div>
         </div>
 
-        <div className="all-business flex flex-col gap-24">
-          <div>
-            <h1 className="text-[#043D12] lg:text-[32px] text-[24px] font-medium">
-              Newly Added Businesses
-            </h1>
-            <div className="w-full grid xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
-              {filteredNewProfiles.map((profile, index) => (
-                <motion.div
-                  key={profile.id}
-                  className="flex flex-col gap-2 cursor-pointer h-[350px] my-8"
-                  initial={{ opacity: 0, y: 50 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: false }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  onClick={() => setSelectedProfile(profile)}
-                >
-                  <div className="profile flex items-center gap-2">
-                    <img
-                      src={profile.businesImg || BusinessImg}
-                      alt={profile.businessName}
-                      className="w-8 h-8 rounded-full object-cover"
-                      onError={(e) => (e.target.src = BusinessImg)}
-                    />
-                    <p className="text-[12px] text-[#043D12]">
-                      {profile.businessName}
-                    </p>
-                  </div>
-                  <figure className="flex-1">
-                    <img
-                      src={
-                        profile.productImages?.[0]?.imageUrl ||
-                        profile.businesImg ||
-                        BusinessImg
-                      }
-                      alt={profile.businessName}
-                      className="w-full h-[300px] object-cover rounded-lg"
-                      onError={(e) => (e.target.src = BusinessImg)}
-                    />
-                    <figcaption className="flex flex-col gap-2 text-[#043D12] py-2">
-                      <div className="flex flex-col gap-1">
-                        <b className="lg:text-[15px] text-[10px]">
-                          {profile.businessName}
-                        </b>
-                        <p className="text-[10px]">
-                          {profile.categories[0]?.name || "Unknown Category"}
-                        </p>
-                      </div>
-                    </figcaption>
-                  </figure>
-                </motion.div>
-              ))}
-            </div>
+        {/* Check if both filtered arrays are empty */}
+        {filteredNewProfiles.length === 0 &&
+        filteredTrendingProfiles.length === 0 ? (
+          <div className="w-full flex flex-col items-center justify-center gap-8 py-16">
+            <Player
+              autoplay
+              loop
+              src="https://lottie.host/7fd33a4f-2e59-4f34-ba0c-4af37814586e/Cq1qkcf16G.lottie"
+              style={{ height: "300px", width: "300px" }}
+            />
+            <h2 className="text-md font-bold text-[#043D12]">
+              No Results Found
+            </h2>
+            <p className="text-sm text-[#6A7368] text-center max-w-2xl">
+              It looks like there are no businesses matching your filter
+              criteria. Try adjusting your filters or explore other businesses
+              in the community!
+            </p>
+            <button
+              className="mt-4 bg-[#043D12] text-white px-8 py-3 rounded-lg text-sm font-semibold hover:bg-[#032d0e] transition-colors cursor-pointer"
+              onClick={() => {
+                setFilterCategory("");
+                setFilterLocation("");
+              }}
+            >
+              Clear Filters
+            </button>
           </div>
+        ) : (
+          <div className="all-business flex flex-col gap-24">
+            <div>
+              <h1 className="text-[#043D12] lg:text-[32px] text-[24px] font-medium">
+                Newly Added Businesses
+              </h1>
+              <div className="w-full grid xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
+                {filteredNewProfiles.map((profile, index) => (
+                  <motion.div
+                    key={profile.id}
+                    className="flex flex-col gap-2 cursor-pointer h-[350px] my-8"
+                    initial={{ opacity: 0, y: 50 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: false }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    onClick={() => setSelectedProfile(profile)}
+                  >
+                    <div className="profile flex items-center gap-2">
+                      <img
+                        src={profile.businesImg || BusinessImg}
+                        alt={profile.businessName}
+                        className="w-8 h-8 rounded-full object-cover"
+                        onError={(e) => (e.target.src = BusinessImg)}
+                      />
+                      <p className="text-[12px] text-[#043D12]">
+                        {profile.businessName}
+                      </p>
+                    </div>
+                    <figure className="flex-1">
+                      <img
+                        src={
+                          profile.productImages?.[0]?.imageUrl ||
+                          profile.businesImg ||
+                          BusinessImg
+                        }
+                        alt={profile.businessName}
+                        className="w-full h-[300px] object-cover rounded-lg"
+                        onError={(e) => (e.target.src = BusinessImg)}
+                      />
+                      <figcaption className="flex flex-col gap-2 text-[#043D12] py-2">
+                        <div className="flex flex-col gap-1">
+                          <b className="lg:text-[15px] text-[10px]">
+                            {profile.businessName}
+                          </b>
+                          <p className="text-[10px]">
+                            {profile.categories[0]?.name || "Unknown Category"}
+                          </p>
+                        </div>
+                      </figcaption>
+                    </figure>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
 
-          <div>
-            <h1 className="text-[#043D12] lg:text-[32px] text-[24px] font-medium">
-              Trending Businesses
-            </h1>
-            <div className="w-full grid xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
-              {filteredTrendingProfiles.map((profile, index) => (
-                <motion.div
-                  key={profile.id}
-                  className="flex flex-col gap-2 cursor-pointer h-[350px] my-8"
-                  initial={{ opacity: 0, y: 50 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: false }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  onClick={() => setSelectedProfile(profile)}
-                >
-                  <div className="profile flex items-center gap-2">
-                    <img
-                      src={profile.businesImg || BusinessImg}
-                      alt={profile.businessName}
-                      className="w-8 h-8 rounded-full object-cover"
-                      onError={(e) => (e.target.src = BusinessImg)}
-                    />
-                    <p className="text-[12px] text-[#043D12]">
-                      {profile.businessName}
-                    </p>
-                  </div>
-                  <figure className="flex-1">
-                    <img
-                      src={
-                        profile.productImages?.[0]?.imageUrl ||
-                        profile.businesImg ||
-                        BusinessImg
-                      }
-                      alt={profile.businessName}
-                      className="w-full h-[300px] object-cover rounded-lg"
-                      onError={(e) => (e.target.src = BusinessImg)}
-                    />
-                    <figcaption className="flex flex-col gap-2 text-[#043D12] py-2">
-                      <div className="flex flex-col gap-1">
-                        <b className="lg:text-[15px] text-[10px]">
-                          {profile.businessName}
-                        </b>
-                        <p className="text-[10px]">
-                          {profile.categories[0]?.name || "Unknown Category"}
-                        </p>
-                      </div>
-                    </figcaption>
-                  </figure>
-                </motion.div>
-              ))}
+            <div>
+              <h1 className="text-[#043D12] lg:text-[32px] text-[24px] font-medium">
+                Trending Businesses
+              </h1>
+              <div className="w-full grid xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
+                {filteredTrendingProfiles.map((profile, index) => (
+                  <motion.div
+                    key={profile.id}
+                    className="flex flex-col gap-2 cursor-pointer h-[350px] my-8"
+                    initial={{ opacity: 0, y: 50 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: false }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    onClick={() => setSelectedProfile(profile)}
+                  >
+                    <div className="profile flex items-center gap-2">
+                      <img
+                        src={profile.businesImg || BusinessImg}
+                        alt={profile.businessName}
+                        className="w-8 h-8 rounded-full object-cover"
+                        onError={(e) => (e.target.src = BusinessImg)}
+                      />
+                      <p className="text-[12px] text-[#043D12]">
+                        {profile.businessName}
+                      </p>
+                    </div>
+                    <figure className="flex-1">
+                      <img
+                        src={
+                          profile.productImages?.[0]?.imageUrl ||
+                          profile.businesImg ||
+                          BusinessImg
+                        }
+                        alt={profile.businessName}
+                        className="w-full h-[300px] object-cover rounded-lg"
+                        onError={(e) => (e.target.src = BusinessImg)}
+                      />
+                      <figcaption className="flex flex-col gap-2 text-[#043D12] py-2">
+                        <div className="flex flex-col gap-1">
+                          <b className="lg:text-[15px] text-[10px]">
+                            {profile.businessName}
+                          </b>
+                          <p className="text-[10px]">
+                            {profile.categories[0]?.name || "Unknown Category"}
+                          </p>
+                        </div>
+                      </figcaption>
+                    </figure>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
       <Modal
         profile={selectedProfile}

@@ -10,7 +10,7 @@ import {
   RiArrowDropUpLine,
 } from "react-icons/ri";
 import { Link, useNavigate } from "react-router-dom";
-import BusinessImg from "../assets/businessImg.jpeg";
+import BusinessImg from "../assets/user-photo.svg";
 import {
   FaTimes,
   FaWhatsapp,
@@ -462,23 +462,23 @@ const SearchPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="w-full flex flex-col items-center justify-center gap-8 py-16">
+                  <div className="w-full flex flex-col items-center justify-center gap-8 py-8">
                     <Player
                       autoplay
                       loop
                       src="https://lottie.host/7fd33a4f-2e59-4f34-ba0c-4af37814586e/Cq1qkcf16G.lottie" // Replace with your Lottie JSON URL
                       style={{ height: "300px", width: "300px" }}
                     />
-                    <h2 className="text-4xl font-bold text-[#043D12]">
+                    <h2 className="text-md font-bold text-[#043D12]">
                       No Results Found
                     </h2>
-                    <p className="text-lg text-[#6A7368] text-center max-w-2xl">
+                    <p className="text-sm text-[#6A7368] text-center max-w-2xl">
                       It looks like there are no businesses or services matching
                       your search criteria. Try adjusting your filters or
                       explore other businesses in the community!
                     </p>
                     <button
-                      className="mt-4 bg-[#043D12] text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-[#032d0e] transition-colors"
+                      className="mt-4 bg-[#043D12] text-white px-8 py-3 rounded-lg text-sm cursor-pointer font-semibold hover:bg-[#032d0e] transition-colors"
                       onClick={() => {
                         setSearchQuery("");
                         setFilterCategory("");

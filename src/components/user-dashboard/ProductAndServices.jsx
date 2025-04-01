@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { MdFileUpload } from "react-icons/md";
-import ProductImg from "../../assets/product.svg";
 import { RiDeleteBinLine } from "react-icons/ri";
 import { FiEdit3 } from "react-icons/fi";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useSelector } from "react-redux";
-
+import NoProductsImg from "../../assets/NotAvailable.svg";
+import EditHeader from "./EditHeader";
 const ProductAndServices = () => {
   const [products, setProducts] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -56,7 +56,7 @@ const ProductAndServices = () => {
     fetchProfile();
   }, [token]);
 
-  // Fetch product images on component mount
+  // Fetch product images
   useEffect(() => {
     if (!token) return;
 
@@ -184,21 +184,20 @@ const ProductAndServices = () => {
       );
 
       if (response.data.success) {
-        toast.success(
-          response.data.message || "Image name updated successfully!"
-        );
-
+        toast.success("Image name updated successfully!");
         setProducts((prevProducts) =>
           prevProducts.map((p) =>
             p.id === editingProduct.id ? { ...p, name: newName } : p
           )
         );
-
-        const updatedProducts = products.map((p) =>
-          p.id === editingProduct.id ? { ...p, name: newName } : p
+        localStorage.setItem(
+          "products",
+          JSON.stringify(
+            products.map((p) =>
+              p.id === editingProduct.id ? { ...p, name: newName } : p
+            )
+          )
         );
-        localStorage.setItem("products", JSON.stringify(updatedProducts));
-
         setEditingProduct(null);
         setNewName("");
       } else {
@@ -214,7 +213,7 @@ const ProductAndServices = () => {
     }
   };
 
-  // Handle delete functionality with API call
+  // Handle delete functionality
   const handleDelete = async (productId) => {
     if (!token) {
       toast.error("Authentication token missing!");
@@ -232,13 +231,9 @@ const ProductAndServices = () => {
       );
 
       if (response.data.success) {
-        toast.success(response.data.message || "Product deleted successfully!");
-
-        // Update state by removing the deleted product
+        toast.success("Product deleted successfully!");
         const updatedProducts = products.filter((p) => p.id !== productId);
         setProducts(updatedProducts);
-
-        // Update localStorage
         localStorage.setItem("products", JSON.stringify(updatedProducts));
       } else {
         toast.error(response.data.error || "Failed to delete product.");
@@ -271,7 +266,8 @@ const ProductAndServices = () => {
   }
 
   return (
-    <div className="w-full px-8 pb-8 flex flex-col gap-10 text-[#6A7368]">
+    <div className="w-full pb-8 flex flex-col gap-10 text-[#6A7368]">
+      <EditHeader />
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -283,88 +279,134 @@ const ProductAndServices = () => {
         draggable
         pauseOnHover
       />
-      <div className="product-header flex max-md:flex-col max-md:gap-4 items-center justify-between">
-        <p className="text-[16px] text-[#043D12] font-medium border-b-[1px] border-[#6A7368] px-2 py-1">
-          Product & Services
-        </p>
-        <button
-          className={`text-[14px] border-[1px] rounded-[11px] shadow px-4 py-2 flex items-center gap-2 border-[#6A7368] ${
-            uploading
-              ? "cursor-not-allowed opacity-50"
-              : "hover:bg-[#043D12] hover:text-white"
-          }`}
-          onClick={() => {
-            if (!uploading) {
-              const fileInput = document.createElement("input");
-              fileInput.type = "file";
-              fileInput.accept = "image/*";
-              fileInput.onchange = (e) => handleImageUpload(e.target.files[0]);
-              fileInput.click();
-            }
-          }}
-          disabled={uploading || !categoryId}
-        >
-          {uploading ? "Uploading..." : "Upload Image"}
-          {uploading ? <Loader /> : <MdFileUpload className="text-[24px]" />}
-        </button>
-      </div>
-      <div className="products grid lg:grid-cols-3 md:grid-cols-2 gap-8">
-        {products.map((product) => (
-          <figure key={product.id} className="flex flex-col gap-4">
-            <div className="h-48 overflow-hidden rounded-lg">
+
+      <div className="container px-[5vw] mx-auto">
+        <div className="product-header flex max-md:flex-col max-md:gap-4 items-center justify-between mb-6">
+          <p className="text-[16px] text-[#043D12] font-medium border-b-[1px] border-[#6A7368] px-2 py-1 ">
+            Product & Services
+          </p>
+          <button
+            className={`text-[14px] border-[1px] rounded-[11px] shadow px-4 py-2 flex items-center gap-2 border-[#6A7368] ${
+              uploading
+                ? "cursor-not-allowed opacity-50"
+                : "hover:bg-[#043D12] hover:text-white"
+            }`}
+            onClick={() => {
+              if (!uploading) {
+                const fileInput = document.createElement("input");
+                fileInput.type = "file";
+                fileInput.accept = "image/*";
+                fileInput.onchange = (e) =>
+                  handleImageUpload(e.target.files[0]);
+                fileInput.click();
+              }
+            }}
+            disabled={uploading || !categoryId}
+          >
+            {uploading ? "Uploading..." : "Upload Image"}
+            {uploading ? <Loader /> : <MdFileUpload className="text-[24px]" />}
+          </button>
+        </div>
+
+        {/* Products Grid with Empty State */}
+        {products.length > 0 ? (
+          <div className="products grid lg:grid-cols-3 md:grid-cols-2 gap-8">
+            {products.map((product) => (
+              <figure key={product.id} className="flex flex-col gap-4">
+                <div className="h-48 overflow-hidden rounded-lg">
+                  <img
+                    src={product.image}
+                    alt={`Product_${product.id}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => (e.target.src = NoProductsImg)}
+                  />
+                </div>
+                <figcaption className="flex items-center justify-between">
+                  <h5 className="text-[14px]">{product.name}</h5>
+                  <div className="flex items-center gap-2 text-[20px]">
+                    <FiEdit3
+                      className="cursor-pointer hover:text-[#043D12]"
+                      onClick={() => handleEdit(product.id)}
+                    />
+                    <RiDeleteBinLine
+                      className="text-red-400 cursor-pointer hover:text-red-600"
+                      onClick={() => handleDelete(product.id)}
+                    />
+                  </div>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 px-4 border-2 border-dashed border-[#6A7368] rounded-lg bg-[#FAFEF4]">
+            <div className="w-40 h-40 mb-6">
               <img
-                src={product.image}
-                alt={`Product_${product.id}`}
-                className="w-full h-full object-cover"
-                onError={(e) => (e.target.src = ProductImg)}
+                src={NoProductsImg}
+                alt="No products"
+                className="w-full h-full object-contain opacity-70"
               />
             </div>
-            <figcaption className="flex items-center justify-between">
-              <h5 className="text-[14px]">{product.name}</h5>
-              <div className="flex items-center gap-2 text-[20px]">
-                <FiEdit3
-                  className="cursor-pointer hover:text-[#043D12]"
-                  onClick={() => handleEdit(product.id)}
-                />
-                <RiDeleteBinLine
-                  className="text-red-400 cursor-pointer hover:text-red-600"
-                  onClick={() => handleDelete(product.id)}
-                />
-              </div>
-            </figcaption>
-          </figure>
-        ))}
-      </div>
+            <h3 className="text-xl font-medium text-[#043D12] mb-2">
+              No Products Yet
+            </h3>
+            <p className="text-center text-[#6A7368] mb-6 max-w-md">
+              Showcase your products and services to potential customers. Upload
+              your first product to get started!
+            </p>
+            <button
+              className="text-[14px] border-[1px] rounded-[11px] shadow px-6 py-3 flex items-center gap-2 border-[#6A7368] bg-[#043D12] text-white hover:bg-[#03280E] transition-colors"
+              onClick={() => {
+                if (!uploading) {
+                  const fileInput = document.createElement("input");
+                  fileInput.type = "file";
+                  fileInput.accept = "image/*";
+                  fileInput.onchange = (e) =>
+                    handleImageUpload(e.target.files[0]);
+                  fileInput.click();
+                }
+              }}
+              disabled={uploading || !categoryId}
+            >
+              {uploading ? "Uploading..." : "Upload Your First Product"}
+              {uploading ? (
+                <Loader />
+              ) : (
+                <MdFileUpload className="text-[20px]" />
+              )}
+            </button>
+          </div>
+        )}
 
-      {/* Edit Modal */}
-      {editingProduct && (
-        <div className="fixed inset-0 bg-black/75 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg w-96">
-            <h2 className="text-lg font-semibold mb-4">Edit Image Name</h2>
-            <input
-              type="text"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              className="w-full p-2 border rounded mb-4"
-              placeholder="Enter new name"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-                onClick={() => setEditingProduct(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-4 py-2 bg-[#043D12] text-white rounded hover:bg-[#03280E]"
-                onClick={handleSaveEdit}
-              >
-                Save
-              </button>
+        {/* Edit Modal */}
+        {editingProduct && (
+          <div className="fixed inset-0 bg-black/75 bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white p-6 rounded-lg w-96 max-w-[90%]">
+              <h2 className="text-lg font-semibold mb-4">Edit Product Name</h2>
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                className="w-full p-2 border rounded mb-4"
+                placeholder="Enter new product name"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                  onClick={() => setEditingProduct(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-[#043D12] text-white rounded hover:bg-[#03280E]"
+                  onClick={handleSaveEdit}
+                >
+                  Save Changes
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

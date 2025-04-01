@@ -7,38 +7,244 @@ import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import Good from "../components/svgs/Good";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import MboLogo from "../../public/mindpower-logo.svg";
+import {
+  BanknotesIcon,
+  CheckCircleIcon,
+  RocketLaunchIcon,
+  UserCircleIcon,
+  MagnifyingGlassIcon,
+  UsersIcon,
+} from "@heroicons/react/24/outline";
 
 const PUBLIC_KEY = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
-const FRONT_URL = import.meta.env.VITE_BASE_URL_LOCAL;
 const MAIN_URL = import.meta.env.VITE_BASE_URL_MAIN;
+
+// Introductory Modal Component
+const IntroModal = ({ onClose, onProceed }) => {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 px-4">
+      <motion.div
+        className="bg-[#FFFDF2] rounded-[20px] p-6 sm:p-8 w-full max-w-[90vw] sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px] max-h-[90vh] overflow-y-auto text-center shadow-xl border border-[#E8F5E9]"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+        <motion.div
+          className="flex justify-center mb-4 sm:mb-6"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
+        >
+          <img
+            src={MboLogo}
+            alt="MindPower Logo"
+            className="w-16 sm:w-20 md:w-24 h-16 sm:h-20 md:h-24 animate-pulse-subtle"
+          />
+        </motion.div>
+        <h2 className="text-[20px] sm:text-[24px] md:text-[28px] font-serif font-bold text-[#043D12] mb-2 tracking-tight">
+          MindPower Business Online Subscription
+        </h2>
+        <p className="text-[#043D12] text-[13px] sm:text-[15px] font-medium mb-3 sm:mb-4 italic">
+          Elevate Your Business with MBO
+        </p>
+        <p className="text-[#6A7368] text-[12px] sm:text-[14px] mb-4 sm:mb-6 leading-relaxed">
+          Join the MindPower Business Online (MBO) Network with an annual
+          subscription. Unlock visibility, seamless networking, and exclusive
+          opportunities tailored for growth.
+        </p>
+        <div className="text-left space-y-3 sm:space-y-4">
+          <h3 className="text-[#043D12] text-[14px] sm:text-[16px] font-semibold tracking-wide">
+            Subscription Breakdown
+          </h3>
+          <div className="flex items-start gap-2">
+            <BanknotesIcon className="w-4 sm:w-5 h-4 sm:h-5 text-[#043D12] mt-0.5 flex-shrink-0" />
+            <p className="text-[#6A7368] text-[12px] sm:text-[14px]">
+              <strong>Total Annual Cost:</strong> ₦15,000{" "}
+              <span className="text-[#043D12] font-medium">
+                (Required for Membership)
+              </span>
+            </p>
+          </div>
+          <div className="flex items-start gap-2">
+            <CheckCircleIcon className="w-4 sm:w-5 h-4 sm:h-5 text-[#043D12] mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-[#6A7368] text-[12px] sm:text-[14px]">
+                <strong>₦5,000 Registration Fee</strong> (Yearly)
+              </p>
+              <ul className="text-[#6A7368] text-[11px] sm:text-[13px] list-disc ml-4">
+                <li>Maintain an active business profile</li>
+                <li>Be discoverable within the MBO Network</li>
+                <li>Collaborate with fellow entrepreneurs</li>
+              </ul>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <RocketLaunchIcon className="w-4 sm:w-5 h-4 sm:h-5 text-[#043D12] mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-[#6A7368] text-[12px] sm:text-[14px]">
+                <strong>₦10,000 Promotion Fee</strong> (Yearly)
+              </p>
+              <ul className="text-[#6A7368] text-[11px] sm:text-[13px] list-disc ml-4">
+                <li>Amplify your business visibility</li>
+                <li>Feature in premium listings & recommendations</li>
+                <li>Draw in more customers and partners</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-4 sm:mt-6">
+          <motion.button
+            onClick={onProceed}
+            className="bg-[#043D12] text-[#FFFDF2] rounded-full px-5 sm:px-6 py-2 sm:py-2.5 font-medium text-[13px] sm:text-[14px] shadow-md hover:bg-[#032d0e] transition-all duration-300 w-full sm:w-auto"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Subscribe Now
+          </motion.button>
+          <motion.button
+            onClick={onClose}
+            className="bg-transparent border-2 border-[#043D12] text-[#043D12] rounded-full px-5 sm:px-6 py-2 sm:py-2.5 font-medium text-[13px] sm:text-[14px] hover:bg-[#043D12]/10 transition-all duration-300 w-full sm:w-auto"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Back to Home
+          </motion.button>
+        </div>
+        <p className="text-[#6A7368] text-[10px] sm:text-[12px] mt-4 sm:mt-6 italic">
+          Stay active, get discovered, and thrive with MBO.
+        </p>
+      </motion.div>
+    </div>
+  );
+};
+
+// Enhanced Success Modal
+const SuccessModal = ({ onClose, userName }) => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 px-4">
+      <motion.div
+        className="bg-[#FFFDF2] rounded-[20px] p-6 sm:p-8 w-full max-w-[90vw] sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px] max-h-[90vh] overflow-y-auto text-center shadow-xl border border-[#E8F5E9]"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+        <motion.div
+          className="flex justify-center mb-4 sm:mb-6"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
+        >
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+            <CheckCircleIcon className="w-12 h-12 text-green-600" />
+          </div>
+        </motion.div>
+
+        <h2 className="text-[20px] sm:text-[24px] md:text-[28px] font-serif font-bold text-[#043D12] mb-2 tracking-tight">
+          Welcome Aboard, {userName}!
+        </h2>
+
+        <p className="text-[#043D12] text-[13px] sm:text-[15px] font-medium mb-3 sm:mb-4 italic">
+          Your MBO subscription is now active!
+        </p>
+
+        <p className="text-[#6A7368] text-[12px] sm:text-[14px] mb-4 sm:mb-6 leading-relaxed">
+          You're officially part of the MindPower Business Network. Let's
+          complete your profile to unlock all benefits:
+        </p>
+
+        <div className="text-left space-y-3 sm:space-y-4 mb-6">
+          <div className="flex items-start gap-2">
+            <UserCircleIcon className="w-4 sm:w-5 h-4 sm:h-5 text-[#043D12] mt-0.5 flex-shrink-0" />
+            <p className="text-[#6A7368] text-[12px] sm:text-[14px]">
+              <strong>Complete your business profile</strong> to establish your
+              professional presence
+            </p>
+          </div>
+          <div className="flex items-start gap-2">
+            <MagnifyingGlassIcon className="w-4 sm:w-5 h-4 sm:h-5 text-[#043D12] mt-0.5 flex-shrink-0" />
+            <p className="text-[#6A7368] text-[12px] sm:text-[14px]">
+              <strong>Get discovered</strong> by potential customers and
+              partners
+            </p>
+          </div>
+          <div className="flex items-start gap-2">
+            <UsersIcon className="w-4 sm:w-5 h-4 sm:h-5 text-[#043D12] mt-0.5 flex-shrink-0" />
+            <p className="text-[#6A7368] text-[12px] sm:text-[14px]">
+              <strong>Connect with other members</strong> in the MBO community
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-4 sm:mt-6">
+          <motion.button
+            onClick={() => {
+              onClose();
+              navigate("/business-profile", {
+                state: { subscriptionSuccess: true },
+              });
+            }}
+            className="bg-[#043D12] text-[#FFFDF2] rounded-full px-5 sm:px-6 py-2 sm:py-2.5 font-medium text-[13px] sm:text-[14px] shadow-md hover:bg-[#032d0e] transition-all duration-300 w-full sm:w-auto"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Complete My Profile
+          </motion.button>
+          <motion.button
+            onClick={() => {
+              onClose();
+              navigate("/dashboard");
+            }}
+            className="bg-transparent border-2 border-[#043D12] text-[#043D12] rounded-full px-5 sm:px-6 py-2 sm:py-2.5 font-medium text-[13px] sm:text-[14px] hover:bg-[#043D12]/10 transition-all duration-300 w-full sm:w-auto"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Go to Dashboard
+          </motion.button>
+        </div>
+
+        <p className="text-[#6A7368] text-[10px] sm:text-[12px] mt-4 sm:mt-6 italic">
+          Your profile setup takes just 5 minutes - let's maximize your
+          membership!
+        </p>
+      </motion.div>
+    </div>
+  );
+};
 
 const Subscribe = () => {
   const navigate = useNavigate();
   const [subscriptions, setSubscriptions] = useState([]);
   const [userId, setUserId] = useState(null);
-  const [txRef, setTxRef] = useState(null);
-  const [selectedPlan, setSelectedPlan] = useState(null);
-  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
+  const [txRefs, setTxRefs] = useState({});
   const [isLoadingSubscriptions, setIsLoadingSubscriptions] = useState(true);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showIntroModal, setShowIntroModal] = useState(true);
+  const [initializingPayments, setInitializingPayments] = useState(false);
 
   const user = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
 
   useEffect(() => {
-    console.log("Token from Redux:", token);
-    if (token) {
-      try {
-        const decodedToken = jwtDecode(token);
-        console.log("Decoded token:", decodedToken);
-        setUserId(decodedToken.id);
-      } catch (error) {
-        console.error("Invalid token:", error);
-        toast.error("Session expired, please log in again.");
-        navigate("/login");
-      }
-    } else {
+    if (!token) {
       toast.error("User not authenticated. Please log in.");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const decodedToken = jwtDecode(token);
+      setUserId(decodedToken.id);
+      setIsLoadingUser(false);
+    } catch (error) {
+      console.error("Invalid token:", error);
+      toast.error("Session expired, please log in again.");
       navigate("/login");
     }
   }, [token, navigate]);
@@ -47,110 +253,53 @@ const Subscribe = () => {
     const fetchSubscriptions = async () => {
       setIsLoadingSubscriptions(true);
       try {
-        console.log(
-          "Fetching from:",
-          `${import.meta.env.VITE_BASE_URL}/admin/get-sub`
-        );
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/admin/get-sub`
         );
-        console.log("API Response:", response.data);
         if (response.data && Array.isArray(response.data.data)) {
           setSubscriptions(response.data.data);
+          initializePayments(response.data.data);
         } else {
-          console.warn("Unexpected response format:", response.data);
-          toast.error("Invalid subscription data.");
+          toast.error("Invalid subscription data received.");
         }
       } catch (error) {
         console.error("Error fetching subscriptions:", error);
-        toast.error("Failed to load subscriptions. Please refresh.");
+        toast.error("Failed to load subscriptions. Please try again.");
       } finally {
         setIsLoadingSubscriptions(false);
       }
     };
 
-    fetchSubscriptions();
-  }, []);
-
-  const handlePayment = async (subscription) => {
-    if (!user || !userId) {
-      toast.error("User details not found. Please log in.");
-      navigate("/login");
-      return;
+    if (!isLoadingUser && userId) {
+      fetchSubscriptions();
     }
-    setSelectedPlan(subscription.id);
-    setIsLoadingPayment(true);
+  }, [isLoadingUser, userId]);
 
+  const initializePayments = async (subs) => {
+    if (!user || !userId) return;
+
+    setInitializingPayments(true);
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/admin/initialize-payment`,
-        {
-          userId,
-          planId: subscription.id,
+      const newTxRefs = {};
+      for (const subscription of subs) {
+        const response = await axios.post(
+          `${import.meta.env.VITE_BASE_URL}/admin/initialize-payment`,
+          { userId, planId: subscription.id }
+        );
+        if (response.data.success && response.data.transaction?.transactionId) {
+          newTxRefs[subscription.id] = response.data.transaction.transactionId;
         }
-      );
-
-      if (response.data.success && response.data.transaction) {
-        const transactionId = response.data.transaction.transactionId;
-        console.log("Transaction ID created:", transactionId);
-        setTxRef(transactionId);
-      } else {
-        throw new Error("Failed to create transaction ID");
       }
+      setTxRefs(newTxRefs);
     } catch (error) {
-      console.error("Error initiating payment:", error);
-      toast.error("Failed to initiate payment. Please try again.");
-      setSelectedPlan(null);
+      console.error("Error initializing payments:", error);
+      toast.error("Payment initialization failed. Please refresh the page.");
     } finally {
-      setIsLoadingPayment(false);
+      setInitializingPayments(false);
     }
-  };
-
-  // Updated SuccessModal with a modern, elegant design
-  const SuccessModal = ({ onClose, userName }) => {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 animate-fadeIn">
-        <div className="bg-gradient-to-br from-[#FFFDF2] to-[#E8F5E9] rounded-[30px] p-8 max-w-lg w-full text-center shadow-2xl transform transition-all duration-500 scale-100 hover:scale-105">
-          <div className="relative">
-            <div className="absolute inset-0 bg-confetti bg-cover opacity-20 rounded-[30px]"></div>
-            <h2 className="text-[28px] font-extrabold text-[#043D12] mb-4 relative z-10 animate-bounceIn">
-              🎉 Congratulations, {userName}!
-            </h2>
-            <p className="text-[#6A7368] text-[18px] mb-6 relative z-10">
-              You’ve successfully subscribed! Take the next step to unlock your
-              full potential by setting up your business profile. We’re excited
-              to see you shine!
-            </p>
-            <div className="flex justify-center gap-4 relative z-10">
-              <button
-                onClick={() => {
-                  onClose();
-                  navigate("/business-profile", {
-                    state: { subscriptionSuccess: true },
-                  });
-                }}
-                className="bg-[#043D12] text-[#FFFDF2] rounded-full px-6 py-3 font-medium text-[16px] hover:bg-[#043D12]/85 transition-all duration-300 shadow-md"
-              >
-                Set Up My Profile
-              </button>
-              <button
-                onClick={() => {
-                  onClose();
-                  navigate("/");
-                }}
-                className="bg-transparent border-2 border-[#043D12] text-[#043D12] rounded-full px-6 py-3 font-medium text-[16px] hover:bg-[#043D12]/10 transition-all duration-300"
-              >
-                Back to Home
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
   };
 
   const handlePaymentCallback = async (paymentResponse) => {
-    console.log("Flutterwave response:", paymentResponse);
     if (
       paymentResponse.status === "completed" ||
       paymentResponse.status === "successful"
@@ -162,152 +311,154 @@ const Subscribe = () => {
             transactionId: paymentResponse.transaction_id,
             txRef: paymentResponse.tx_ref,
             userId,
-            planId: selectedPlan,
+            planId: Object.keys(txRefs).find(
+              (key) => txRefs[key] === paymentResponse.tx_ref
+            ),
           }
         );
-        console.log("Verification response:", verificationResponse.data);
         if (verificationResponse.data.success) {
-          setShowSuccessModal(true); // Show the updated modal
+          setShowSuccessModal(true);
         } else {
           throw new Error("Payment verification failed");
         }
       } catch (error) {
-        console.error(
-          "Error verifying payment:",
-          error.response?.data || error
-        );
+        console.error("Error verifying payment:", error);
         toast.error("Payment verification failed. Contact support.");
       }
     } else {
       toast.error("Payment failed. Please try again.");
     }
-    setSelectedPlan(null);
-    setTxRef(null);
     closePaymentModal();
   };
 
+  if (isLoadingUser) {
+    return (
+      <div className="text-white text-center py-16">Loading user data...</div>
+    );
+  }
+
+  if (!user || !userId) {
+    return null;
+  }
+
   return (
     <div className="bg-[#043D12] w-full lg:h-screen h-fit overflow-y-auto py-16 flex flex-col justify-center items-center">
-      <div className="container mx-auto px-[5vw] flex flex-col items-center gap-4">
-        <h1 className="text-[#B4B3B3] lg:text-[30px] text-[20px] w-[90%] md:w-[60%] mx-auto text-center">
-          Stay Connected, Stay Promoted: <br className="max-lg:hidden" /> Your
-          All-in-One Plan
-        </h1>
+      {showIntroModal && (
+        <IntroModal
+          onClose={() => navigate("/")}
+          onProceed={() => setShowIntroModal(false)}
+        />
+      )}
 
-        <div className="w-[90%] overflow-x-auto whitespace-nowrap flex gap-6 py-4 items-center justify-center">
-          {isLoadingSubscriptions ? (
-            <p className="text-white">Loading subscriptions...</p>
-          ) : subscriptions.length > 0 ? (
-            subscriptions.map((subscription) => (
-              <div
-                key={subscription.id}
-                className={`details min-w-[250px] md:min-w-[300px] px-10 py-10 bg-[#FFFDF2] shadow-lg rounded-lg flex max-lg:flex-col gap-8 transition-all duration-300 
-                  ${
-                    selectedPlan === subscription.id ? "scale-110" : "scale-100"
-                  }`}
-              >
-                <div className="amount w-full flex flex-col items-center lg:pt-8">
-                  <h1 className="lg:text-[50px] text-[45px] text-[#043D12] flex items-center gap-0">
-                    <TbCurrencyNaira />
-                    {subscription.price}
-                  </h1>
-                  <span className="lg:text-[24px] text-[14px] text-[#043D12]">
-                    YEARLY
-                  </span>
-                </div>
-                <div className="w-full flex flex-col gap-4 items-center mt-6">
-                  <ul className="w-fit flex flex-col gap-4">
-                    <li className="flex items-center gap-4">
-                      <Good />
-                      <span className="md:text-[20px] text-[16px] text-[#676767]">
-                        Active Business Profile
-                      </span>
-                    </li>
-                    <li className="flex items-center gap-4">
-                      <Good />
-                      <span className="md:text-[20px] text-[16px] text-[#676767]">
-                        Boosted Visibility
-                      </span>
-                    </li>
-                    <li className="flex items-center gap-4">
-                      <Good />
-                      <span className="md:text-[20px] text-[16px] text-[#676767]">
-                        Affordable and Flexible
-                      </span>
-                    </li>
-                    <li className="flex items-center gap-4">
-                      <Good />
-                      <span className="md:text-[20px] text-[16px] text-[#676767]">
-                        Networking Opportunities
-                      </span>
-                    </li>
-                    <li className="flex items-center gap-4">
-                      <Good />
-                      <span className="md:text-[20px] text-[16px] text-[#676767]">
-                        Enhanced Credibility
-                      </span>
-                    </li>
-                  </ul>
-                  <div className="shadow-lg mt-8 register px-6 md:px-14 md:py-4 py-3 bg-[#043D12] rounded-[9px] text-[#FFFDF2] flex flex-col gap-2">
-                    {selectedPlan !== subscription.id && (
-                      <button
-                        className="cursor-pointer bg-transparent text-white font-medium text-[18px] border-2 border-white px-4 py-2 rounded-lg"
-                        onClick={() => handlePayment(subscription)}
-                        disabled={isLoadingPayment}
-                      >
-                        Subscribe Now
-                      </button>
-                    )}
+      {!showIntroModal && (
+        <div className="container mx-auto px-[5vw] flex flex-col items-center gap-4">
+          <h1 className="text-[#B4B3B3] lg:text-[30px] text-[20px] w-[90%] md:w-[60%] mx-auto text-center">
+            Stay Connected, Stay Promoted: <br className="max-lg:hidden" /> Your
+            All-in-One Plan
+          </h1>
 
-                    {selectedPlan === subscription.id && isLoadingPayment && (
-                      <p className="text-white text-[18px]">
-                        Initializing payment...
-                      </p>
-                    )}
-
-                    {selectedPlan === subscription.id &&
-                      txRef &&
-                      !isLoadingPayment && (
+          <div className="w-[90%] overflow-x-auto whitespace-nowrap flex gap-6 py-4 items-center justify-center">
+            {isLoadingSubscriptions ? (
+              <p className="text-white">Loading subscriptions...</p>
+            ) : subscriptions.length > 0 ? (
+              subscriptions.map((subscription) => (
+                <div
+                  key={subscription.id}
+                  className="details min-w-[250px] md:min-w-[300px] px-10 py-10 bg-[#FFFDF2] shadow-lg rounded-lg flex max-lg:flex-col gap-8 transition-all duration-300"
+                >
+                  <div className="amount w-full flex flex-col items-center lg:pt-8">
+                    <h1 className="lg:text-[50px] text-[45px] text-[#043D12] flex items-center gap-0">
+                      <TbCurrencyNaira />
+                      {subscription.price || "N/A"}
+                    </h1>
+                    <span className="lg:text-[24px] text-[14px] text-[#043D12]">
+                      YEARLY
+                    </span>
+                  </div>
+                  <div className="w-full flex flex-col gap-4 items-center mt-6">
+                    <ul className="w-fit flex flex-col gap-4">
+                      <li className="flex items-center gap-4">
+                        <Good />
+                        <span className="md:text-[20px] text-[16px] text-[#676767]">
+                          Active Business Profile
+                        </span>
+                      </li>
+                      <li className="flex items-center gap-4">
+                        <Good />
+                        <span className="md:text-[20px] text-[16px] text-[#676767]">
+                          Boosted Visibility
+                        </span>
+                      </li>
+                      <li className="flex items-center gap-4">
+                        <Good />
+                        <span className="md:text-[20px] text-[16px] text-[#676767]">
+                          Affordable and Flexible
+                        </span>
+                      </li>
+                      <li className="flex items-center gap-4">
+                        <Good />
+                        <span className="md:text-[20px] text-[16px] text-[#676767]">
+                          Networking Opportunities
+                        </span>
+                      </li>
+                      <li className="flex items-center gap-4">
+                        <Good />
+                        <span className="md:text-[20px] text-[16px] text-[#676767]">
+                          Enhanced Credibility
+                        </span>
+                      </li>
+                    </ul>
+                    <div className="shadow-lg mt-8 register px-6 md:px-14 md:py-4 py-3 bg-[#043D12] rounded-[9px] text-[#FFFDF2] flex flex-col gap-2">
+                      {initializingPayments ? (
+                        <p className="text-white text-[18px]">
+                          Preparing payment...
+                        </p>
+                      ) : txRefs[subscription.id] ? (
                         <FlutterWaveButton
                           className="cursor-pointer bg-transparent text-white font-medium text-[18px] border-2 border-white px-4 py-2 rounded-lg"
                           public_key={PUBLIC_KEY}
-                          tx_ref={txRef}
-                          amount={subscription.price}
+                          tx_ref={txRefs[subscription.id]}
+                          amount={subscription.price || 0}
                           currency="NGN"
                           redirect_url={`${MAIN_URL}/business-profile`}
                           payment_options="banktransfer, card, ussd"
                           customer={{
-                            email: user.email,
-                            name: `${user.firstName} ${user.lastName}`,
+                            email: user.email || "guest@example.com",
+                            name: `${user.firstName || "Guest"} ${
+                              user.lastName || ""
+                            }`,
                           }}
                           customizations={{
                             title: "MBO Subscription",
-                            description: `Payment for ${subscription.name}`,
+                            description: `Payment for ${
+                              subscription.name || "Subscription"
+                            }`,
                             logo: "/mbo-logo.png",
                           }}
                           callback={handlePaymentCallback}
-                          onClose={() => {
-                            console.log("Payment modal closed");
-                            setSelectedPlan(null);
-                            setTxRef(null);
-                          }}
-                          text="Proceed with Payment"
+                          onClose={() => console.log("Payment modal closed")}
+                          text="Pay Now"
                         />
+                      ) : (
+                        <p className="text-white text-[18px]">
+                          Payment unavailable
+                        </p>
                       )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-white">No subscriptions available.</p>
-          )}
+              ))
+            ) : (
+              <p className="text-white">No subscriptions available.</p>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {showSuccessModal && (
         <SuccessModal
           onClose={() => setShowSuccessModal(false)}
-          userName={`${user?.firstName} ${user?.lastName}`}
+          userName={`${user.firstName || "User"} ${user.lastName || ""}`}
         />
       )}
     </div>

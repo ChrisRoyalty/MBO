@@ -1,19 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { LuLayoutGrid } from "react-icons/lu";
-import {
-  IoSettingsOutline,
-  IoNotificationsOutline,
-  IoCodeSlash,
-} from "react-icons/io5";
-import { TbChartBar } from "react-icons/tb";
-import { MdHeadset } from "react-icons/md";
+
 import { CgMenuLeftAlt } from "react-icons/cg";
-import { MdOutlineCancelPresentation } from "react-icons/md";
-import BusinessImg from "../../assets/businessImg.jpeg";
+
 import { motion } from "framer-motion";
 import ManageIcon from "../../assets/manage.svg";
-import AnalyticsIcon from "../../assets/analytics.svg";
 import LogoutIcon from "../../assets/logout.svg";
 import SupportIcon from "../../assets/support.svg";
 import NotificationIcon from "../../assets/notification.svg";
@@ -110,10 +102,12 @@ const AdminDashboard = () => {
           ${isSidebarOpen ? "absolute md:relative" : "absolute"}`}
       >
         {/* Close Sidebar Button (hidden on large screens) */}
-        <MdOutlineCancelPresentation
+        <p
           onClick={toggleSidebar}
-          className="text-[#043D12] text-[35px] absolute top-4 right-4 cursor-pointer transition-transform hover:scale-110 lg:hidden"
-        />
+          className="text-gray-500 text-[20px] absolute top-4 right-4 cursor-pointer transition-transform hover:scale-110 lg:hidden"
+        >
+          x
+        </p>
 
         <div className="flex flex-col gap-10 h-full">
           <motion.strong

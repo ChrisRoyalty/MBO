@@ -14,7 +14,7 @@ import {
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { IoIosNotificationsOutline } from "react-icons/io";
 import { CiUser } from "react-icons/ci";
-import BusinessImg from "../../assets/businessImg.jpeg";
+import BusinessImg from "../../assets/user-photo.svg";
 import { Link } from "react-router-dom";
 
 import LockIcon from "../../assets/lock.svg";

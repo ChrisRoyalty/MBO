@@ -80,7 +80,7 @@ const Start = () => {
           whileInView="visible"
           viewport={{ once: false }}
           variants={animations.fadeIn}
-          className="lg:text-[40px] text-[30px]"
+          className="lg:text-[35px] text-[25px]"
         >
           Don’t Hesitate, Get Started Now!
         </motion.h1>

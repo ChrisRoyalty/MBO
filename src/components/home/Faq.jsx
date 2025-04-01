@@ -70,7 +70,7 @@ const Faq = () => {
   ];
 
   return (
-    <div className="w-full bg-[#FFFDF2] md:py-18 py-10">
+    <div className="w-full bg-[#FFFDF2] pb-10">
       <div className="container mx-auto px-[5vw] flex flex-col gap-10">
         <div className="w-full flex flex-col lg:gap-4 gap-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-12">
@@ -94,32 +94,32 @@ const Faq = () => {
                         activeIndex === index
                           ? "bg-[#043D12] text-white"
                           : "bg-[#B5BBB4] text-[#043D12]"
-                      } rounded-[26px] px-6 py-4 gap-4 w-full md:text-[24px] text-[18px]`}
+                      } rounded-[26px] px-6 py-4 gap-4 w-full md:text-[18px] text-[15px]`}
                       onClick={() => handleToggle(index)}
                     >
                       {item.question}
                       {activeIndex === index ? (
-                        <RiArrowDropUpLine className="text-[30px]" />
+                        <RiArrowDropUpLine className="text-[20px]" />
                       ) : (
-                        <RiArrowDropDownLine className="text-[30px]" />
+                        <RiArrowDropDownLine className="text-[20px]" />
                       )}
                     </button>
                   </div>
                   <figcaption
                     className={`p-6 ${
                       activeIndex === index
-                        ? "block bg-[#B5BBB4] mt-4 rounded-b-[26px]"
+                        ? "block bg-[#B5BBB4] rounded-b-[26px]"
                         : "hidden"
                     }`}
                   >
                     {Array.isArray(item.answer) ? (
-                      <ul className="list-disc pl-6 md:text-[20px] text-[16px] text-[#043D12]">
+                      <ul className="list-disc pl-6 md:text-[18px] text-[15px] text-[#043D12]">
                         {item.answer.map((listItem, liIndex) => (
                           <li key={liIndex}>{listItem}</li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-[20px] text-[#043D12]">
+                      <p className="text-[18px] text-[#043D12]">
                         {item.answer}
                       </p>
                     )}
@@ -130,7 +130,7 @@ const Faq = () => {
             {/* FAQ Image */}
             <div className="order-1 self-start lg:self-center flex flex-col justify-center items-center gap-8">
               <div className="intro max-lg:text-center">
-                <h1 className="lg:text-[40px] text-[30px] text-[#6A7368]">
+                <h1 className="lg:text-[30px] text-[25px] text-[#6A7368]">
                   Frequently Asked Questions
                 </h1>
                 <p className="md:text-[20px] text-[18px] text-[#6A7368]">

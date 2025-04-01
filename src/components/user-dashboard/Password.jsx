@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import EditHeader from "./EditHeader";
 
 const Password = () => {
   const [formData, setFormData] = useState({
@@ -115,6 +116,7 @@ const Password = () => {
 
   return (
     <div className="w-full text-[#6A7368] flex flex-col gap-10 justify-start">
+      <EditHeader />
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -126,84 +128,93 @@ const Password = () => {
         draggable
         pauseOnHover
       />
-      <h2 className="text-[16px] text-[#043D12] font-medium border-b-[1px] border-[#6A7368] px-2 py-1 w-fit">
-        Change Password
-      </h2>
-      <form className="lg:w-[70%] flex flex-col gap-8" onSubmit={handleSubmit}>
-        <div className="text-[#6A7368] flex flex-col gap-2">
-          <label>Current Password</label>
-          <div className="relative">
-            <input
-              type={showPasswords.oldPassword ? "text" : "password"}
-              value={formData.oldPassword}
-              onChange={(e) => handleInputChange("oldPassword", e.target.value)}
-              placeholder="Enter current password"
-              className="w-full h-[46px] px-4 pr-10 rounded-[11px] border-[1px] border-[#6A7368] focus:ring-2 focus:ring-[#043D12] focus:border-[#043D12]"
-            />
+      <div className="container px-[5vw] mx-auto">
+        <form
+          className="lg:w-[70%] lg:mx-auto flex flex-col gap-8 mt-4"
+          onSubmit={handleSubmit}
+        >
+          <h2 className="text-[16px] text-[#043D12] font-medium border-b-[1px] border-[#6A7368] py-1 w-fit">
+            Change Password
+          </h2>
+          <div className="text-[#6A7368] flex flex-col gap-2">
+            <label>Current Password</label>
+            <div className="relative">
+              <input
+                type={showPasswords.oldPassword ? "text" : "password"}
+                value={formData.oldPassword}
+                onChange={(e) =>
+                  handleInputChange("oldPassword", e.target.value)
+                }
+                placeholder="Enter current password"
+                className="w-full h-[46px] px-4 pr-10 rounded-[11px] border-[1px] border-[#6A7368] focus:ring-2 focus:ring-[#043D12] focus:border-[#043D12]"
+              />
+              <button
+                type="button"
+                onClick={() => togglePasswordVisibility("oldPassword")}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368] hover:text-[#043D12]"
+              >
+                {showPasswords.oldPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+          </div>
+          <div className="text-[#6A7368] flex flex-col gap-2">
+            <label>New Password</label>
+            <div className="relative">
+              <input
+                type={showPasswords.newPassword ? "text" : "password"}
+                value={formData.newPassword}
+                onChange={(e) =>
+                  handleInputChange("newPassword", e.target.value)
+                }
+                placeholder="Enter new password"
+                className="w-full h-[46px] px-4 pr-10 rounded-[11px] border-[1px] border-[#6A7368] focus:ring-2 focus:ring-[#043D12] focus:border-[#043D12]"
+              />
+              <button
+                type="button"
+                onClick={() => togglePasswordVisibility("newPassword")}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368] hover:text-[#043D12]"
+              >
+                {showPasswords.newPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+          </div>
+          <div className="text-[#6A7368] flex flex-col gap-2">
+            <label>Confirm Password</label>
+            <div className="relative">
+              <input
+                type={showPasswords.confirmPassword ? "text" : "password"}
+                value={formData.confirmPassword}
+                onChange={(e) =>
+                  handleInputChange("confirmPassword", e.target.value)
+                }
+                placeholder="Confirm new password"
+                className="w-full h-[46px] px-4 pr-10 rounded-[11px] border-[1px] border-[#6A7368] focus:ring-2 focus:ring-[#043D12] focus:border-[#043D12]"
+              />
+              <button
+                type="button"
+                onClick={() => togglePasswordVisibility("confirmPassword")}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368] hover:text-[#043D12]"
+              >
+                {showPasswords.confirmPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+          </div>
+          <div>
             <button
-              type="button"
-              onClick={() => togglePasswordVisibility("oldPassword")}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368] hover:text-[#043D12]"
+              type="submit"
+              disabled={submitting}
+              className={`border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-2 lg:px-8 py-3 shadow-lg flex items-center gap-2 ${
+                submitting
+                  ? "cursor-not-allowed opacity-50"
+                  : "hover:text-white hover:bg-[#043D12]"
+              }`}
             >
-              {showPasswords.oldPassword ? <FaEyeSlash /> : <FaEye />}
+              {submitting ? "Saving..." : "Save Changes"}
+              {submitting && <Loader />}
             </button>
           </div>
-        </div>
-        <div className="text-[#6A7368] flex flex-col gap-2">
-          <label>New Password</label>
-          <div className="relative">
-            <input
-              type={showPasswords.newPassword ? "text" : "password"}
-              value={formData.newPassword}
-              onChange={(e) => handleInputChange("newPassword", e.target.value)}
-              placeholder="Enter new password"
-              className="w-full h-[46px] px-4 pr-10 rounded-[11px] border-[1px] border-[#6A7368] focus:ring-2 focus:ring-[#043D12] focus:border-[#043D12]"
-            />
-            <button
-              type="button"
-              onClick={() => togglePasswordVisibility("newPassword")}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368] hover:text-[#043D12]"
-            >
-              {showPasswords.newPassword ? <FaEyeSlash /> : <FaEye />}
-            </button>
-          </div>
-        </div>
-        <div className="text-[#6A7368] flex flex-col gap-2">
-          <label>Confirm Password</label>
-          <div className="relative">
-            <input
-              type={showPasswords.confirmPassword ? "text" : "password"}
-              value={formData.confirmPassword}
-              onChange={(e) =>
-                handleInputChange("confirmPassword", e.target.value)
-              }
-              placeholder="Confirm new password"
-              className="w-full h-[46px] px-4 pr-10 rounded-[11px] border-[1px] border-[#6A7368] focus:ring-2 focus:ring-[#043D12] focus:border-[#043D12]"
-            />
-            <button
-              type="button"
-              onClick={() => togglePasswordVisibility("confirmPassword")}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6A7368] hover:text-[#043D12]"
-            >
-              {showPasswords.confirmPassword ? <FaEyeSlash /> : <FaEye />}
-            </button>
-          </div>
-        </div>
-        <div>
-          <button
-            type="submit"
-            disabled={submitting}
-            className={`border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-2 lg:px-8 py-3 shadow-lg flex items-center gap-2 ${
-              submitting
-                ? "cursor-not-allowed opacity-50"
-                : "hover:text-white hover:bg-[#043D12]"
-            }`}
-          >
-            {submitting ? "Saving..." : "Save Changes"}
-            {submitting && <Loader />}
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };

@@ -80,12 +80,12 @@ const BusinessProfile = () => {
   };
 
   const addKeyword = () => {
-    if (currentKeyword.trim() && keywords.length < 10) {
+    if (currentKeyword.trim() && keywords.length < 5) {
       setKeywords([...keywords, currentKeyword.trim()]);
       setCurrentKeyword("");
       setValidationErrors((prev) => ({ ...prev, keywords: false }));
-    } else if (keywords.length >= 10) {
-      toast.error("Maximum of 10 keywords allowed.", {
+    } else if (keywords.length >= 5) {
+      toast.error("Maximum of 5 keywords allowed.", {
         position: "top-center",
         autoClose: 3000,
       });
@@ -100,7 +100,7 @@ const BusinessProfile = () => {
     const errors = {
       businessName: !businessName.trim(),
       category: !selectedCategory.id,
-      keywords: keywords.length < 5 || keywords.length > 10,
+      keywords: keywords.length < 3 || keywords.length > 5,
       description: !description.trim(),
     };
 
@@ -123,8 +123,8 @@ const BusinessProfile = () => {
       return false;
     }
 
-    if (keywords.length < 5) {
-      toast.error("Please enter at least 5 keywords.", {
+    if (keywords.length < 3) {
+      toast.error("Please enter at least 3 keywords.", {
         position: "top-center",
         autoClose: 3000,
       });
@@ -132,8 +132,8 @@ const BusinessProfile = () => {
       return false;
     }
 
-    if (keywords.length > 10) {
-      toast.error("Maximum of 10 keywords allowed.", {
+    if (keywords.length > 5) {
+      toast.error("Maximum of 5 keywords allowed.", {
         position: "top-center",
         autoClose: 3000,
       });
@@ -316,7 +316,7 @@ const BusinessProfile = () => {
                   </div>
                 ))}
               </div>
-              {keywords.length < 10 && (
+              {keywords.length < 5 && (
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
@@ -341,7 +341,7 @@ const BusinessProfile = () => {
                   validationErrors.keywords ? "text-red-500" : "text-[#6A7368]"
                 } mt-1`}
               >
-                {keywords.length}/10 keywords added (min 5, max 10)
+                {keywords.length}/5 keywords added (min 3, max 5)
               </p>
             </div>
 
@@ -354,7 +354,7 @@ const BusinessProfile = () => {
               <textarea
                 name="description"
                 required
-                placeholder="Description"
+                placeholder="Tell us about your business"
                 value={description}
                 onChange={(e) => {
                   setDescription(e.target.value);

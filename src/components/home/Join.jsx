@@ -70,7 +70,7 @@ const Join = () => {
           whileInView="visible"
           viewport={{ once: false }}
           variants={animations.scaleUp}
-          className="mt-12 lg:text-[40px] text-[32px] text-[#043D1266] font-semibold"
+          className="mt-12 lg:text-[35px] text-[25px] text-[#043D1266] font-semibold"
         >
           Join our growing network
         </motion.h1>
@@ -95,8 +95,8 @@ const Join = () => {
               animation: (
                 <Lottie
                   options={animation2Options}
-                  height={172} // From JSON: h: 172
-                  width={193} // From JSON: w: 193
+                  height={182} // From JSON: h: 172
+                  width={136} // From JSON: w: 193
                 />
               ),
               title: <Link to="/create-account">SUBSCRIBE</Link>,
@@ -108,8 +108,8 @@ const Join = () => {
               animation: (
                 <Lottie
                   options={animation3Options}
-                  height={224} // From JSON: h: 224
-                  width={224} // From JSON: w: 224
+                  height={182} // From JSON: h: 224
+                  width={136} // From JSON: w: 224
                 />
               ),
               title: <Link to="/create-account">GROW</Link>,
@@ -129,7 +129,7 @@ const Join = () => {
               {card.animation}
               <figcaption className="text-[24px] text-[#043D12]">
                 <h5 className="font-bold">{card.title}</h5>
-                <p className="text-[20px] lg:px-16 px-8 text-[#6A7368]">
+                <p className="text-[18px] lg:px-16 px-8 text-[#6A7368]">
                   {card.description}
                 </p>
               </figcaption>

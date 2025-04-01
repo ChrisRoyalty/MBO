@@ -16,9 +16,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { login } from "../../redux/authSlice";
 import { motion } from "framer-motion";
 import { CiUser } from "react-icons/ci";
-import BusinessImg from "../../assets/businessImg.jpeg";
+import BusinessImg from "../../assets/user-photo.svg";
 import { RiArrowDropDownLine } from "react-icons/ri";
-import ProfileProgressBar from "./ProfileProgressBar";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FiEye, FiEyeOff } from "react-icons/fi";
@@ -33,16 +32,23 @@ const Profile = () => {
   const [profileData, setProfileData] = useState({
     businessName: "User Name",
     category: "Category",
-    businesImg: null,
+    businesImg: "",
     id: "",
     subscriptionStatus: "Unknown",
     views: 0,
     whatsappClicks: 0,
     sharedClicks: 0,
+    contactNo: [],
+    description: "",
+    location: "",
+    keyword: [],
+    socialLinks: {},
   });
   const [analyticsData, setAnalyticsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [profileProgress, setProfileProgress] = useState(0);
+  const [isProfileComplete, setIsProfileComplete] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -76,12 +82,9 @@ const Profile = () => {
     yearly: { label: "Yearly", limit: 5 },
   };
 
-  // Date formatting utilities
   const formatDateForRange = (dateStr, range) => {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) {
-      console.log("Invalid date detected:", dateStr, "for range:", range); // Debug
-      const now = new Date(); // Fallback to today
+    if (!dateStr) {
+      const now = new Date();
       switch (range) {
         case "daily":
           return now.toLocaleDateString("en-US", { weekday: "short" });
@@ -98,6 +101,31 @@ const Profile = () => {
           return now.toISOString().split("T")[0];
       }
     }
+
+    // Handle API-provided formatted strings
+    if (typeof dateStr === "string" && dateStr.includes("-")) {
+      if (range === "daily") {
+        const date = new Date(dateStr); // e.g., "2025-03-30"
+        return isNaN(date.getTime())
+          ? dateStr
+          : date.toLocaleDateString("en-US", { weekday: "short" });
+      } else if (range === "weekly") {
+        const [year, week] = dateStr.split("-"); // e.g., "2025-13"
+        return `Week ${week} ${year}`;
+      } else if (range === "monthly") {
+        const [year, month] = dateStr.split("-"); // e.g., "2025-03"
+        const date = new Date(year, month - 1);
+        return isNaN(date.getTime())
+          ? dateStr
+          : date.toLocaleString("default", { month: "short", year: "numeric" });
+      } else if (range === "yearly") {
+        return dateStr; // e.g., "2025"
+      }
+    }
+
+    // Handle Date object or unexpected string from filler logic
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr; // Fallback to raw string if invalid
     switch (range) {
       case "daily":
         return date.toLocaleDateString("en-US", { weekday: "short" });
@@ -122,10 +150,34 @@ const Profile = () => {
       startOfYear +
       (startOfYear.getTimezoneOffset() - date.getTimezoneOffset()) * 60 * 1000;
     const oneWeek = 1000 * 60 * 60 * 24 * 7;
-    return Math.floor(diff / oneWeek) + 1;
+    return Math.floor(diff / oneWeek) + 1; // Fixed: Removed "dije"
   };
 
-  // Generate graph data
+  const calculateProfileProgress = (data) => {
+    const requiredFields = [
+      { key: "businessName", check: (val) => val && val.trim().length > 0 },
+      {
+        key: "contactNo",
+        check: (val) => Array.isArray(val) && val.length > 0,
+      },
+      { key: "businesImg", check: (val) => val && val.trim().length > 0 },
+      { key: "description", check: (val) => val && val.trim().length > 0 },
+      { key: "location", check: (val) => val && val.trim().length > 0 },
+      { key: "keyword", check: (val) => Array.isArray(val) && val.length > 0 },
+      {
+        key: "socialLinks",
+        check: (val) => val && Object.keys(val).length > 0,
+      },
+    ];
+    const totalFields = requiredFields.length;
+    let completedFields = 0;
+    requiredFields.forEach(({ key, check }) => {
+      if (check(data[key])) completedFields++;
+    });
+    const progress = (completedFields / totalFields) * 100;
+    return { progress, isComplete: completedFields === totalFields };
+  };
+
   const generateGraphData = useMemo(() => {
     const metricKey = {
       ProfileViews: "views",
@@ -134,8 +186,15 @@ const Profile = () => {
     }[metric];
     const { limit } = TIME_RANGES[timeRange];
 
+    const dateField = {
+      daily: "formattedDate",
+      weekly: "formattedWeek",
+      monthly: "formattedMonth",
+      yearly: "formattedYear",
+    }[timeRange];
+
     if (!analyticsData.length) {
-      return Array.from({ length: limit }, (_, i) => {
+      const fallbackData = Array.from({ length: limit }, (_, i) => {
         const date = new Date();
         date.setDate(
           date.getDate() -
@@ -148,40 +207,31 @@ const Profile = () => {
                 ? 30
                 : 365)
         );
-        return { date: formatDateForRange(date, timeRange), value: 0 };
+        return {
+          date: formatDateForRange(date, timeRange),
+          value: profileData[metricKey] || 0,
+        };
       }).reverse();
+      return fallbackData;
     }
 
     const graphData = analyticsData
       .map((item) => {
-        if (!item || !item.date) {
-          console.log("Missing or invalid item in analyticsData:", item);
-          return null;
-        }
+        if (!item || !item[dateField]) return null;
         return {
-          date: formatDateForRange(item.date, timeRange),
-          value: item[metricKey] || 0,
+          date: formatDateForRange(item[dateField], timeRange),
+          value: Number(item[metricKey]) || 0,
         };
       })
       .filter(Boolean)
-      .sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return (
-          (isNaN(dateA.getTime()) ? 0 : dateA) -
-          (isNaN(dateB.getTime()) ? 0 : dateB)
-        );
-      })
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
       .slice(-limit);
 
     if (graphData.length < limit) {
       let lastDate = new Date(
         graphData[graphData.length - 1]?.date || Date.now()
-      ); // Changed to let
-      if (isNaN(lastDate.getTime())) {
-        console.log("Invalid lastDate, using now:", lastDate);
-        lastDate = new Date(); // Now legal with let
-      }
+      );
+      if (isNaN(lastDate.getTime())) lastDate = new Date();
       const filler = Array.from(
         { length: limit - graphData.length },
         (_, i) => {
@@ -197,15 +247,18 @@ const Profile = () => {
                   ? 30
                   : 365)
           );
-          return { date: formatDateForRange(newDate, timeRange), value: 0 };
+          return {
+            date: formatDateForRange(newDate, timeRange),
+            value: 0,
+          };
         }
       ).reverse();
       return [...filler, ...graphData];
     }
 
     return graphData;
-  }, [analyticsData, metric, timeRange]);
-  // Fetch profile and analytics data
+  }, [analyticsData, metric, timeRange, profileData]);
+
   useEffect(() => {
     if (!isAuthenticated || !token) {
       setError("Please log in to view your profile.");
@@ -227,27 +280,35 @@ const Profile = () => {
 
         const memberData = data.member || {};
         const newUserData = {
-          ...user, // Existing user from Redux
-          ...memberData, // New data from API
+          ...user,
+          ...memberData,
           subscriptionStatus: memberData.subscriptionStatus || "Unknown",
         };
-
-        // Only dispatch if user data has changed
-        if (JSON.stringify(user) !== JSON.stringify(newUserData)) {
+        if (JSON.stringify(user) !== JSON.stringify(newUserData))
           dispatch(login({ token, user: newUserData }));
-        }
 
-        setProfileData({
+        const updatedProfileData = {
           businessName: data.businessName || "User Name",
           category: data.categories?.[0]?.name || "Category",
-          businesImg: data.businesImg || BusinessImg,
+          businesImg: data.businesImg || "",
           id: data.id || "",
           subscriptionStatus: memberData.subscriptionStatus || "Unknown",
           views: data.views || 0,
-          whatsappClicks: data.whatsappClicks || 0,
+          whatsappClicks: data.socialClicks?.whatsapp || 0,
           sharedClicks: data.sharedClicks || 0,
-        });
+          contactNo: data.contactNo || [],
+          description: data.description || "",
+          location: data.location || "",
+          keyword: data.keyword || [],
+          socialLinks: data.socialLinks || {},
+        };
+
+        setProfileData(updatedProfileData);
         setIsVisible(!data.deletedAt);
+        const { progress, isComplete } =
+          calculateProfileProgress(updatedProfileData);
+        setProfileProgress(progress);
+        setIsProfileComplete(isComplete);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load profile data.");
         if (err.response?.status === 404)
@@ -258,10 +319,10 @@ const Profile = () => {
     };
 
     fetchProfileData();
-  }, [isAuthenticated, token, dispatch, navigate, user]); // Include 'user' in dependencies
+  }, [isAuthenticated, token, dispatch, navigate, user]);
 
   useEffect(() => {
-    if (!isAuthenticated || !token || loading) return;
+    if (!isAuthenticated || !token) return;
 
     const fetchAnalyticsData = async () => {
       try {
@@ -273,9 +334,8 @@ const Profile = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        if (!response.data.success || !Array.isArray(response.data.data)) {
+        if (!response.data.success || !Array.isArray(response.data.data))
           throw new Error("Invalid analytics data received.");
-        }
         setAnalyticsData(response.data.data);
       } catch (err) {
         setError(
@@ -286,9 +346,8 @@ const Profile = () => {
     };
 
     fetchAnalyticsData();
-  }, [isAuthenticated, token, timeRange, loading]);
+  }, [isAuthenticated, token, timeRange]);
 
-  // Dropdown and visibility handlers
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (isDropdownOpen && !e.target.closest(".dropdown-container"))
@@ -304,11 +363,8 @@ const Profile = () => {
   }, [isDropdownOpen, isProfileVisibleDropdownOpen]);
 
   const toggleVisibility = async (action) => {
-    if (!profileData.id || !token) {
-      toast.error("Missing profile ID or token.");
-      return;
-    }
-
+    if (!profileData.id || !token)
+      return toast.error("Missing profile ID or token.");
     try {
       const url = `${import.meta.env.VITE_BASE_URL}/member/${
         action === "hide" ? "hide" : "unhide"
@@ -433,9 +489,35 @@ const Profile = () => {
             </span>
           </p>
         </div>
-        <div className="flex items-center gap-2 sm:gap-4">
-          <div className="max-lg:hidden">
-            <ProfileProgressBar />
+        <div className="flex items-center gap-2 sm:gap-18">
+          <div className="flex flex-col items-center gap-2">
+            <div
+              className="w-[150px] sm:w-[200px] h-4 bg-gray-200 rounded-full overflow-hidden cursor-pointer"
+              onClick={() =>
+                !isProfileComplete && navigate("/user-dashboard/profile")
+              }
+              title={
+                !isProfileComplete
+                  ? "Complete your profile"
+                  : "Profile Completed"
+              }
+            >
+              <motion.div
+                className="h-full bg-[#043D12]"
+                initial={{ width: 0 }}
+                animate={{ width: `${profileProgress}%` }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              />
+            </div>
+            <p className="text-[10px] sm:text-[12px] text-[#6A7368]">
+              {isProfileComplete ? (
+                <span className="text-[#043D12] font-semibold">
+                  Profile Completed ⚡
+                </span>
+              ) : (
+                `Profile Progress: ${Math.round(profileProgress)}%`
+              )}
+            </p>
           </div>
           <div className="relative profile-visible-dropdown max-lg:mx-auto">
             <button
@@ -549,7 +631,11 @@ const Profile = () => {
             </div>
           </div>
           <div className="mt-6 sm:mt-8 w-full h-[250px] sm:h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+              key={`${metric}-${timeRange}`}
+            >
               <LineChart
                 data={generateGraphData}
                 margin={{ top: 20, right: 20, left: 0, bottom: 10 }}
