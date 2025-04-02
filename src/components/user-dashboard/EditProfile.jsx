@@ -542,9 +542,9 @@ const EditProfile = () => {
           />
         </div>
 
-        <div className="relative w-full max-w-5xl mx-auto mt-16 sm:-mt-20 md:-mt-24 lg:-mt-28 px-4 sm:px-6 lg:px-8">
+        <div className="max-sm:absolute top-[200px] w-full max-w-5xl mx-auto sm:-mt-20 md:-mt-24 lg:-mt-28 px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center sm:flex-row sm:items-end sm:justify-between">
-            <figure className="relative flex flex-col items-center">
+            <figure className="relative  flex flex-col items-center">
               <img
                 src={
                   imagePreviews.businesImg ||

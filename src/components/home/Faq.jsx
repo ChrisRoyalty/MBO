@@ -113,13 +113,13 @@ const Faq = () => {
                     }`}
                   >
                     {Array.isArray(item.answer) ? (
-                      <ul className="list-disc pl-6 md:text-[18px] text-[15px] text-[#043D12]">
+                      <ul className="list-disc pl-6 md:text-[17px] text-[15px] text-[#043D12]">
                         {item.answer.map((listItem, liIndex) => (
                           <li key={liIndex}>{listItem}</li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-[18px] text-[#043D12]">
+                      <p className="md:text-[17px] text-[15px] text-[#043D12]">
                         {item.answer}
                       </p>
                     )}
