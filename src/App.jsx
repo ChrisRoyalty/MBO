@@ -1,5 +1,5 @@
 import React, { useEffect } from "react"; // Import useEffect
-import SEO from "./components/SEO";
+// import SEO from "./components/SEO";
 import { ToastContainer } from "react-toastify";
 import { Routes, Route, useLocation } from "react-router-dom"; // Import useLocation
 import PrivateRoute from "./components/PrivateRoute"; // Import PrivateRoute
@@ -53,7 +53,7 @@ function App() {
 
   return (
     <>
-      <SEO />
+      {/* <SEO /> */}
       <ToastContainer position="top-right" autoClose={3000} />
       <Routes>
         {/* Public Routes */}

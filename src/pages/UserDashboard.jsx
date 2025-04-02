@@ -36,7 +36,11 @@ const navItems = [
     icon: <PiUserCircle className="text-[25px]" />,
     label: "Community",
   },
-  { to: "/user-dashboard/profile", icon: <CiUser />, label: "About" },
+  {
+    to: "/user-dashboard/profile",
+    icon: <CiUser className="text-[25px]" />,
+    label: "About",
+  },
   {
     to: "/user-dashboard/products-and-services",
     icon: <TbLayoutGrid className="text-[25px]" />,

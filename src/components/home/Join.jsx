@@ -61,7 +61,7 @@ const Join = () => {
       whileInView="visible"
       viewport={{ once: false }}
       variants={animations.fadeIn}
-      className="w-full flex justify-center items-center bg-[#FAFEF4] py-18 overflow-hidden"
+      className="w-full flex justify-center items-center bg-[#FAFEF4] lg:py-18 py-14 overflow-h-auto"
     >
       <div className="container mx-auto px-[5vw] flex flex-col gap-10 text-center  overflow-hidden">
         {/* Title Section */}
@@ -138,22 +138,13 @@ const Join = () => {
         </div>
 
         {/* Call-to-Action Button */}
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: false }}
-          variants={animations.slideUp}
-          className="mt-12 overflow-hidden"
+
+        <Link
+          to="/create-account"
+          className="w-fit mx-auto border bg-transparent text-[#043D12] border-[#043D12] rounded-[48px] shadow-lg lg:text-[18px] text-[16px] px-8 py-4 hover:bg-[#043D12] hover:text-white"
         >
-          <motion.div variants={animations.buttonHover} whileHover="hover">
-            <Link
-              to="/create-account"
-              className="border bg-transparent text-[#043D12] border-[#043D12] rounded-[48px] shadow-lg lg:text-[18px] text-[16px] px-8 py-4 hover:bg-[#043D12] hover:text-white transition duration-300"
-            >
-              Explore Businesses
-            </Link>
-          </motion.div>
-        </motion.div>
+          Explore Businesses
+        </Link>
       </div>
     </motion.section>
   );

@@ -21,8 +21,9 @@ import {
 const PUBLIC_KEY = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
 const MAIN_URL = import.meta.env.VITE_BASE_URL_MAIN;
 
-// Introductory Modal Component
-const IntroModal = ({ onClose, onProceed }) => {
+const IntroModal = ({ onClose, onProceed, subscriptions }) => {
+  const hasMultiple = subscriptions.length > 1;
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 px-4">
       <motion.div
@@ -44,39 +45,92 @@ const IntroModal = ({ onClose, onProceed }) => {
             className="w-16 sm:w-20 md:w-24 h-16 sm:h-20 md:h-24 animate-pulse-subtle"
           />
         </motion.div>
+
         <h2 className="text-[20px] sm:text-[24px] md:text-[28px] font-serif font-bold text-[#043D12] mb-2 tracking-tight">
-          MindPower Business Online Subscription
+          MindPower Business Online
         </h2>
+
         <p className="text-[#043D12] text-[13px] sm:text-[15px] font-medium mb-3 sm:mb-4 italic">
-          Elevate Your Business with MBO
+          {hasMultiple
+            ? "Choose the right plan for your business"
+            : "Elevate your business with MBO"}
         </p>
+
         <p className="text-[#6A7368] text-[12px] sm:text-[14px] mb-4 sm:mb-6 leading-relaxed">
-          Join the MindPower Business Online (MBO) Network with an annual
-          subscription. Unlock visibility, seamless networking, and exclusive
-          opportunities tailored for growth.
+          {hasMultiple
+            ? "Select from our subscription plans to unlock visibility, networking, and growth opportunities."
+            : "Join the MindPower Business Network with an annual subscription to unlock all benefits."}
         </p>
-        <div className="text-left space-y-3 sm:space-y-4">
-          <h3 className="text-[#043D12] text-[14px] sm:text-[16px] font-semibold tracking-wide">
-            Subscription Breakdown
+
+        <div className="mb-6">
+          <h3 className="text-[#043D12] text-[14px] sm:text-[16px] font-semibold tracking-wide mb-3">
+            {hasMultiple ? "Available Plans:" : "Subscription Plan:"}
           </h3>
-          <div className="flex items-start gap-2">
-            <BanknotesIcon className="w-4 sm:w-5 h-4 sm:h-5 text-[#043D12] mt-0.5 flex-shrink-0" />
-            <p className="text-[#6A7368] text-[12px] sm:text-[14px]">
-              <strong>Total Annual Cost:</strong> ₦15,000{" "}
-              <span className="text-[#043D12] font-medium">
-                (Required for Membership)
-              </span>
-            </p>
+
+          <div
+            className={`space-y-4 ${
+              hasMultiple ? "" : "max-w-[500px] mx-auto"
+            }`}
+          >
+            {subscriptions.length > 0 ? (
+              subscriptions.map((subscription) => (
+                <motion.div
+                  key={subscription.id}
+                  className={`bg-white p-4 rounded-lg border border-[#E8F5E9] shadow-sm hover:shadow-md transition-all ${
+                    hasMultiple ? "" : "w-full"
+                  }`}
+                  whileHover={{ scale: hasMultiple ? 1.02 : 1 }}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="text-[#043D12] font-bold text-[16px] sm:text-[18px]">
+                        {subscription.name || "Business Plan"}
+                      </h4>
+                      <div className="flex items-center mt-1">
+                        <TbCurrencyNaira className="text-[#043D12]" />
+                        <span className="text-[#043D12] font-bold text-[20px] sm:text-[24px] ml-1">
+                          {subscription.price || "15,000"}
+                        </span>
+                        <span className="text-[#6A7368] text-[12px] ml-2">
+                          /year
+                        </span>
+                      </div>
+                    </div>
+                    {hasMultiple && (
+                      <div className="bg-[#043D12]/10 text-[#043D12] text-[10px] sm:text-[12px] px-2 py-1 rounded-full">
+                        {subscription.duration || "12 months"}
+                      </div>
+                    )}
+                  </div>
+
+                  {subscription.description && (
+                    <p className="text-[#6A7368] text-[12px] sm:text-[13px] mt-2 text-left">
+                      {subscription.description}
+                    </p>
+                  )}
+                </motion.div>
+              ))
+            ) : (
+              <p className="text-[#6A7368] text-[12px] sm:text-[14px] py-4">
+                Loading available plans...
+              </p>
+            )}
           </div>
+        </div>
+
+        <div className="text-left space-y-3 sm:space-y-4 mb-6">
+          <h3 className="text-[#043D12] text-[14px] sm:text-[16px] font-semibold tracking-wide">
+            All Plans Include:
+          </h3>
           <div className="flex items-start gap-2">
             <CheckCircleIcon className="w-4 sm:w-5 h-4 sm:h-5 text-[#043D12] mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-[#6A7368] text-[12px] sm:text-[14px]">
-                <strong>₦5,000 Registration Fee</strong> (Yearly)
+                <strong>Business Profile</strong>
               </p>
               <ul className="text-[#6A7368] text-[11px] sm:text-[13px] list-disc ml-4">
-                <li>Maintain an active business profile</li>
-                <li>Be discoverable within the MBO Network</li>
+                <li>Maintain an active business presence</li>
+                <li>Be discoverable within our network</li>
                 <li>Collaborate with fellow entrepreneurs</li>
               </ul>
             </div>
@@ -85,25 +139,18 @@ const IntroModal = ({ onClose, onProceed }) => {
             <RocketLaunchIcon className="w-4 sm:w-5 h-4 sm:h-5 text-[#043D12] mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-[#6A7368] text-[12px] sm:text-[14px]">
-                <strong>₦10,000 Promotion Fee</strong> (Yearly)
+                <strong>Promotion & Visibility</strong>
               </p>
               <ul className="text-[#6A7368] text-[11px] sm:text-[13px] list-disc ml-4">
-                <li>Amplify your business visibility</li>
-                <li>Feature in premium listings & recommendations</li>
-                <li>Draw in more customers and partners</li>
+                <li>Amplify your business reach</li>
+                <li>Feature in premium listings</li>
+                <li>Attract more customers</li>
               </ul>
             </div>
           </div>
         </div>
+
         <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-4 sm:mt-6">
-          <motion.button
-            onClick={onProceed}
-            className="bg-[#043D12] text-[#FFFDF2] rounded-full px-5 sm:px-6 py-2 sm:py-2.5 font-medium text-[13px] sm:text-[14px] shadow-md hover:bg-[#032d0e] transition-all duration-300 w-full sm:w-auto"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Subscribe Now
-          </motion.button>
           <motion.button
             onClick={onClose}
             className="bg-transparent border-2 border-[#043D12] text-[#043D12] rounded-full px-5 sm:px-6 py-2 sm:py-2.5 font-medium text-[13px] sm:text-[14px] hover:bg-[#043D12]/10 transition-all duration-300 w-full sm:w-auto"
@@ -112,19 +159,26 @@ const IntroModal = ({ onClose, onProceed }) => {
           >
             Back to Home
           </motion.button>
+          <motion.button
+            onClick={onProceed}
+            className="bg-[#043D12] text-[#FFFDF2] rounded-full px-5 sm:px-6 py-2 sm:py-2.5 font-medium text-[13px] sm:text-[14px] shadow-md hover:bg-[#032d0e] transition-all duration-300 w-full sm:w-auto"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {hasMultiple ? "View Plans" : "Subscribe Now"}
+          </motion.button>
         </div>
+
         <p className="text-[#6A7368] text-[10px] sm:text-[12px] mt-4 sm:mt-6 italic">
-          Stay active, get discovered, and thrive with MBO.
+          Grow your network and elevate your business with MBO.
         </p>
       </motion.div>
     </div>
   );
 };
 
-// Enhanced Success Modal
 const SuccessModal = ({ onClose, userName }) => {
   const navigate = useNavigate();
-
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 px-4">
       <motion.div
@@ -341,116 +395,157 @@ const Subscribe = () => {
     return null;
   }
 
+  const hasMultipleSubscriptions = subscriptions.length > 1;
+
   return (
     <div className="bg-[#043D12] w-full lg:h-screen h-fit overflow-y-auto py-16 flex flex-col justify-center items-center">
       {showIntroModal && (
         <IntroModal
           onClose={() => navigate("/")}
           onProceed={() => setShowIntroModal(false)}
+          subscriptions={subscriptions}
         />
       )}
 
       {!showIntroModal && (
         <div className="container mx-auto px-[5vw] flex flex-col items-center gap-4">
           <h1 className="text-[#B4B3B3] lg:text-[30px] text-[20px] w-[90%] md:w-[60%] mx-auto text-center">
-            Stay Connected, Stay Promoted: <br className="max-lg:hidden" /> Your
-            All-in-One Plan
+            {hasMultipleSubscriptions
+              ? "Choose Your Subscription Plan"
+              : "MindPower Business Online Subscription"}
           </h1>
 
-          <div className="w-[90%] overflow-x-auto whitespace-nowrap flex gap-6 py-4 items-center justify-center">
-            {isLoadingSubscriptions ? (
-              <p className="text-white">Loading subscriptions...</p>
-            ) : subscriptions.length > 0 ? (
-              subscriptions.map((subscription) => (
-                <div
-                  key={subscription.id}
-                  className="details min-w-[250px] md:min-w-[300px] px-10 py-10 bg-[#FFFDF2] shadow-lg rounded-lg flex max-lg:flex-col gap-8 transition-all duration-300"
-                >
-                  <div className="amount w-full flex flex-col items-center lg:pt-8">
-                    <h1 className="lg:text-[50px] text-[45px] text-[#043D12] flex items-center gap-0">
-                      <TbCurrencyNaira />
-                      {subscription.price || "N/A"}
-                    </h1>
-                    <span className="lg:text-[24px] text-[14px] text-[#043D12]">
-                      YEARLY
-                    </span>
-                  </div>
-                  <div className="w-full flex flex-col gap-4 items-center mt-6">
-                    <ul className="w-fit flex flex-col gap-4">
-                      <li className="flex items-center gap-4">
-                        <Good />
-                        <span className="md:text-[20px] text-[16px] text-[#676767]">
-                          Active Business Profile
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-4">
-                        <Good />
-                        <span className="md:text-[20px] text-[16px] text-[#676767]">
-                          Boosted Visibility
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-4">
-                        <Good />
-                        <span className="md:text-[20px] text-[16px] text-[#676767]">
-                          Affordable and Flexible
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-4">
-                        <Good />
-                        <span className="md:text-[20px] text-[16px] text-[#676767]">
-                          Networking Opportunities
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-4">
-                        <Good />
-                        <span className="md:text-[20px] text-[16px] text-[#676767]">
-                          Enhanced Credibility
-                        </span>
-                      </li>
-                    </ul>
-                    <div className="shadow-lg mt-8 register px-6 md:px-14 md:py-4 py-3 bg-[#043D12] rounded-[9px] text-[#FFFDF2] flex flex-col gap-2">
-                      {initializingPayments ? (
-                        <p className="text-white text-[18px]">
-                          Preparing payment...
-                        </p>
-                      ) : txRefs[subscription.id] ? (
-                        <FlutterWaveButton
-                          className="cursor-pointer bg-transparent text-white font-medium text-[18px] border-2 border-white px-4 py-2 rounded-lg"
-                          public_key={PUBLIC_KEY}
-                          tx_ref={txRefs[subscription.id]}
-                          amount={subscription.price || 0}
-                          currency="NGN"
-                          redirect_url={`${MAIN_URL}/business-profile`}
-                          payment_options="banktransfer, card, ussd"
-                          customer={{
-                            email: user.email || "guest@example.com",
-                            name: `${user.firstName || "Guest"} ${
-                              user.lastName || ""
-                            }`,
-                          }}
-                          customizations={{
-                            title: "MBO Subscription",
-                            description: `Payment for ${
-                              subscription.name || "Subscription"
-                            }`,
-                            logo: "/mbo-logo.png",
-                          }}
-                          callback={handlePaymentCallback}
-                          onClose={() => console.log("Payment modal closed")}
-                          text="Pay Now"
-                        />
-                      ) : (
-                        <p className="text-white text-[18px]">
-                          Payment unavailable
-                        </p>
-                      )}
+          <div
+            className={`w-full flex ${
+              hasMultipleSubscriptions
+                ? "justify-start md:justify-center"
+                : "justify-center"
+            }`}
+          >
+            <div
+              className={`
+                ${
+                  hasMultipleSubscriptions ? "w-[90%]" : "w-full max-w-[700px]"
+                } 
+                overflow-x-auto whitespace-nowrap flex gap-6 py-4 items-center
+                ${
+                  hasMultipleSubscriptions
+                    ? "justify-start md:justify-center"
+                    : "justify-center"
+                }
+              `}
+            >
+              {isLoadingSubscriptions ? (
+                <p className="text-white">Loading subscriptions...</p>
+              ) : subscriptions.length > 0 ? (
+                subscriptions.map((subscription) => (
+                  <div
+                    key={subscription.id}
+                    className={`
+                      ${
+                        hasMultipleSubscriptions
+                          ? "min-w-[250px] md:min-w-[300px]"
+                          : "w-full"
+                      }
+                      px-10 py-10 bg-[#FFFDF2] shadow-lg rounded-lg flex 
+                      ${
+                        hasMultipleSubscriptions
+                          ? "flex-col"
+                          : "flex-row max-lg:flex-col"
+                      } 
+                      gap-8 transition-all duration-300
+                    `}
+                  >
+                    <div
+                      className={`amount w-full flex flex-col items-center ${
+                        !hasMultipleSubscriptions ? "lg:pt-8" : ""
+                      }`}
+                    >
+                      <h1 className="lg:text-[50px] text-[45px] text-[#043D12] flex items-center gap-0">
+                        <TbCurrencyNaira />
+                        {subscription.price || "N/A"}
+                      </h1>
+                      <span className="lg:text-[24px] text-[14px] text-[#043D12]">
+                        YEARLY
+                      </span>
+                    </div>
+                    <div className="w-full flex flex-col gap-4 items-center mt-6">
+                      <ul className="w-fit flex flex-col gap-4">
+                        <li className="flex items-center gap-4">
+                          <Good />
+                          <span className="md:text-[20px] text-[16px] text-[#676767]">
+                            Active Business Profile
+                          </span>
+                        </li>
+                        <li className="flex items-center gap-4">
+                          <Good />
+                          <span className="md:text-[20px] text-[16px] text-[#676767]">
+                            Boosted Visibility
+                          </span>
+                        </li>
+                        <li className="flex items-center gap-4">
+                          <Good />
+                          <span className="md:text-[20px] text-[16px] text-[#676767]">
+                            Affordable and Flexible
+                          </span>
+                        </li>
+                        <li className="flex items-center gap-4">
+                          <Good />
+                          <span className="md:text-[20px] text-[16px] text-[#676767]">
+                            Networking Opportunities
+                          </span>
+                        </li>
+                        <li className="flex items-center gap-4">
+                          <Good />
+                          <span className="md:text-[20px] text-[16px] text-[#676767]">
+                            Enhanced Credibility
+                          </span>
+                        </li>
+                      </ul>
+                      <div className="shadow-lg mt-8 register px-6 md:px-14 md:py-4 py-3 bg-[#043D12] rounded-[9px] text-[#FFFDF2] flex flex-col gap-2 w-full max-w-[300px]">
+                        {initializingPayments ? (
+                          <p className="text-white text-[18px]">
+                            Preparing payment...
+                          </p>
+                        ) : txRefs[subscription.id] ? (
+                          <FlutterWaveButton
+                            className="cursor-pointer bg-transparent text-white font-medium text-[18px] border-2 border-white px-4 py-2 rounded-lg w-full"
+                            public_key={PUBLIC_KEY}
+                            tx_ref={txRefs[subscription.id]}
+                            amount={subscription.price || 0}
+                            currency="NGN"
+                            redirect_url={`${MAIN_URL}/business-profile`}
+                            payment_options="banktransfer, card, ussd"
+                            customer={{
+                              email: user.email || "guest@example.com",
+                              name: `${user.firstName || "Guest"} ${
+                                user.lastName || ""
+                              }`,
+                            }}
+                            customizations={{
+                              title: "MBO Subscription",
+                              description: `Payment for ${
+                                subscription.name || "Subscription"
+                              }`,
+                              logo: "/mbo-logo.png",
+                            }}
+                            callback={handlePaymentCallback}
+                            onClose={() => console.log("Payment modal closed")}
+                            text="Pay Now"
+                          />
+                        ) : (
+                          <p className="text-white text-[18px]">
+                            Payment unavailable
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-white">No subscriptions available.</p>
-            )}
+                ))
+              ) : (
+                <p className="text-white">No subscriptions available.</p>
+              )}
+            </div>
           </div>
         </div>
       )}
