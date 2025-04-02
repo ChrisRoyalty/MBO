@@ -8,7 +8,7 @@ import { jwtDecode } from "jwt-decode";
 import Good from "../components/svgs/Good";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import MboLogo from "../../public/mindpower-logo.svg";
+import MboLogo from "../../src/assets/mindpower-logo.svg";
 import {
   BanknotesIcon,
   CheckCircleIcon,
