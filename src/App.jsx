@@ -1,4 +1,5 @@
 import React, { useEffect } from "react"; // Import useEffect
+import SEO from "./components/SEO";
 import { ToastContainer } from "react-toastify";
 import { Routes, Route, useLocation } from "react-router-dom"; // Import useLocation
 import PrivateRoute from "./components/PrivateRoute"; // Import PrivateRoute
@@ -14,7 +15,7 @@ import ForgottenPassword from "./pages/ForgottenPassword";
 import ResetPassword from "./pages/ResetPassword";
 import SearchPage from "./pages/SearchPage";
 import UserDashboard from "./pages/UserDashboard";
-import CreateProfile from "./components/user-dashboard/CreateProfile";
+import CreateProfile from "./components/user-dashboard/EditHeader";
 import Profile from "./components/user-dashboard/Profile";
 import Analytics from "./components/user-dashboard/HelpAndSupport";
 import ProductAndServices from "./components/user-dashboard/ProductAndServices";
@@ -34,13 +35,13 @@ import ManageSubscription from "./components/admin/ManageSubscription";
 import Support from "./components/admin/Support";
 import Notification from "./components/admin/Notification";
 import HelpAndSupport from "./pages/HelpAndSupport";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
 import AllTickets from "./components/admin/support/AllTickets";
 import PendingTickets from "./components/admin/support/PendingTickets";
 import ResolvedTickets from "./components/admin/support/ResolvedTickets";
 import SupportFaqs from "./components/admin/support/SupportFaqs";
 import UserHelpAndSupport from "./components/user-dashboard/UserHelpAndSupport";
+import PrivacyPolicy from "./components/legal-header/PrivacyPolicy";
+import TermsOfService from "./components/legal-header/TermsOfService";
 
 function App() {
   const location = useLocation(); // Get the current location
@@ -52,6 +53,7 @@ function App() {
 
   return (
     <>
+      <SEO />
       <ToastContainer position="top-right" autoClose={3000} />
       <Routes>
         {/* Public Routes */}
@@ -59,6 +61,7 @@ function App() {
         <Route path="/create-account" element={<Signup />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
+        {/* Move legal routes inside Layout */}
 
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
@@ -68,6 +71,7 @@ function App() {
             <Route path="all-businesses" element={<AllBusiness />} />
             <Route path="search" element={<SearchPage />} />
             <Route path="profile/:id" element={<ProfilePage />} />{" "}
+            <Route path="profile/s/:slug" element={<ProfilePage />} />
             {/* Updated to dynamic route with :id */}
           </Route>
         </Route>
@@ -133,18 +137,18 @@ function App() {
           }
         >
           <Route index element={<Profile />} />
-          <Route path="profile" element={<CreateProfile />}>
-            <Route index element={<EditProfile />} />
-            {/* <Route path="/profile" element={<Profile />} /> */}
+          <Route path="profile" element={<EditProfile />} />
+          {/* <Route index element={<EditProfile />} /> */}
+          {/* <Route path="/profile" element={<Profile />} /> */}
 
-            <Route
-              path="products-and-services"
-              element={<ProductAndServices />}
-            />
-            <Route path="contact-and-socials" element={<ContactAndSocials />} />
-            <Route path="subscription" element={<Subscription />} />
-            <Route path="password" element={<Password />} />
-          </Route>
+          <Route
+            path="products-and-services"
+            element={<ProductAndServices />}
+          />
+          <Route path="contact-and-socials" element={<ContactAndSocials />} />
+          <Route path="subscription" element={<Subscription />} />
+          <Route path="password" element={<Password />} />
+
           <Route path="help-and-support" element={<UserHelpAndSupport />} />
 
           {/* <Route path="help" element={<HelpAndSupport />} /> */}

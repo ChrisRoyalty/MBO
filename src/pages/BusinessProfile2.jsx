@@ -10,8 +10,19 @@ import "react-toastify/dist/ReactToastify.css";
 import Hand from "../components/svgs/Hand";
 import { motion } from "framer-motion";
 
+// Example country codes (you can expand this list)
+const countryCodes = [
+  { code: "+1", label: "US (+1)" },
+  { code: "+234", label: "Nigeria (+234)" },
+  { code: "+44", label: "UK (+44)" },
+  { code: "+91", label: "India (+91)" },
+  // Add more as needed
+];
+
 const BusinessProfile2 = () => {
+  const [whatsappCountryCode, setWhatsappCountryCode] = useState("+234"); // Default to Nigeria
   const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [phoneCountryCode, setPhoneCountryCode] = useState("+234"); // Default to Nigeria
   const [phoneNumber, setPhoneNumber] = useState("");
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,7 +33,7 @@ const BusinessProfile2 = () => {
   const navigate = useNavigate();
   const { token, user } = useSelector((state) => state.auth);
 
-  // Authentication and profile check
+  // Authentication and profile check (unchanged)
   useEffect(() => {
     if (!token) {
       toast.error("Please log in to create a profile.", { autoClose: 3000 });
@@ -61,62 +72,60 @@ const BusinessProfile2 = () => {
     checkProfile();
   }, [token, navigate]);
 
-  // WhatsApp number validation (requires country code, 10-15 digits total)
+  // WhatsApp number validation
   useEffect(() => {
-    const cleanNumber = whatsappNumber.replace(/\D/g, ""); // Remove non-digits
-    if (whatsappNumber.startsWith("+") && cleanNumber.length > 1) {
-      const digitsAfterPlus = cleanNumber.length - 1; // Exclude the "+"
-      if (/^\+\d{9,14}$/.test(whatsappNumber)) {
+    const cleanNumber = whatsappNumber.replace(/\D/g, "");
+    const fullNumber = `${whatsappCountryCode}${cleanNumber}`;
+    if (cleanNumber.length > 0) {
+      const digitsAfterCode = cleanNumber.length;
+      if (/^\d{9,14}$/.test(cleanNumber)) {
         setWhatsappStatus("valid");
-      } else if (digitsAfterPlus > 14) {
+      } else if (digitsAfterCode > 14) {
         setWhatsappStatus("too_long");
       } else {
         setWhatsappStatus("invalid");
       }
-    } else if (whatsappNumber) {
-      setWhatsappStatus("invalid_format");
     } else {
       setWhatsappStatus("");
     }
-  }, [whatsappNumber]);
+  }, [whatsappNumber, whatsappCountryCode]);
 
-  // Alternative phone number validation (requires country code, 8-15 digits total)
+  // Alternative phone number validation
   useEffect(() => {
-    const cleanPhone = phoneNumber.replace(/\D/g, ""); // Remove non-digits
-    if (phoneNumber.startsWith("+") && cleanPhone.length > 1) {
-      const digitsAfterPlus = cleanPhone.length - 1; // Exclude the "+"
-      if (/^\+\d{7,14}$/.test(phoneNumber)) {
+    const cleanPhone = phoneNumber.replace(/\D/g, "");
+    const fullPhone = `${phoneCountryCode}${cleanPhone}`;
+    if (cleanPhone.length > 0) {
+      const digitsAfterCode = cleanPhone.length;
+      if (/^\d{7,14}$/.test(cleanPhone)) {
         setPhoneStatus("valid");
-      } else if (digitsAfterPlus > 14) {
+      } else if (digitsAfterCode > 14) {
         setPhoneStatus("too_long");
       } else {
         setPhoneStatus("invalid");
       }
-    } else if (phoneNumber) {
-      setPhoneStatus("invalid_format");
     } else {
       setPhoneStatus("");
     }
-  }, [phoneNumber]);
+  }, [phoneNumber, phoneCountryCode]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const fullWhatsapp = `${whatsappCountryCode}${whatsappNumber.replace(
+      /\D/g,
+      ""
+    )}`;
+    const fullPhone = `${phoneCountryCode}${phoneNumber.replace(/\D/g, "")}`;
+
     if (!whatsappNumber.trim() || whatsappStatus !== "valid") {
-      toast.error(
-        "Please enter a valid WhatsApp number (e.g., +2348012345678).",
-        {
-          autoClose: 3000,
-        }
-      );
+      toast.error("Please enter a valid WhatsApp number.", {
+        autoClose: 3000,
+      });
       return;
     }
     if (!phoneNumber.trim() || phoneStatus !== "valid") {
-      toast.error(
-        "Please enter a valid alternative phone number (e.g., +2348012345678).",
-        {
-          autoClose: 3000,
-        }
-      );
+      toast.error("Please enter a valid alternative phone number.", {
+        autoClose: 3000,
+      });
       return;
     }
     if (!location.trim()) {
@@ -126,7 +135,7 @@ const BusinessProfile2 = () => {
       return;
     }
 
-    const whatsappLink = `https://wa.me/${whatsappNumber.replace(/\D/g, "")}`; // Clean number for link
+    const whatsappLink = `https://wa.me/${fullWhatsapp}`;
     const step1Data = JSON.parse(
       sessionStorage.getItem("businessProfileStep1") || "{}"
     );
@@ -137,7 +146,7 @@ const BusinessProfile2 = () => {
       keyword: step1Data.keyword
         ? step1Data.keyword.split(",").map((kw) => kw.trim())
         : [],
-      contactNo: [phoneNumber.replace(/\D/g, "")], // Clean number for payload
+      contactNo: [fullPhone],
       location,
       socialLinks: { whatsapp: whatsappLink },
     };
@@ -192,7 +201,6 @@ const BusinessProfile2 = () => {
       case "valid":
         return "text-green-600";
       case "invalid":
-      case "invalid_format":
         return "text-red-600";
       case "too_long":
         return "text-yellow-600";
@@ -206,11 +214,9 @@ const BusinessProfile2 = () => {
       case "valid":
         return "Valid phone number";
       case "invalid":
-        return "Number must be 10-15 digits (WhatsApp) or 8-15 digits (alternative)";
-      case "invalid_format":
-        return "Number must start with a country code (e.g., +234)";
+        return "Number must be 9-14 digits (WhatsApp) or 7-14 digits (alternative)";
       case "too_long":
-        return "Number exceeds maximum length of 15 digits";
+        return "Number exceeds maximum length";
       default:
         return "";
     }
@@ -264,16 +270,29 @@ const BusinessProfile2 = () => {
               <label className="text-[#043D12] text-sm font-medium">
                 WhatsApp Number
               </label>
-              <div className="border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
-                <BsPerson className="text-[#6A7368]" />
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g., +2348012345678"
-                  value={whatsappNumber}
-                  onChange={(e) => setWhatsappNumber(e.target.value)}
-                  className="w-full h-full border-none focus:outline-none text-[#6A7368] placeholder-[#6A7368]/70"
-                />
+              <div className="flex gap-2">
+                <select
+                  value={whatsappCountryCode}
+                  onChange={(e) => setWhatsappCountryCode(e.target.value)}
+                  className="border-[1px] rounded-[27px] px-4 border-[#363636] h-[48px] lg:h-[60px] text-[#6A7368] focus:outline-none"
+                >
+                  {countryCodes.map((country) => (
+                    <option key={country.code} value={country.code}>
+                      {country.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex-1 border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 h-[48px] lg:h-[60px]">
+                  <BsPerson className="text-[#6A7368]" />
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g., 8012345678"
+                    value={whatsappNumber}
+                    onChange={(e) => setWhatsappNumber(e.target.value)}
+                    className="w-full h-full border-none focus:outline-none text-[#6A7368] placeholder-[#6A7368]/70"
+                  />
+                </div>
               </div>
               {whatsappStatus && (
                 <p className={`text-xs ${statusColor(whatsappStatus)}`}>
@@ -287,16 +306,28 @@ const BusinessProfile2 = () => {
               <label className="text-[#043D12] text-sm font-medium">
                 Alternative Number
               </label>
-              <div className="border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 lg:h-[60px] h-[48px]">
-                <BsPerson className="text-[#6A7368]" />
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g., +2348012345678"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="w-full h-full border-none focus:outline-none text-[#6A7368] placeholder-[#6A7368]/70"
-                />
+              <div className="flex gap-2">
+                <select
+                  value={phoneCountryCode}
+                  onChange={(e) => setPhoneCountryCode(e.target.value)}
+                  className="border-[1px] rounded-[27px] px-4 border-[#363636] h-[48px] lg:h-[60px] text-[#6A7368] focus:outline-none"
+                >
+                  {countryCodes.map((country) => (
+                    <option key={country.code} value={country.code}>
+                      {country.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex-1 border-[1px] rounded-[27px] px-8 border-[#363636] flex items-center gap-2 h-[48px] lg:h-[60px]">
+                  <BsPerson className="text-[#6A7368]" />
+                  <input
+                    type="text"
+                    placeholder="e.g., 8012345678"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="w-full h-full border-none focus:outline-none text-[#6A7368] placeholder-[#6A7368]/70"
+                  />
+                </div>
               </div>
               {phoneStatus && (
                 <p className={`text-xs ${statusColor(phoneStatus)}`}>

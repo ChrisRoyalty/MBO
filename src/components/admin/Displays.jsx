@@ -96,6 +96,8 @@ const Display = () => {
 
     const fetchData = async () => {
       try {
+        setLoading(true);
+        setAnalyticsData([]);
         setProfileData({
           firstname: user?.firstName || "Admin",
           lastname: user?.lastName || "Hello",
@@ -115,6 +117,10 @@ const Display = () => {
         ) {
           throw new Error("Invalid analytics data format.");
         }
+        console.log(
+          `Fetched data for ${currentType}:`,
+          analyticsResponse.data.data
+        );
         setAnalyticsData(analyticsResponse.data.data);
       } catch (error) {
         console.error("❌ Error Fetching Data:", error);
@@ -160,9 +166,7 @@ const Display = () => {
   }, [isDropdownOpen, showProfileDropdown, isChangePasswordModalOpen]);
 
   const formatDateForRange = (dateStr, range) => {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) {
-      console.warn("Invalid date string:", dateStr, "using fallback.");
+    if (!dateStr) {
       const now = new Date();
       switch (range) {
         case "daily":
@@ -175,6 +179,26 @@ const Display = () => {
           return now.toISOString().split("T")[0];
       }
     }
+
+    if (typeof dateStr === "string" || typeof dateStr === "number") {
+      if (range === "daily" && dateStr.includes("-")) {
+        const date = new Date(dateStr);
+        return isNaN(date.getTime())
+          ? dateStr
+          : date.toLocaleDateString("en-US", { weekday: "short" });
+      } else if (range === "monthly" && dateStr.includes("-")) {
+        const [year, month] = dateStr.split("-");
+        const date = new Date(parseInt(year, 10), parseInt(month, 10) - 1);
+        return isNaN(date.getTime())
+          ? dateStr
+          : date.toLocaleString("default", { month: "short" });
+      } else if (range === "yearly") {
+        return String(dateStr);
+      }
+    }
+
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return String(dateStr);
     switch (range) {
       case "daily":
         return date.toLocaleDateString("en-US", { weekday: "short" });
@@ -188,54 +212,113 @@ const Display = () => {
   };
 
   const generateGraphData = useMemo(() => {
-    const { limit } = TIME_RANGES[timeRange];
+    const { limit, type } = TIME_RANGES[timeRange];
+    const dateField =
+      type === "month"
+        ? "formattedMonth"
+        : type === "day"
+        ? "formattedDate"
+        : "formattedYear";
+
+    console.log("Generating graph data for:", {
+      timeRange,
+      type,
+      limit,
+      dateField,
+    });
+    console.log("Raw analytics data:", analyticsData);
+
     if (!analyticsData.length) {
+      console.log("No analytics data, generating filler.");
       return Array.from({ length: limit }, (_, i) => {
         const date = new Date();
-        date.setDate(
-          date.getDate() -
-            i * (timeRange === "daily" ? 1 : timeRange === "monthly" ? 30 : 365)
-        );
+        if (type === "day") date.setDate(date.getDate() - i);
+        else if (type === "month") date.setMonth(date.getMonth() - i);
+        else if (type === "year") date.setFullYear(date.getFullYear() - i);
         return { date: formatDateForRange(date, timeRange), value: 0 };
       }).reverse();
     }
 
     const graphData = analyticsData
-      .map((item) => {
-        if (!item?.date) {
-          console.warn("Missing date in analytics item:", item);
+      .map((item, index) => {
+        console.log(
+          `Processing item at index ${index}:`,
+          item,
+          `dateField: ${dateField}`,
+          `item[dateField]:`,
+          item[dateField]
+        );
+        if (!item || typeof item[dateField] === "undefined") {
+          console.warn(`Missing date field at index ${index}:`, item);
           return null;
         }
-        return {
-          date: formatDateForRange(item.date, timeRange),
-          value: parseInt(item[metric] || 0, 10),
-        };
+        const formattedDate = formatDateForRange(item[dateField], timeRange);
+        const value = parseInt(item[metric] || 0, 10);
+        return { date: formattedDate, value, originalDate: item[dateField] };
       })
-      .filter(Boolean)
-      .sort((a, b) => new Date(a.date) - new Date(b.date))
-      .slice(-limit);
+      .filter(Boolean);
 
-    if (graphData.length < limit) {
-      let lastDate = new Date(
-        graphData[graphData.length - 1]?.date || Date.now()
-      );
-      if (isNaN(lastDate.getTime())) lastDate = new Date();
-      const filler = Array.from(
-        { length: limit - graphData.length },
-        (_, i) => {
-          const newDate = new Date(lastDate);
-          newDate.setDate(
-            newDate.getDate() -
-              (i + 1) *
-                (timeRange === "daily" ? 1 : timeRange === "monthly" ? 30 : 365)
-          );
-          return { date: formatDateForRange(newDate, timeRange), value: 0 };
-        }
-      ).reverse();
-      return [...filler, ...graphData];
+    console.log("Mapped graph data:", graphData);
+
+    if (!graphData.length) {
+      console.log("No valid data after mapping, generating filler.");
+      return Array.from({ length: limit }, (_, i) => {
+        const date = new Date();
+        if (type === "day") date.setDate(date.getDate() - i);
+        else if (type === "month") date.setMonth(date.getMonth() - i);
+        else if (type === "year") date.setFullYear(date.getFullYear() - i);
+        return { date: formatDateForRange(date, timeRange), value: 0 };
+      }).reverse();
     }
 
-    return graphData;
+    const sortedData = graphData.sort((a, b) => {
+      if (type === "year") {
+        return parseInt(a.originalDate, 10) - parseInt(b.originalDate, 10);
+      } else if (type === "month") {
+        const aDate = new Date(a.originalDate);
+        const bDate = new Date(b.originalDate);
+        return aDate - bDate;
+      } else {
+        const aDate = new Date(a.originalDate);
+        const bDate = new Date(b.originalDate);
+        return aDate - bDate;
+      }
+    });
+
+    if (sortedData.length < limit) {
+      const lastItem = sortedData[sortedData.length - 1];
+      let lastDate = lastItem ? new Date(lastItem.originalDate) : new Date();
+      if (isNaN(lastDate.getTime())) lastDate = new Date();
+
+      const filler = Array.from(
+        { length: limit - sortedData.length },
+        (_, i) => {
+          const newDate = new Date(lastDate);
+          if (type === "day") newDate.setDate(lastDate.getDate() - (i + 1));
+          else if (type === "month")
+            newDate.setMonth(lastDate.getMonth() - (i + 1));
+          else if (type === "year")
+            newDate.setFullYear(lastDate.getFullYear() - (i + 1));
+          return {
+            date: formatDateForRange(newDate, timeRange),
+            value: 0,
+            originalDate:
+              type === "day"
+                ? newDate.toISOString().split("T")[0]
+                : type === "month"
+                ? `${newDate.getFullYear()}-${String(
+                    newDate.getMonth() + 1
+                  ).padStart(2, "0")}`
+                : String(newDate.getFullYear()),
+          };
+        }
+      ).reverse();
+      console.log("Filler data:", filler);
+      return [...filler, ...sortedData];
+    }
+
+    console.log("Final graph data:", sortedData.slice(-limit));
+    return sortedData.slice(-limit);
   }, [analyticsData, metric, timeRange]);
 
   const handleTimeRangeChange = (range) => {

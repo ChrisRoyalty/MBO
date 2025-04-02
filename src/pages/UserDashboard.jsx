@@ -6,8 +6,7 @@ import { LuLayoutGrid } from "react-icons/lu";
 import { PiUserCircle } from "react-icons/pi";
 import { IoIosLogOut } from "react-icons/io";
 import { CgMenuLeftAlt } from "react-icons/cg";
-import { MdOutlineCancelPresentation } from "react-icons/md";
-import BusinessImg from "../assets/businessImg.jpeg";
+import BusinessImg from "../assets/user-photo.svg";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -21,6 +20,10 @@ import {
   FaShareAlt,
   FaCopy,
 } from "react-icons/fa";
+import { CiUser } from "react-icons/ci";
+import { TbLayoutGrid } from "react-icons/tb";
+import { BiSolidContact } from "react-icons/bi";
+import { RiExchangeDollarFill, RiLockPasswordLine } from "react-icons/ri";
 
 const navItems = [
   {
@@ -33,12 +36,39 @@ const navItems = [
     icon: <PiUserCircle className="text-[25px]" />,
     label: "Community",
   },
+  { to: "/user-dashboard/profile", icon: <CiUser />, label: "About" },
+  {
+    to: "/user-dashboard/products-and-services",
+    icon: <TbLayoutGrid className="text-[25px]" />,
+    label: "Product & Services",
+  },
+  {
+    to: "/user-dashboard/contact-and-socials",
+    icon: <BiSolidContact className="text-[25px]" />,
+    label: "Contact & Socials",
+  },
+  {
+    to: "/user-dashboard/subscription",
+    icon: <RiExchangeDollarFill className="text-[25px]" />,
+    label: "Subscription",
+  },
+  {
+    to: "/user-dashboard/password",
+    icon: <RiLockPasswordLine className="text-[25px]" />,
+    label: "Password",
+  },
 ];
 
 const helpItem = {
   to: "/user-dashboard/help-and-support",
   icon: <PiUserCircle className="text-[25px]" />,
   label: "Help & Support",
+};
+
+const shareVariants = {
+  hidden: { opacity: 0, scale: 0, y: 20 },
+  visible: { opacity: 1, scale: 1, y: 0 },
+  exit: { opacity: 0, scale: 0, y: 20 },
 };
 
 const UserDashboard = () => {
@@ -79,9 +109,7 @@ const UserDashboard = () => {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/member/my-profile`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         if (response.data && response.data.success && response.data.data) {
           const profile = response.data.data;
@@ -106,9 +134,7 @@ const UserDashboard = () => {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/member/share`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         if (
           response.data &&
@@ -157,11 +183,9 @@ const UserDashboard = () => {
       toast.error("No shareable link available!");
       return;
     }
-
     const encodedLink = encodeURIComponent(shareableLink);
     const message = `Check out my business profile: ${shareableLink}`;
     let url;
-
     switch (platform) {
       case "whatsapp":
         url = `https://api.whatsapp.com/send?text=${encodeURIComponent(
@@ -186,7 +210,6 @@ const UserDashboard = () => {
       default:
         return;
     }
-
     window.open(url, "_blank", "noopener,noreferrer");
     setShowShareOptions(false);
   };
@@ -199,12 +222,6 @@ const UserDashboard = () => {
     navigator.clipboard.writeText(shareableLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const shareVariants = {
-    hidden: { opacity: 0, scale: 0, y: 20 },
-    visible: { opacity: 1, scale: 1, y: 0 },
-    exit: { opacity: 0, scale: 0, y: 20 },
   };
 
   return (
@@ -226,7 +243,7 @@ const UserDashboard = () => {
           x: isSidebarOpen || window.innerWidth >= 1024 ? "0%" : "-100%",
         }}
         transition={{ duration: 0.5, ease: "easeInOut" }}
-        className={`fixed lg:static z-50 top-0 left-0 lg:w-[25%] max-md:h-screen py-14 px-10 md:h-full h-auto bg-white shadow-xl ${
+        className={`fixed lg:static z-50 top-0 left-0 lg:w-[25%] max-md:h-screen overflow-y-auto py-14 px-10 md:h-full h-auto bg-white shadow-xl custom-scrollbar ${
           isSidebarOpen ? "absolute md:relative" : "absolute"
         } flex flex-col`}
       >
@@ -236,7 +253,6 @@ const UserDashboard = () => {
         >
           x
         </p>
-        {/* MBO Header */}
         <motion.strong
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -246,9 +262,7 @@ const UserDashboard = () => {
           MBO
         </motion.strong>
 
-        {/* Full-Height Container with Two Sub-Containers */}
         <div className="flex-1 flex flex-col justify-between">
-          {/* First Container: Home and Community */}
           <nav className="flex flex-col gap-4">
             {navItems.map((item, index) => (
               <motion.div
@@ -281,9 +295,7 @@ const UserDashboard = () => {
             ))}
           </nav>
 
-          {/* Second Container: Profile, Help, Logout */}
-          <div className="flex flex-col gap-6">
-            {/* Profile Section */}
+          <div className="flex flex-col gap-6 mt-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -314,7 +326,7 @@ const UserDashboard = () => {
                   <FaShareAlt className="text-[16px]" />
                   Share Profile
                 </span>
-                <span className="absolute inset-0 bg-[#03500F] transform scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-out"></span>
+                <span className="absolute inset-0 bg-[#03500F] transform scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-out" />
               </motion.button>
               <AnimatePresence>
                 {showShareOptions && (
@@ -392,7 +404,6 @@ const UserDashboard = () => {
               </AnimatePresence>
             </motion.div>
 
-            {/* Help & Support */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -420,7 +431,6 @@ const UserDashboard = () => {
               </Link>
             </motion.div>
 
-            {/* Logout */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

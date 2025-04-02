@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { CiSearch, CiLocationOn } from "react-icons/ci";
 import { Link, useNavigate } from "react-router-dom";
-import BusinessImg from "../../assets/businessImg.jpeg";
+import BusinessImg from "../../assets/user-photo.svg";
 import {
   FaTimes,
   FaWhatsapp,
@@ -11,7 +11,6 @@ import {
   FaFacebook,
   FaInstagram,
 } from "react-icons/fa";
-import ProfilePic from "../../assets/profilepic.svg";
 import NetworkError from "../NetworkError";
 import { Player } from "@lottiefiles/react-lottie-player";
 import Start from "../home/Start";
@@ -111,7 +110,7 @@ const Modal = ({ profile, onClose }) => {
         >
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-[#6A7368] hover:text-[#043D12] text-xl"
+            className="absolute top-2 right-4 text-[#6A7368] hover:text-[#043D12] text-xl"
           >
             <FaTimes />
           </button>
@@ -123,14 +122,14 @@ const Modal = ({ profile, onClose }) => {
               BusinessImg
             }
             alt={profile.businessName}
-            className="w-full md:w-1/2 h-[350px] object-cover rounded-lg"
+            className="w-full md:w-1/2 h-[350px] object-cover rounded-lg cursor-pointer"
             initial={{ x: -50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.5 }}
             onError={(e) => (e.target.src = BusinessImg)}
           />
           <motion.div
-            className="flex flex-col gap-4 w-full md:w-1/2 p-2"
+            className="flex flex-col gap-4 w-full md:w-1/2 p-2 cursor-pointer"
             initial={{ x: 50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.5 }}
@@ -138,7 +137,7 @@ const Modal = ({ profile, onClose }) => {
             <h2 className="text-2xl font-bold text-[#043D12]">
               {profile.businessName}
             </h2>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 cursor-pointer">
               {profile.categories[0]?.name || "Unknown Category"}
             </p>
             <p className="text-gray-700">
@@ -291,7 +290,7 @@ const AllBusiness = () => {
                           BusinessImg
                         }
                         alt={profile.businessName}
-                        className="w-full max-w-[200px] h-[80px] object-cover rounded-[8px] shadow-md"
+                        className="w-full max-w-[200px] h-[80px] object-cover rounded-[8px] shadow-md cursor-pointer"
                         onError={(e) => (e.target.src = BusinessImg)}
                       />
                     ) : (
@@ -302,7 +301,7 @@ const AllBusiness = () => {
                             img.imageUrl || profile.businesImg || BusinessImg
                           }
                           alt={profile.businessName}
-                          className={`w-full h-[80px] object-cover ${
+                          className={`w-full h-[80px] object-cover cursor-pointer ${
                             i === 0
                               ? "rounded-l-[8px]"
                               : i === imageCount - 1
@@ -315,10 +314,10 @@ const AllBusiness = () => {
                     )}
                     {/* Profile Picture Overlay */}
                     <img
-                      src={profile.businesImg || ProfilePic}
+                      src={profile.businesImg || BusinessImg}
                       alt={profile.businessName}
-                      className="absolute top-[45px] left-1/2 transform -translate-x-1/2 w-[70px] h-[70px] rounded-full object-cover border-2 border-[#FFFDF2] shadow-lg"
-                      onError={(e) => (e.target.src = ProfilePic)}
+                      className="absolute top-[45px] left-1/2 transform -translate-x-1/2 w-[70px] h-[70px] rounded-full object-cover border-2 border-[#FFFDF2] shadow-lg cursor-pointer"
+                      onError={(e) => (e.target.src = BusinessImg)}
                     />
                   </div>
 
@@ -335,7 +334,7 @@ const AllBusiness = () => {
                         <CiLocationOn />
                         {profile.location || "Not specified"}
                       </p>
-                      <p className="text-[#043D12] border-[1px] border-[#6A7368] rounded-[4px] w-fit mx-auto px-4 py-2 text-[10px]">
+                      <p className="text-[#043D12] border-[1px] border-[#6A7368] rounded-[4px] w-fit mx-auto px-4 py-2 text-[10px] cursor-pointer">
                         {profile.categories[0]?.name || "Unknown Category"}
                       </p>
                       <div className="details flex items-center justify-center">
@@ -381,10 +380,10 @@ const AllBusiness = () => {
               src="https://lottie.host/7fd33a4f-2e59-4f34-ba0c-4af37814586e/Cq1qkcf16G.lottie"
               style={{ height: "300px", width: "300px" }}
             />
-            <h2 className="text-4xl font-bold text-[#043D12]">
+            <h2 className="text-md font-bold text-[#043D12]">
               No Results Found
             </h2>
-            <p className="text-lg text-[#6A7368] text-center max-w-2xl">
+            <p className="text-sm text-[#6A7368] text-center max-w-2xl">
               It looks like there are no businesses or services matching your
               search criteria. Try adjusting your search or explore other
               businesses in the community!

@@ -1,6 +1,5 @@
 import React from "react";
 import { motion } from "framer-motion";
-import DemoImg from "../../assets/demo.svg";
 import BenefitIcon01 from "../../assets/benefit01.gif";
 import BenefitIcon02 from "../../assets/benefit02.gif";
 import BenefitIcon03 from "../../assets/benefit03.gif";
@@ -30,7 +29,7 @@ const Benefits = () => {
         viewport={{ once: false }}
       >
         <motion.h1
-          className="lg:text-[40px] text-[32px] font-medium text-center"
+          className="lg:text-[35px] text-[25px] font-medium text-center"
           variants={fadeInVariants}
         >
           What’s in it for You?
@@ -91,7 +90,7 @@ const Benefits = () => {
                 variants={fadeInVariants}
               >
                 <motion.h1
-                  className="lg:text-[40px] text-[32px] "
+                  className="lg:text-[35px] text-[25px] "
                   variants={fadeInVariants}
                 >
                   {title}

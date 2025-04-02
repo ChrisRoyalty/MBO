@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import MindPowerLogo from "../assets/mbo-logo.png";
 import MenuIcon from "../assets/menu.svg";
-import ProfilePic from "../assets/profilepic.svg";
+import ProfilePic from "../assets/user-photo.svg";
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
 import { logout, selectAuth, setLastDashboard } from "../redux/authSlice";

@@ -11,7 +11,7 @@ import { CiShare1 } from "react-icons/ci";
 import { useParams, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import BusinessImg from "../../assets/businessImg.jpeg";
+import BusinessImg from "../../assets/user-photo.svg";
 import NetworkError from "../NetworkError";
 import { Player } from "@lottiefiles/react-lottie-player"; // Import Player from @lottiefiles/react-lottie-player
 import { TfiEmail } from "react-icons/tfi";
@@ -175,7 +175,7 @@ const ReportModal = ({ profile, onClose }) => {
         onClick={onClose}
       >
         <motion.div
-          className="bg-[#FFFDF2] p-6 rounded-lg shadow-lg w-full max-w-md"
+          className="bg-[#FFFDF2] p-6 rounded-lg shadow-lg w-[90%] max-w-md"
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
           exit={{ scale: 0.8 }}
@@ -287,7 +287,7 @@ const ReportModal = ({ profile, onClose }) => {
 };
 
 const ProfileMain = () => {
-  const { id } = useParams();
+  const { id , slug} = useParams();
   const [profile, setProfile] = useState(null);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -300,9 +300,16 @@ const ProfileMain = () => {
     setLoading(true);
     setError(null);
     try {
-      const API_URL = `${
-        import.meta.env.VITE_BASE_URL
-      }/member/get-profile/${id}`;
+      let API_URL;
+      // Fetch profile by id or slug
+      if (id) {
+        API_URL = `${import.meta.env.VITE_BASE_URL}/member/get-profile/${id}`;
+      } else if (slug) {
+        API_URL = `${import.meta.env.VITE_BASE_URL}/member/get-slug/${slug}`;
+      } else {
+        throw new Error("No profile identifier (id or slug) provided.");
+      }
+      
       const response = await axios.get(API_URL);
       if (response.data && response.data.profile) {
         setProfile(response.data.profile);
@@ -321,7 +328,7 @@ const ProfileMain = () => {
 
   useEffect(() => {
     fetchProfile();
-  }, [id]);
+  }, [id, slug]);
 
   const filterProducts = (products) => {
     if (!products || products.length === 0) return [];
@@ -363,7 +370,7 @@ const ProfileMain = () => {
           {/* Aside Section */}
           <aside className="md:w-[25%] flex flex-col gap-8 text-[#6A7368]">
             <h3
-              className="lg:text-[32px] text-[#043D12] text-center md:text-left text-[24px] md:text-[28px] font-bold truncate hover:whitespace-normal hover:overflow-visible hover:z-10 hover:bg-white hover:shadow-lg hover:p-2 hover:rounded-lg"
+              className="lg:text-[20px] text-[#043D12] text-center md:text-left text-[18px] md:text-[28px] font-bold truncate hover:whitespace-normal hover:overflow-visible hover:z-10"
               title={profile.businessName}
             >
               {profile.businessName}
@@ -607,16 +614,16 @@ const ProfileMain = () => {
                   src="https://lottie.host/7fd33a4f-2e59-4f34-ba0c-4af37814586e/Cq1qkcf16G.lottie" // Replace with your Lottie JSON URL
                   style={{ height: "300px", width: "300px" }}
                 />
-                <h2 className="text-4xl font-bold text-[#043D12]">
+                <h2 className="text-md font-bold text-[#043D12]">
                   No Products Available
                 </h2>
-                <p className="text-lg text-[#6A7368] text-center max-w-2xl">
+                <p className="text-sm text-[#6A7368] text-center max-w-2xl">
                   It looks like this business hasn't added any products or
                   services yet. Check back later or explore other businesses in
                   the community!
                 </p>
                 <button
-                  className="mt-4 bg-[#043D12] text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-[#032d0e] transition-colors"
+                  className="mt-4 bg-[#043D12] text-white px-8 py-3 rounded-lg text-sm font-semibold hover:bg-[#032d0e] transition-colors cursor-pointer"
                   onClick={() => navigate("/community")} // Redirect to community page
                 >
                   Explore Community

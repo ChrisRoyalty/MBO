@@ -9,9 +9,9 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import BusinessImg from "../../assets/businessImg.jpeg"; // Fallback image
+import BusinessImg from "../../assets/user-photo.svg"; // Fallback image
 
-const CreateProfile = () => {
+const EditHeader = () => {
   const location = useLocation();
   const { token } = useSelector((state) => state.auth);
 
@@ -90,7 +90,7 @@ const CreateProfile = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="h-[10vh] p-8 text-[#6A7368] flex justify-between items-center w-full z-0 border">
+        <div className="h-[10vh] p-8 text-[#6A7368] flex justify-between items-center w-full z-0 border-b-[1px] border-gray-200 bg-white shadow">
           <strong className="lg:text-[16px] text-[12px] pl-4 xl:pl-6">
             Edit Profile
           </strong>
@@ -132,7 +132,7 @@ const CreateProfile = () => {
       </motion.div>
 
       {/* Navigation & Content */}
-      <div className="lg:w-full w-[90%] md:w-[80%] mx-auto mt-8 flex max-lg:flex-col justify-center lg:gap-20 lg:px-10">
+      {/* <div className="lg:w-full w-[90%] md:w-[80%] mx-auto mt-8 flex max-lg:flex-col justify-center lg:gap-20 lg:px-10">
         <nav className="md:w-[60%] lg:w-[40%] px-8 flex flex-col gap-4">
           {navItems.map(({ to, icon, label }) => (
             <motion.div
@@ -163,9 +163,9 @@ const CreateProfile = () => {
         >
           <Outlet />
         </motion.main>
-      </div>
+      </div> */}
     </div>
   );
 };
 
-export default CreateProfile;
+export default EditHeader;
