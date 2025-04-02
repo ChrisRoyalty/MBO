@@ -94,7 +94,7 @@ const EditHeader = () => {
           <strong className="lg:text-[16px] text-[12px] pl-4 xl:pl-6">
             Edit Profile
           </strong>
-          <div className="flex items-center md:gap-4">
+          <div className="flex items-center md:gap-4 pr-8">
             <Link to="/">
               <IoIosNotificationsOutline className="text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
             </Link>

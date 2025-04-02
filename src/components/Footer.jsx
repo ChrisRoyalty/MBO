@@ -1,8 +1,8 @@
 import React from "react";
 import { CiFacebook } from "react-icons/ci";
-import { FaXTwitter } from "react-icons/fa6";
+// import { FaXTwitter } from "react-icons/fa6";
 import { FaWhatsapp } from "react-icons/fa";
-import { CiInstagram } from "react-icons/ci";
+// import { CiInstagram } from "react-icons/ci";
 import { motion } from "framer-motion";
 import MindPowerLogo from "../assets/mindpower-logo.svg";
 import { Link } from "react-router";
@@ -40,18 +40,16 @@ const Footer = () => {
             community where every connection is an opportunity.
           </p>
           <div className="socials flex items-center gap-2">
-            {[CiFacebook, FaXTwitter, FaWhatsapp, CiInstagram].map(
-              (Icon, index) => (
-                <motion.a
-                  key={index}
-                  variants={fadeInUp}
-                  href="#"
-                  className="text-[#043D12] text-[28px] hover:scale-110 transition-transform"
-                >
-                  <Icon />
-                </motion.a>
-              )
-            )}
+            {[CiFacebook, FaWhatsapp].map((Icon, index) => (
+              <motion.a
+                key={index}
+                variants={fadeInUp}
+                href="#"
+                className="text-[#043D12] text-[28px] hover:scale-110 transition-transform"
+              >
+                <Icon />
+              </motion.a>
+            ))}
           </div>
         </motion.div>
 
