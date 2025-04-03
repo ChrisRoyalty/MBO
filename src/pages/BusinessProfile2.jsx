@@ -10,19 +10,25 @@ import "react-toastify/dist/ReactToastify.css";
 import Hand from "../components/svgs/Hand";
 import { motion } from "framer-motion";
 
-// Example country codes (you can expand this list)
+// Example country codes and their length requirements
 const countryCodes = [
   { code: "+1", label: "US (+1)" },
   { code: "+234", label: "Nigeria (+234)" },
   { code: "+44", label: "UK (+44)" },
   { code: "+91", label: "India (+91)" },
-  // Add more as needed
 ];
 
+const countryCodeLengths = {
+  "+1": { min: 10, max: 10 }, // US: 10 digits
+  "+234": { min: 10, max: 11 }, // Nigeria: 10-11 digits
+  "+44": { min: 10, max: 10 }, // UK: 10 digits
+  "+91": { min: 10, max: 10 }, // India: 10 digits
+};
+
 const BusinessProfile2 = () => {
-  const [whatsappCountryCode, setWhatsappCountryCode] = useState("+234"); // Default to Nigeria
+  const [whatsappCountryCode, setWhatsappCountryCode] = useState("+234");
   const [whatsappNumber, setWhatsappNumber] = useState("");
-  const [phoneCountryCode, setPhoneCountryCode] = useState("+234"); // Default to Nigeria
+  const [phoneCountryCode, setPhoneCountryCode] = useState("+234");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,7 +39,6 @@ const BusinessProfile2 = () => {
   const navigate = useNavigate();
   const { token, user } = useSelector((state) => state.auth);
 
-  // Authentication and profile check (unchanged)
   useEffect(() => {
     if (!token) {
       toast.error("Please log in to create a profile.", { autoClose: 3000 });
@@ -45,9 +50,7 @@ const BusinessProfile2 = () => {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/member/my-profile`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         if (response.data.success) {
           toast.info("You already have a profile. Redirecting...", {
@@ -72,18 +75,35 @@ const BusinessProfile2 = () => {
     checkProfile();
   }, [token, navigate]);
 
+  // WhatsApp number input handler
+  const handleWhatsappNumberChange = (e) => {
+    const numericValue = e.target.value.replace(/\D/g, "");
+    setWhatsappNumber(numericValue);
+  };
+
+  // Alternative phone number input handler
+  const handlePhoneNumberChange = (e) => {
+    const numericValue = e.target.value.replace(/\D/g, "");
+    setPhoneNumber(numericValue);
+  };
+
   // WhatsApp number validation
   useEffect(() => {
-    const cleanNumber = whatsappNumber.replace(/\D/g, "");
-    const fullNumber = `${whatsappCountryCode}${cleanNumber}`;
+    const cleanNumber = whatsappNumber;
+    const countryRules = countryCodeLengths[whatsappCountryCode] || {
+      min: 9,
+      max: 14,
+    };
     if (cleanNumber.length > 0) {
-      const digitsAfterCode = cleanNumber.length;
-      if (/^\d{9,14}$/.test(cleanNumber)) {
+      if (
+        cleanNumber.length >= countryRules.min &&
+        cleanNumber.length <= countryRules.max
+      ) {
         setWhatsappStatus("valid");
-      } else if (digitsAfterCode > 14) {
+      } else if (cleanNumber.length > countryRules.max) {
         setWhatsappStatus("too_long");
       } else {
-        setWhatsappStatus("invalid");
+        setWhatsappStatus("too_short");
       }
     } else {
       setWhatsappStatus("");
@@ -92,16 +112,21 @@ const BusinessProfile2 = () => {
 
   // Alternative phone number validation
   useEffect(() => {
-    const cleanPhone = phoneNumber.replace(/\D/g, "");
-    const fullPhone = `${phoneCountryCode}${cleanPhone}`;
+    const cleanPhone = phoneNumber;
+    const countryRules = countryCodeLengths[phoneCountryCode] || {
+      min: 7,
+      max: 14,
+    };
     if (cleanPhone.length > 0) {
-      const digitsAfterCode = cleanPhone.length;
-      if (/^\d{7,14}$/.test(cleanPhone)) {
+      if (
+        cleanPhone.length >= countryRules.min &&
+        cleanPhone.length <= countryRules.max
+      ) {
         setPhoneStatus("valid");
-      } else if (digitsAfterCode > 14) {
+      } else if (cleanPhone.length > countryRules.max) {
         setPhoneStatus("too_long");
       } else {
-        setPhoneStatus("invalid");
+        setPhoneStatus("too_short");
       }
     } else {
       setPhoneStatus("");
@@ -110,16 +135,11 @@ const BusinessProfile2 = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const fullWhatsapp = `${whatsappCountryCode}${whatsappNumber.replace(
-      /\D/g,
-      ""
-    )}`;
-    const fullPhone = `${phoneCountryCode}${phoneNumber.replace(/\D/g, "")}`;
+    const fullWhatsapp = `${whatsappCountryCode}${whatsappNumber}`;
+    const fullPhone = `${phoneCountryCode}${phoneNumber}`;
 
     if (!whatsappNumber.trim() || whatsappStatus !== "valid") {
-      toast.error("Please enter a valid WhatsApp number.", {
-        autoClose: 3000,
-      });
+      toast.error("Please enter a valid WhatsApp number.", { autoClose: 3000 });
       return;
     }
     if (!phoneNumber.trim() || phoneStatus !== "valid") {
@@ -200,7 +220,7 @@ const BusinessProfile2 = () => {
     switch (status) {
       case "valid":
         return "text-green-600";
-      case "invalid":
+      case "too_short":
         return "text-red-600";
       case "too_long":
         return "text-yellow-600";
@@ -209,14 +229,15 @@ const BusinessProfile2 = () => {
     }
   };
 
-  const statusMessage = (status) => {
+  const statusMessage = (status, countryCode) => {
+    const countryRules = countryCodeLengths[countryCode] || { min: 9, max: 14 };
     switch (status) {
       case "valid":
         return "Valid phone number";
-      case "invalid":
-        return "Number must be 9-14 digits (WhatsApp) or 7-14 digits (alternative)";
+      case "too_short":
+        return `Number must be ${countryRules.min}-${countryRules.max} digits for this country`;
       case "too_long":
-        return "Number exceeds maximum length";
+        return `Number exceeds maximum length of ${countryRules.max} digits`;
       default:
         return "";
     }
@@ -289,14 +310,14 @@ const BusinessProfile2 = () => {
                     required
                     placeholder="e.g., 8012345678"
                     value={whatsappNumber}
-                    onChange={(e) => setWhatsappNumber(e.target.value)}
+                    onChange={handleWhatsappNumberChange}
                     className="w-full h-full border-none focus:outline-none text-[#6A7368] placeholder-[#6A7368]/70"
                   />
                 </div>
               </div>
               {whatsappStatus && (
                 <p className={`text-xs ${statusColor(whatsappStatus)}`}>
-                  {statusMessage(whatsappStatus)}
+                  {statusMessage(whatsappStatus, whatsappCountryCode)}
                 </p>
               )}
             </div>
@@ -306,14 +327,18 @@ const BusinessProfile2 = () => {
               <label className="text-[#043D12] text-sm font-medium">
                 Alternative Number
               </label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 ">
                 <select
                   value={phoneCountryCode}
                   onChange={(e) => setPhoneCountryCode(e.target.value)}
                   className="border-[1px] rounded-[27px] px-4 border-[#363636] h-[48px] lg:h-[60px] text-[#6A7368] focus:outline-none"
                 >
                   {countryCodes.map((country) => (
-                    <option key={country.code} value={country.code}>
+                    <option
+                      key={country.code}
+                      value={country.code}
+                      className=""
+                    >
                       {country.label}
                     </option>
                   ))}
@@ -324,14 +349,14 @@ const BusinessProfile2 = () => {
                     type="text"
                     placeholder="e.g., 8012345678"
                     value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    onChange={handlePhoneNumberChange}
                     className="w-full h-full border-none focus:outline-none text-[#6A7368] placeholder-[#6A7368]/70"
                   />
                 </div>
               </div>
               {phoneStatus && (
                 <p className={`text-xs ${statusColor(phoneStatus)}`}>
-                  {statusMessage(phoneStatus)}
+                  {statusMessage(phoneStatus, phoneCountryCode)}
                 </p>
               )}
             </div>

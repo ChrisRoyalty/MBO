@@ -13,14 +13,33 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import BusinessImg from "../../assets/user-photo.svg";
 import NetworkError from "../NetworkError";
-import { Player } from "@lottiefiles/react-lottie-player"; // Import Player from @lottiefiles/react-lottie-player
+import { Player } from "@lottiefiles/react-lottie-player";
 import { TfiEmail } from "react-icons/tfi";
 
-// Modal Component (for viewing business details)
+// Utility function to generate WhatsApp URL with predefined message
+const getWhatsAppUrl = (profile, productName = null) => {
+  if (!profile?.socialLinks?.whatsapp) return null;
+
+  const baseUrl = profile.socialLinks.whatsapp;
+  let message = `Hello ${profile.businessName}, I saw your profile on MBO`;
+
+  if (productName) {
+    message += ` and I'm interested in your "${productName}"`;
+  } else {
+    message += ` and I'm interested in your products/services`;
+  }
+
+  return `${baseUrl}${
+    baseUrl.includes("?") ? "&" : "?"
+  }text=${encodeURIComponent(message)}`;
+};
+
+// Modal Component
 const Modal = ({ business, onClose }) => {
   if (!business) return null;
 
   const navigate = useNavigate();
+  const whatsappUrl = getWhatsAppUrl(business);
 
   const handleViewProfile = () => {
     navigate(`/community/profile/${business.id}`);
@@ -77,12 +96,23 @@ const Modal = ({ business, onClose }) => {
                 >
                   View Profile
                 </button>
-                <a
-                  href={`/community/contact/${business.id}`}
-                  className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-2 lg:px-8 py-2 shadow-lg hover:bg-[#043D12]"
-                >
-                  Contact Us
-                </a>
+                {whatsappUrl ? (
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-2 lg:px-8 py-2 shadow-lg hover:bg-[#043D12]"
+                  >
+                    Contact Us
+                  </a>
+                ) : (
+                  <a
+                    href={`/community/contact/${business.id}`}
+                    className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-2 lg:px-8 py-2 shadow-lg hover:bg-[#043D12]"
+                  >
+                    Contact Us
+                  </a>
+                )}
               </div>
             </div>
             <button
@@ -98,7 +128,7 @@ const Modal = ({ business, onClose }) => {
   );
 };
 
-// Report Modal Component
+// Report Modal Component (unchanged)
 const ReportModal = ({ profile, onClose }) => {
   const [reportData, setReportData] = useState({
     fullName: "",
@@ -121,15 +151,13 @@ const ReportModal = ({ profile, onClose }) => {
 
     try {
       const BASE_URL = import.meta.env.VITE_BASE_URL;
-      const profileId = profile.id; // Use the profile ID from the prop
+      const profileId = profile.id;
       const payload = {
         name: reportData.fullName,
         email: reportData.email,
         issue: reportData.issueDescription,
         issueType: reportData.issueType,
       };
-
-      console.log("Submitting report payload:", payload);
 
       const response = await axios.post(
         `${BASE_URL}/admin/create-issue/${profileId}`,
@@ -371,6 +399,9 @@ const ProfileMain = () => {
     return <div>Profile not found.</div>;
   }
 
+  // Generate WhatsApp URL with predefined message
+  const whatsappUrl = getWhatsAppUrl(profile);
+
   return (
     <div className="w-full min-h-screen bg-[#FFFDF2] flex flex-col items-center pt-[10vh]">
       <div className="container px-[5vw] mx-auto py-8">
@@ -396,9 +427,9 @@ const ProfileMain = () => {
                   <IoLocationOutline /> {profile.location || "Not specified"}
                 </li>
               </ul>
-              {profile.socialLinks?.whatsapp ? (
+              {whatsappUrl ? (
                 <a
-                  href={profile.socialLinks.whatsapp}
+                  href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 border-[1px] border-[#043D12] hover:bg-[#043D12] hover:text-white rounded-[28px] px-4 md:px-12 py-2 shadow text-[14px]"
@@ -522,7 +553,10 @@ const ProfileMain = () => {
                 </p>
                 <div className="content border-[1px] border-[#6A7368] rounded-[11px]">
                   {profile.contactNo?.[0] && (
-                    <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
+                    <a
+                      href={`tel:${profile.contactNo[0]}`}
+                      className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]"
+                    >
                       <div className="flex items-center gap-4">Phone</div>
                       <a
                         href={`tel:${profile.contactNo[0]}`}
@@ -530,10 +564,13 @@ const ProfileMain = () => {
                       >
                         <IoCallOutline />
                       </a>
-                    </div>
+                    </a>
                   )}
                   {profile.member?.email && (
-                    <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
+                    <a
+                      href={`mailto:${profile.member.email}`}
+                      className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]"
+                    >
                       <div className="flex items-center gap-4">Email</div>
                       <a
                         href={`mailto:${profile.member.email}`}
@@ -541,20 +578,18 @@ const ProfileMain = () => {
                       >
                         <TfiEmail />
                       </a>
-                    </div>
+                    </a>
                   )}
                   {profile.socialLinks?.whatsapp && (
-                    <div className="flex justify-between items-center text-[14px] py-2 px-8">
+                    <a
+                      href={getWhatsAppUrl(profile)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex justify-between items-center text-[14px] py-2 px-8"
+                    >
                       <div className="flex items-center gap-4">WhatsApp</div>
-                      <a
-                        href={profile.socialLinks.whatsapp}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="cursor-pointer text-[18px]"
-                      >
-                        <IoLogoWhatsapp />
-                      </a>
-                    </div>
+                      <IoLogoWhatsapp className="text-[18px]" />
+                    </a>
                   )}
                 </div>
                 <div className="membership flex flex-col gap-2">
@@ -619,7 +654,7 @@ const ProfileMain = () => {
                 <Player
                   autoplay
                   loop
-                  src="https://lottie.host/7fd33a4f-2e59-4f34-ba0c-4af37814586e/Cq1qkcf16G.lottie" // Replace with your Lottie JSON URL
+                  src="https://lottie.host/7fd33a4f-2e59-4f34-ba0c-4af37814586e/Cq1qkcf16G.lottie"
                   style={{ height: "300px", width: "300px" }}
                 />
                 <h2 className="text-md font-bold text-[#043D12]">
@@ -632,7 +667,7 @@ const ProfileMain = () => {
                 </p>
                 <button
                   className="mt-4 bg-[#043D12] text-white px-8 py-3 rounded-lg text-sm font-semibold hover:bg-[#032d0e] transition-colors cursor-pointer"
-                  onClick={() => navigate("/community")} // Redirect to community page
+                  onClick={() => navigate("/community")}
                 >
                   Explore Community
                 </button>
@@ -651,7 +686,7 @@ const ProfileMain = () => {
           onClose={() => setIsReportModalOpen(false)}
         />
       )}
-      <ToastContainer /> {/* Add ToastContainer here */}
+      <ToastContainer />
     </div>
   );
 };

@@ -199,10 +199,13 @@ const EditProfile = () => {
     setEditedFields((prev) => new Set(prev).add(field));
   };
 
-  // Handle edit button click with focus
+  // Handle edit button click with focus and dropdown toggle for category
   const handleEditClick = (field) => {
     setEditField(field);
     setButtonActive((prev) => ({ ...prev, [field]: true }));
+    if (field === "category") {
+      setShowDropdown(true); // Open dropdown when editing category
+    }
     setTimeout(() => {
       setButtonActive((prev) => ({ ...prev, [field]: false }));
       if (inputRefs[field]?.current) {
@@ -518,19 +521,29 @@ const EditProfile = () => {
         pauseOnHover
       />
 
-      <div className="container px-[5vw] mx-auto mt-8">
-        <div className="relative w-full h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px] overflow-hidden">
+      <div className="container lg:px-[5vw] mx-auto mt-8">
+        <div
+          className="relative w-full h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px] overflow-hidden"
+          onClick={() => {
+            const fileInput = document.createElement("input");
+            fileInput.type = "file";
+            fileInput.accept = "image/*";
+            fileInput.onchange = (e) =>
+              handleImageUpload("backgroundImg", e.target.files[0]);
+            fileInput.click();
+          }}
+        >
           <img
             src={
               imagePreviews.backgroundImg ||
               profileData.backgroundImg ||
               ProfileBg
             }
-            className="w-full h-full object-cover object-center"
+            className="sm:w-full w-[90%] mx-auto h-full object-cover object-center cursor-pointer"
             alt="Background"
           />
           <FiEdit3
-            className="absolute right-4 top-4 text-white text-[20px] sm:text-[24px] cursor-pointer z-10 bg-black bg-opacity-50 p-1 rounded-full"
+            className="absolute right-8 top-4 text-white text-[20px] sm:text-[24px] cursor-pointer z-10 bg-black bg-opacity-50 p-1 rounded-full"
             onClick={() => {
               const fileInput = document.createElement("input");
               fileInput.type = "file";
@@ -542,9 +555,9 @@ const EditProfile = () => {
           />
         </div>
 
-        <div className="max-sm:absolute top-[200px] w-full max-w-5xl mx-auto sm:-mt-20 md:-mt-24 lg:-mt-28 px-4 sm:px-6 lg:px-8">
+        <div className="max-sm:absolute max-sm:top-[250px] w-full max-w-5xl mx-auto sm:-mt-20 md:-mt-24 lg:-mt-28 px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center sm:flex-row sm:items-end sm:justify-between">
-            <figure className="relative  flex flex-col items-center">
+            <figure className="relative flex flex-col items-center">
               <img
                 src={
                   imagePreviews.businesImg ||
@@ -552,7 +565,24 @@ const EditProfile = () => {
                   ProfileImg
                 }
                 alt="Profile-photo"
-                className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-full object-cover border-4 border-white shadow-lg"
+                className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-full object-cover border-4 border-white shadow-lg cursor-pointer"
+                onClick={() => {
+                  setButtonActive((prev) => ({ ...prev, changeImage: true }));
+                  const fileInput = document.createElement("input");
+                  fileInput.type = "file";
+                  fileInput.accept = "image/*";
+                  fileInput.onchange = (e) =>
+                    handleImageUpload("businesImg", e.target.files[0]);
+                  fileInput.click();
+                  setTimeout(
+                    () =>
+                      setButtonActive((prev) => ({
+                        ...prev,
+                        changeImage: false,
+                      })),
+                    200
+                  );
+                }}
               />
               <figcaption className="text-center mt-2 text-[#6A7368]">
                 <h4 className="text-sm sm:text-base md:text-lg font-semibold">
@@ -565,7 +595,7 @@ const EditProfile = () => {
             </figure>
 
             <button
-              className={`mt-4 sm:mt-0 border rounded-[11px] text-[10px] sm:text-sm px-4 sm:px-6 py-2 sm:py-3 shadow-lg transition-transform ${
+              className={`mt-4 sm:mt-0 border rounded-[11px] text-[10px] sm:text-sm px-4 sm:px-6 py-2 sm:py-3 shadow-lg transition-transform cursor-pointer ${
                 buttonActive.changeImage
                   ? "scale-95 bg-[#043D12] text-white"
                   : "hover:bg-[#043D12] hover:text-white"
