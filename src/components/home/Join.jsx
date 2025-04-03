@@ -61,7 +61,7 @@ const Join = () => {
       whileInView="visible"
       viewport={{ once: false }}
       variants={animations.fadeIn}
-      className="w-full flex justify-center items-center bg-[#FAFEF4] py-18 overflow-hidden"
+      className="w-full flex justify-center items-center bg-[#FAFEF4] lg:py-18 py-14 overflow-h-auto"
     >
       <div className="container mx-auto px-[5vw] flex flex-col gap-10 text-center  overflow-hidden">
         {/* Title Section */}
@@ -70,7 +70,7 @@ const Join = () => {
           whileInView="visible"
           viewport={{ once: false }}
           variants={animations.scaleUp}
-          className="mt-12 lg:text-[40px] text-[32px] text-[#043D1266] font-semibold"
+          className="mt-12 lg:text-[35px] text-[25px] text-[#043D1266] font-semibold"
         >
           Join our growing network
         </motion.h1>
@@ -95,11 +95,11 @@ const Join = () => {
               animation: (
                 <Lottie
                   options={animation2Options}
-                  height={172} // From JSON: h: 172
-                  width={193} // From JSON: w: 193
+                  height={182} // From JSON: h: 172
+                  width={136} // From JSON: w: 193
                 />
               ),
-              title: <Link to="/subscribe">SUBSCRIBE</Link>,
+              title: <Link to="/create-account">SUBSCRIBE</Link>,
               description:
                 "Choose a single annual plan for access and promotion.",
               animationVariant: animations.slideUp,
@@ -108,11 +108,11 @@ const Join = () => {
               animation: (
                 <Lottie
                   options={animation3Options}
-                  height={224} // From JSON: h: 224
-                  width={224} // From JSON: w: 224
+                  height={182} // From JSON: h: 224
+                  width={136} // From JSON: w: 224
                 />
               ),
-              title: <Link to="/business-profile">GROW</Link>,
+              title: <Link to="/create-account">GROW</Link>,
               description:
                 "Share your profile, connect with customers, and track your growth.",
               animationVariant: animations.slideRight,
@@ -129,7 +129,7 @@ const Join = () => {
               {card.animation}
               <figcaption className="text-[24px] text-[#043D12]">
                 <h5 className="font-bold">{card.title}</h5>
-                <p className="text-[20px] lg:px-16 px-8 text-[#6A7368]">
+                <p className="text-[18px] lg:px-16 px-8 text-[#6A7368]">
                   {card.description}
                 </p>
               </figcaption>
@@ -138,22 +138,13 @@ const Join = () => {
         </div>
 
         {/* Call-to-Action Button */}
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: false }}
-          variants={animations.slideUp}
-          className="mt-12 overflow-hidden"
+
+        <Link
+          to="/create-account"
+          className="w-fit mx-auto border bg-transparent text-[#043D12] border-[#043D12] rounded-[48px] shadow-lg lg:text-[18px] text-[16px] px-8 py-4 hover:bg-[#043D12] hover:text-white"
         >
-          <motion.div variants={animations.buttonHover} whileHover="hover">
-            <Link
-              to="/create-account"
-              className="border bg-transparent text-[#043D12] border-[#043D12] rounded-[48px] shadow-lg lg:text-[18px] text-[16px] px-8 py-4 hover:bg-[#043D12] hover:text-white transition duration-300"
-            >
-              Explore Businesses
-            </Link>
-          </motion.div>
-        </motion.div>
+          Explore Businesses
+        </Link>
       </div>
     </motion.section>
   );

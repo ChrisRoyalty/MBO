@@ -1,8 +1,8 @@
 import React from "react";
 import { CiFacebook } from "react-icons/ci";
-import { FaXTwitter } from "react-icons/fa6";
+// import { FaXTwitter } from "react-icons/fa6";
 import { FaWhatsapp } from "react-icons/fa";
-import { CiInstagram } from "react-icons/ci";
+// import { CiInstagram } from "react-icons/ci";
 import { motion } from "framer-motion";
 import MindPowerLogo from "../assets/mindpower-logo.svg";
 import { Link } from "react-router";
@@ -40,18 +40,16 @@ const Footer = () => {
             community where every connection is an opportunity.
           </p>
           <div className="socials flex items-center gap-2">
-            {[CiFacebook, FaXTwitter, FaWhatsapp, CiInstagram].map(
-              (Icon, index) => (
-                <motion.a
-                  key={index}
-                  variants={fadeInUp}
-                  href="#"
-                  className="text-[#043D12] text-[28px] hover:scale-110 transition-transform"
-                >
-                  <Icon />
-                </motion.a>
-              )
-            )}
+            {[CiFacebook, FaWhatsapp].map((Icon, index) => (
+              <motion.a
+                key={index}
+                variants={fadeInUp}
+                href="#"
+                className="text-[#043D12] text-[28px] hover:scale-110 transition-transform"
+              >
+                <Icon />
+              </motion.a>
+            ))}
           </div>
         </motion.div>
 
@@ -70,27 +68,27 @@ const Footer = () => {
           </ul>
           <ul className="flex items-center gap-1">
             <li className="font-bold">Email:</li>
-            <li> mbo@gmail.com</li>
+            <li> admin@mindpowerbusinessonline.com</li>
           </ul>
         </motion.div>
         <motion.nav
           variants={fadeInUp}
           className="policies text-[14px] flex flex-col gap-2 w-full items-center"
         >
-          <div className="flex flex-col gap-6">
-            <Link className="hover:text-[17px]" to="/">
+          <div className="max-lg:w-full flex flex-col max-lg:items-center gap-6">
+            <Link className="hover:border-b-[1px] w-fit" to="/">
               Home
             </Link>
-            <Link className="hover:text-[17px]" to="/community">
+            <Link className="hover:border-b-[1px] w-fit" to="/community">
               Community
             </Link>
-            <Link to="/privacy-policy" className="hover:text-[17px]">
+            <Link to="/privacy-policy" className="hover:border-b-[1px] w-fit">
               Privacy Policy
             </Link>
-            <Link to="/terms-of-service" className="hover:text-[17px]">
+            <Link to="/terms-of-service" className="hover:border-b-[1px] w-fit">
               Terms of service
             </Link>
-            <Link to="/help-and-support" className="hover:text-[17px]">
+            <Link to="/help-and-support" className="hover:border-b-[1px] w-fit">
               Help & Support
             </Link>
           </div>
@@ -103,6 +101,12 @@ const Footer = () => {
         <p className="text-[#043D12]">
           © 2025 Mind Power Aba. All rights reserved.
         </p>
+        <a
+          href="https://api.whatsapp.com/send?phone=2348188155501"
+          className="border-b-[1px] hover:font-bold"
+        >
+          Designed by RAD5 Tech Hub
+        </a>
       </motion.div>
     </motion.div>
   );

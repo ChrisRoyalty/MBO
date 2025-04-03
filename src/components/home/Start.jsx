@@ -80,7 +80,7 @@ const Start = () => {
           whileInView="visible"
           viewport={{ once: false }}
           variants={animations.fadeIn}
-          className="lg:text-[40px] text-[30px]"
+          className="lg:text-[35px] text-[25px]"
         >
           Don’t Hesitate, Get Started Now!
         </motion.h1>
@@ -104,7 +104,7 @@ const Start = () => {
             variants={animations.buttonHover}
             whileHover="hover"
             whileTap="tap"
-            href="/business-profile"
+            href="/create-account"
             className="bg-[#FFFDF2] text-[#043D12] rounded-[48px] shadow-lg lg:text-[18px] text-[14px] md:px-8 px-4 py-3 md:py-4 w-fit mx-auto font-medium"
           >
             Create my Profile
