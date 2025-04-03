@@ -8,7 +8,7 @@ import { jwtDecode } from "jwt-decode";
 import Good from "../components/svgs/Good";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import MboLogo from "../../public/mindpower-logo.svg";
+import MboLogo from "../../src/assets/mindpower-logo.svg";
 import {
   BanknotesIcon,
   CheckCircleIcon,
@@ -354,36 +354,17 @@ const Subscribe = () => {
   };
 
   const handlePaymentCallback = async (paymentResponse) => {
-    if (
-      paymentResponse.status === "completed" ||
-      paymentResponse.status === "successful"
-    ) {
-      try {
-        const verificationResponse = await axios.post(
-          `${import.meta.env.VITE_BASE_URL}/admin/verify-payment`,
-          {
-            transactionId: paymentResponse.transaction_id,
-            txRef: paymentResponse.tx_ref,
-            userId,
-            planId: Object.keys(txRefs).find(
-              (key) => txRefs[key] === paymentResponse.tx_ref
-            ),
-          }
-        );
-        if (verificationResponse.data.success) {
-          setShowSuccessModal(true);
-        } else {
-          throw new Error("Payment verification failed");
-        }
-      } catch (error) {
-        console.error("Error verifying payment:", error);
-        toast.error("Payment verification failed. Contact support.");
-      }
-    } else {
-      toast.error("Payment failed. Please try again.");
-    }
-    closePaymentModal();
-  };
+  if (
+    paymentResponse.status === "completed" ||
+    paymentResponse.status === "successful"
+  ) {
+    setShowSuccessModal(true);
+  } else {
+    toast.error("Payment failed. Please try again.");
+  }
+  closePaymentModal();
+};
+
 
   if (isLoadingUser) {
     return (

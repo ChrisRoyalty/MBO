@@ -42,6 +42,7 @@ import SupportFaqs from "./components/admin/support/SupportFaqs";
 import UserHelpAndSupport from "./components/user-dashboard/UserHelpAndSupport";
 import PrivacyPolicy from "./components/legal-header/PrivacyPolicy";
 import TermsOfService from "./components/legal-header/TermsOfService";
+import SlugRedirect from "./components/community/SlugRedirect"
 
 function App() {
   const location = useLocation(); // Get the current location
@@ -61,6 +62,8 @@ function App() {
         <Route path="/create-account" element={<Signup />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/:slug" element={<SlugRedirect />} />
+
         {/* Move legal routes inside Layout */}
 
         <Route path="/" element={<Layout />}>
@@ -70,7 +73,7 @@ function App() {
             <Route index element={<CommunityMain />} />
             <Route path="all-businesses" element={<AllBusiness />} />
             <Route path="search" element={<SearchPage />} />
-            <Route path="profile/:id" element={<ProfilePage />} />{" "}
+            <Route path="profile/:identifier" element={<ProfilePage />} />{" "}
             {/* Updated to dynamic route with :id */}
           </Route>
         </Route>

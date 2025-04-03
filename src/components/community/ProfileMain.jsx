@@ -315,7 +315,7 @@ const ReportModal = ({ profile, onClose }) => {
 };
 
 const ProfileMain = () => {
-  const { id } = useParams();
+  const { identifier } = useParams();
   const [profile, setProfile] = useState(null);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -323,33 +323,48 @@ const ProfileMain = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-
-  const fetchProfile = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const API_URL = `${
-        import.meta.env.VITE_BASE_URL
-      }/member/get-profile/${id}`;
-      const response = await axios.get(API_URL);
-      if (response.data && response.data.profile) {
-        setProfile(response.data.profile);
-      } else {
-        throw new Error("Profile not found in the response.");
-      }
-    } catch (error) {
-      console.error("❌ Error Fetching Profile:", error);
-      setError(
-        error.response?.data?.message || "Failed to fetch profile data."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    if (!identifier) {
+      setError("Invalid profile identifier.");
+      setLoading(false);
+      return;
+    }
+
+    const fetchProfile = async () => {
+      setLoading(true);
+      setError(null);
+      const validateUUID = (uuid) => {
+        const regex =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        return regex.test(uuid);
+      };
+
+      try {
+        const isUUID = validateUUID(identifier);
+        const API_URL = isUUID
+          ? `${import.meta.env.VITE_BASE_URL}/member/get-profile/${identifier}`
+          : `${import.meta.env.VITE_BASE_URL}/member/get-slug/${identifier}`;
+
+        const response = await axios.get(API_URL);
+        if (response.data && response.data.profile) {
+          setProfile(response.data.profile);
+        } else {
+          throw new Error("Profile not found.");
+        }
+      } catch (error) {
+        console.error(" Error Fetching Profile:", error);
+        setError(
+          error.response?.data?.message ||
+            error.message ||
+            "Failed to fetch profile data."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchProfile();
-  }, [id]);
+  }, [identifier]);
 
   const filterProducts = (products) => {
     if (!products || products.length === 0) return [];
