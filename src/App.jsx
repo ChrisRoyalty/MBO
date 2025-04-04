@@ -42,7 +42,8 @@ import SupportFaqs from "./components/admin/support/SupportFaqs";
 import UserHelpAndSupport from "./components/user-dashboard/UserHelpAndSupport";
 import PrivacyPolicy from "./components/legal-header/PrivacyPolicy";
 import TermsOfService from "./components/legal-header/TermsOfService";
-import SlugRedirect from "./components/community/SlugRedirect"
+import SlugRedirect from "./components/community/SlugRedirect";
+import Faq from "./components/home/Faq";
 
 function App() {
   const location = useLocation(); // Get the current location
@@ -69,6 +70,8 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="/help-and-support" element={<HelpAndSupport />} />
+          <Route path="faq" element={<Faq />} />
+
           <Route path="community" element={<Community />}>
             <Route index element={<CommunityMain />} />
             <Route path="all-businesses" element={<AllBusiness />} />

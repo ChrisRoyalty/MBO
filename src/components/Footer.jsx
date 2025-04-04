@@ -1,11 +1,9 @@
 import React from "react";
 import { CiFacebook } from "react-icons/ci";
-// import { FaXTwitter } from "react-icons/fa6";
 import { FaWhatsapp } from "react-icons/fa";
-// import { CiInstagram } from "react-icons/ci";
 import { motion } from "framer-motion";
 import MindPowerLogo from "../assets/mindpower-logo.svg";
-import { Link } from "react-router";
+import { Link } from "react-router-dom"; // Corrected import
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 50 },
@@ -32,8 +30,8 @@ const Footer = () => {
           variants={fadeInUp}
           className="w-full flex flex-col gap-4 max-lg:items-center"
         >
-          <Link path="/" className="logo">
-            <img src={MindPowerLogo} alt="Mind-Power-Logo" className=" h-16" />
+          <Link to="/" className="logo">
+            <img src={MindPowerLogo} alt="Mind-Power-Logo" className="h-16" />
           </Link>
           <p className="text-[16px] text-[#043D12]">
             Your business deserves a platform designed for growth. Join a
@@ -55,7 +53,7 @@ const Footer = () => {
 
         <motion.div
           variants={fadeInUp}
-          className="w-full contact flex flex-col gap-4 max-lg:items-center"
+          className="w-full max-md:w-[90%] mx-auto contact flex flex-col gap-4 max-lg:items-center"
         >
           <h4 className="text-[17px] font-bold">Contact Info</h4>
           <p className="text-[14px]">
@@ -64,11 +62,11 @@ const Footer = () => {
           </p>
           <ul className="flex items-center gap-1">
             <li className="font-bold">Customer Support:</li>
-            <li> 09078987890</li>
+            <li>09078987890</li>
           </ul>
           <ul className="flex items-center gap-1">
             <li className="font-bold">Email:</li>
-            <li> admin@mindpowerbusinessonline.com</li>
+            <li>admin@mindpowerbusinessonline.com</li>
           </ul>
         </motion.div>
         <motion.nav
@@ -88,7 +86,7 @@ const Footer = () => {
             <Link to="/terms-of-service" className="hover:border-b-[1px] w-fit">
               Terms of service
             </Link>
-            <Link to="/help-and-support" className="hover:border-b-[1px] w-fit">
+            <Link to="/#faq" className="hover:border-b-[1px] w-fit">
               Help & Support
             </Link>
           </div>
@@ -96,7 +94,7 @@ const Footer = () => {
       </motion.div>
       <motion.div
         variants={fadeInUp}
-        className="h-[10vh] policies text-[14px] flex flex-col gap-2 w-full items-center justify-center border-t-[1px] border-[#043D12]"
+        className="max-md:w-[90%] mx-auto lg:h-[10vh] h-[15vh] policies text-[14px] flex flex-col gap-2 w-full items-center justify-center border-t-[1px] border-[#043D12] py-4 max-md:text-center"
       >
         <p className="text-[#043D12]">
           © 2025 Mind Power Aba. All rights reserved.

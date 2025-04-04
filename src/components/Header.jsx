@@ -36,58 +36,54 @@ const Header = () => {
   const isAuthenticated = auth.isAuthenticated;
   const userRole = auth.user?.role;
   const lastDashboard = auth.lastDashboard;
+  const isAdmin = userRole === "admin";
 
-  // Fetch user's subscription and profile status from /member/my-profile
+  // Fetch user's subscription and business profile status
   useEffect(() => {
     if (isAuthenticated) {
-      const fetchMyProfile = async () => {
-        setIsStatusLoading(true);
-        try {
-          const API_URL = `${import.meta.env.VITE_BASE_URL}/member/my-profile`;
-          const response = await axios.get(API_URL, {
-            headers: { Authorization: `Bearer ${auth.token}` }, // Adjust if token is elsewhere
-          });
+      if (isAdmin) {
+        // Admins bypass all checks
+        setIsSubscribed(true);
+        setHasBusinessProfile(true);
+        setIsStatusLoading(false);
+      } else {
+        const fetchMyProfile = async () => {
+          setIsStatusLoading(true);
+          try {
+            const API_URL = `${
+              import.meta.env.VITE_BASE_URL
+            }/member/my-profile`;
+            const response = await axios.get(API_URL, {
+              headers: { Authorization: `Bearer ${auth.token}` },
+            });
 
-          const { data } = response.data;
+            const { data } = response.data;
+            const isSubActive =
+              data.member.subscriptionStatus === "active" &&
+              new Date() >= new Date(data.member.subscriptionStartDate) &&
+              new Date() <= new Date(data.member.subscriptionEndDate);
 
-          // Check subscription status
-          const subStatus = data.member.subscriptionStatus === "active";
-          const startDate = new Date(data.member.subscriptionStartDate);
-          const endDate = new Date(data.member.subscriptionEndDate);
-          const today = new Date();
-          const isSubActive =
-            subStatus && today >= startDate && today <= endDate;
-          setIsSubscribed(isSubActive);
-
-          // Check if business profile exists
-          const hasProfile =
-            !!data.businessName && data.businessName.trim() !== "";
-          setHasBusinessProfile(hasProfile);
-        } catch (error) {
-          console.error("❌ Error Fetching My Profile:", error);
-          setIsSubscribed(false);
-          setHasBusinessProfile(false);
-          // Optional: toast.error("Failed to load profile status.");
-        } finally {
-          setIsStatusLoading(false);
-        }
-      };
-      fetchMyProfile();
+            setIsSubscribed(isSubActive);
+            setHasBusinessProfile(!!data.businessName?.trim());
+          } catch (error) {
+            console.error("Error fetching profile:", error);
+            setIsSubscribed(false);
+            setHasBusinessProfile(false);
+          } finally {
+            setIsStatusLoading(false);
+          }
+        };
+        fetchMyProfile();
+      }
     } else {
       setIsSubscribed(false);
       setHasBusinessProfile(false);
       setIsStatusLoading(false);
     }
-  }, [isAuthenticated, auth.token]);
+  }, [isAuthenticated, auth.token, isAdmin]);
 
-  // Handle lastDashboard updates and community profile fetching
+  // Fetch business profile data when on a profile page
   useEffect(() => {
-    if (location.pathname === "/admin") {
-      dispatch(setLastDashboard("/admin"));
-    } else if (location.pathname === "/user-dashboard") {
-      dispatch(setLastDashboard("/user-dashboard"));
-    }
-
     if (location.pathname.startsWith("/community/profile/")) {
       setLoading(true);
       const fetchProfile = async () => {
@@ -96,16 +92,10 @@ const Header = () => {
             import.meta.env.VITE_BASE_URL
           }/member/get-profile/${id}`;
           const response = await axios.get(API_URL);
-          if (response.data && response.data.profile) {
-            setProfile(response.data.profile);
-          } else {
-            throw new Error("Profile not found in the response.");
-          }
+          setProfile(response.data?.profile || null);
         } catch (error) {
-          console.error("❌ Error Fetching Profile for Header:", error);
-          setError(
-            error.response?.data?.message || "Failed to fetch profile data."
-          );
+          console.error("Error fetching business profile:", error);
+          setError(error.response?.data?.message || "Failed to load profile");
         } finally {
           setLoading(false);
         }
@@ -114,7 +104,16 @@ const Header = () => {
     } else {
       setProfile(null);
     }
-  }, [location.pathname, id, dispatch]);
+  }, [location.pathname, id]);
+
+  // Track dashboard visits
+  useEffect(() => {
+    if (location.pathname === "/admin") {
+      dispatch(setLastDashboard("/admin"));
+    } else if (location.pathname === "/user-dashboard") {
+      dispatch(setLastDashboard("/user-dashboard"));
+    }
+  }, [location.pathname, dispatch]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -126,54 +125,56 @@ const Header = () => {
   };
 
   const dashboardRoute =
-    lastDashboard || (userRole === "admin" ? "/admin" : "/user-dashboard");
+    lastDashboard || (isAdmin ? "/admin" : "/user-dashboard");
 
-  // Simplified navItems: Only "Log In" or "Dashboard" based on all conditions
   const navItems = [
     { name: "Home", path: "/" },
     { name: "Community", path: "/community" },
-    isAuthenticated && isSubscribed && hasBusinessProfile && !isStatusLoading
+    isAuthenticated &&
+    (isAdmin || (isSubscribed && hasBusinessProfile)) &&
+    !isStatusLoading
       ? {
           name: "Dashboard",
           path: dashboardRoute,
           className:
-            "border-[1px] border-[#FFFFFF] rounded-[39px] lg:ml-8 px-8 py-2 hover:bg-white hover:text-[#02530c] active:bg-white active:text-[#02530c]",
+            "border border-white rounded-[39px] lg:ml-8 px-8 py-2 hover:bg-white hover:text-[#02530c]",
         }
       : {
           name: "Log In",
           path: "/login",
           className:
-            "border-[1px] border-[#FFFFFF] rounded-[39px] lg:ml-8 px-8 py-2 hover:bg-white hover:text-[#02530c] active:bg-white active:text-[#02530c]",
+            "border border-white rounded-[39px] lg:ml-8 px-8 py-2 hover:bg-white hover:text-[#02530c]",
         },
-  ];
+  ].filter(Boolean);
 
   return (
     <div
-      className={`h-fit flex flex-col justify-center items-center transition-all duration-500 relative bg-[#FFFDF2] py-[5vh] lg:py-[6vh] ${
+      className={`relative bg-[#FFFDF2] py-[5vh] lg:py-[6vh] ${
         location.pathname.startsWith("/community/profile/") ? "pb-[40px]" : ""
       }`}
     >
+      {/* Background image for profile pages */}
       {location.pathname.startsWith("/community/profile/") &&
         profile?.backgroundImg && (
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0"
-            style={{
-              backgroundImage: `url(${profile.backgroundImg || ProfilePic})`,
-            }}
+            style={{ backgroundImage: `url(${profile.backgroundImg})` }}
           />
         )}
+
+      {/* Business profile picture - centered on mobile */}
       {location.pathname.startsWith("/community/profile/") && (
         <img
           src={profile?.businesImg || ProfilePic}
-          alt="Profile_Picture"
-          className="absolute bottom-[-60px] w-[120px] h-[120px] rounded-full border-4 border-[#FFCF00] shadow-lg lg:left-[12%] z-20"
+          alt="Business Profile"
+          className="absolute bottom-[-60px] w-[120px] h-[120px] rounded-full border-4 border-[#FFCF00] shadow-lg lg:left-[12%] left-[calc(50%-60px)] z-20"
           onError={(e) => (e.target.src = ProfilePic)}
         />
       )}
 
       <div className="container mx-auto px-[5vw]">
         <div
-          className={`main-header h-fit bg-[#043D12] px-[20px] md:px-[50px] py-4 flex justify-between items-center rounded-[48px] shadow-lg relative z-30 ${
+          className={`bg-[#043D12] px-5 md:px-12 py-4 flex justify-between items-center rounded-[48px] shadow-lg relative z-30 ${
             location.pathname.startsWith("/community/profile/")
               ? "mb-[50px]"
               : ""
@@ -182,20 +183,19 @@ const Header = () => {
           <Link to="/">
             <img
               src={MindPowerLogo}
-              alt="Mind_Power_Logo"
-              className="md:w-[47px] md:h-[55px] w-[33px] h-[39px] object-contain brightness-100"
+              alt="Logo"
+              className="w-8 md:w-12 object-contain"
             />
           </Link>
+
+          {/* Mobile menu */}
           <AnimatePresence>
             {isOpen && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
-                animate={{
-                  opacity: 1,
-                  scale: 1,
-                  transition: { duration: 0.4, ease: "easeOut" },
-                }}
+                animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.3 }}
                 className="absolute top-[15vh] left-0 w-full bg-[#FFFDF2] flex flex-col items-center py-6 shadow-lg md:hidden rounded-b-[40px] z-20"
               >
                 <nav className="flex flex-col items-center gap-6 w-full">
@@ -211,7 +211,7 @@ const Header = () => {
                       <Link
                         to={item.path}
                         onClick={() => setIsOpen(false)}
-                        className={`text-[20px] font-medium px-8 py-2 transition ${
+                        className={`text-xl font-medium px-8 py-2 ${
                           (item.path === "/community" &&
                             location.pathname.startsWith("/community")) ||
                           location.pathname === item.path
@@ -227,37 +227,44 @@ const Header = () => {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Desktop menu */}
           <div className="hidden md:flex gap-8 items-center text-white">
             {navItems.map((item) => (
               <motion.div key={item.path} className="relative group">
                 <Link
                   to={item.path}
-                  className={`relative text-[20px] transition-all duration-300 ${
+                  className={`text-xl ${item.className || ""} ${
                     (item.path === "/community" &&
                       location.pathname.startsWith("/community")) ||
                     location.pathname === item.path
                       ? "text-[#FFCF00] font-bold"
                       : "hover:text-[#FFCF00]"
-                  } ${item.className || ""}`}
+                  }`}
                 >
                   {item.name}
-                  {item.path !== "/login" && (
+                  {item.path !== "/login" && item.path !== "/" && (
                     <motion.div
-                      className="absolute bottom-[-3px] left-0 h-[3px] bg-[#FFCF00] origin-left"
+                      className="absolute bottom-[-3px] left-0 h-[3px] bg-[#FFCF00]"
                       initial={{ width: 0 }}
                       animate={{
                         width: location.pathname === item.path ? "100%" : "0%",
                       }}
                       whileHover={{ width: "100%" }}
-                      transition={{ duration: 0.4, ease: "easeInOut" }}
+                      transition={{ duration: 0.3 }}
                     />
                   )}
                 </Link>
               </motion.div>
             ))}
           </div>
-          <button className="md:hidden" onClick={() => setIsOpen(!isOpen)}>
-            <img src={MenuIcon} alt="Hamburger_Icon" className="w-8 h-8" />
+
+          <button
+            className="md:hidden"
+            onClick={() => setIsOpen(!isOpen)}
+            aria-label="Toggle menu"
+          >
+            <img src={MenuIcon} alt="Menu" className="w-8 h-8" />
           </button>
         </div>
       </div>
