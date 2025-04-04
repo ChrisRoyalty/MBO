@@ -790,7 +790,7 @@ const ManageSubscription = () => {
                     className="py-4 px-4 sm:px-6 text-center text-gray-500"
                   >
                     {activeFilter === "Cancelled"
-                      ? "N/A (No endpoint available yet)"
+                      ? "N/A"
                       : "No subscriptions found matching your criteria."}
                   </td>
                 </tr>

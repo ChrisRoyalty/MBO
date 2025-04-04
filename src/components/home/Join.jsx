@@ -140,7 +140,7 @@ const Join = () => {
         {/* Call-to-Action Button */}
 
         <Link
-          to="/create-account"
+          to="/community/all-businesses"
           className="w-fit mx-auto border bg-transparent text-[#043D12] border-[#043D12] rounded-[48px] shadow-lg lg:text-[18px] text-[16px] px-8 py-4 hover:bg-[#043D12] hover:text-white"
         >
           Explore Businesses

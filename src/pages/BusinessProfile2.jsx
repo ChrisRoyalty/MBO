@@ -325,7 +325,7 @@ const BusinessProfile2 = () => {
             {/* Alternative Number */}
             <div className="max-lg:w-full flex flex-col gap-2">
               <label className="text-[#043D12] text-sm font-medium">
-                Alternative Number
+                Alternative Number( Optional )
               </label>
               <div className="flex gap-2 ">
                 <select
