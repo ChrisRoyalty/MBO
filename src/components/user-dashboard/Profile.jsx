@@ -82,75 +82,90 @@ const Profile = () => {
     yearly: { label: "Yearly", limit: 5 },
   };
 
+  const getWeekNumber = (date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+    const week1 = new Date(d.getFullYear(), 0, 4);
+    return (
+      1 +
+      Math.round(((d - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7)
+    );
+  };
+
   const formatDateForRange = (dateStr, range) => {
-    if (!dateStr) {
-      const now = new Date();
+    try {
+      let date;
+      if (typeof dateStr === "string") {
+        if (range === "monthly" && dateStr.includes("-")) {
+          const [year, month] = dateStr.split("-");
+          date = new Date(year, month - 1);
+        } else if (range === "weekly" && dateStr.includes("-")) {
+          const [year, week] = dateStr.split("-");
+          date = new Date(year, 0, 1 + (week - 1) * 7);
+        } else if (dateStr.includes("-") || dateStr.includes("/")) {
+          date = new Date(dateStr);
+        } else {
+          date = new Date();
+        }
+      } else {
+        date = new Date(dateStr);
+      }
+
+      if (isNaN(date.getTime())) {
+        date = new Date();
+      }
+
       switch (range) {
         case "daily":
-          return now.toLocaleDateString("en-US", { weekday: "short" });
+          return date.toLocaleDateString("en-US", { weekday: "short" });
         case "weekly":
-          return `Week ${getWeekNumber(now)} ${now.getFullYear()}`;
+          return `Week ${getWeekNumber(date)}`;
         case "monthly":
-          return now.toLocaleString("default", {
+          return date.toLocaleString("default", {
             month: "short",
-            year: "numeric",
+            year: "2-digit",
           });
         case "yearly":
-          return now.getFullYear().toString();
+          return date.getFullYear().toString();
         default:
-          return now.toISOString().split("T")[0];
+          return date.toISOString().split("T")[0];
       }
-    }
-
-    // Handle API-provided formatted strings
-    if (typeof dateStr === "string" && dateStr.includes("-")) {
-      if (range === "daily") {
-        const date = new Date(dateStr); // e.g., "2025-03-30"
-        return isNaN(date.getTime())
-          ? dateStr
-          : date.toLocaleDateString("en-US", { weekday: "short" });
-      } else if (range === "weekly") {
-        const [year, week] = dateStr.split("-"); // e.g., "2025-13"
-        return `Week ${week} ${year}`;
-      } else if (range === "monthly") {
-        const [year, month] = dateStr.split("-"); // e.g., "2025-03"
-        const date = new Date(year, month - 1);
-        return isNaN(date.getTime())
-          ? dateStr
-          : date.toLocaleString("default", { month: "short", year: "numeric" });
-      } else if (range === "yearly") {
-        return dateStr; // e.g., "2025"
-      }
-    }
-
-    // Handle Date object or unexpected string from filler logic
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return dateStr; // Fallback to raw string if invalid
-    switch (range) {
-      case "daily":
-        return date.toLocaleDateString("en-US", { weekday: "short" });
-      case "weekly":
-        return `Week ${getWeekNumber(date)} ${date.getFullYear()}`;
-      case "monthly":
-        return date.toLocaleString("default", {
-          month: "short",
-          year: "numeric",
-        });
-      case "yearly":
-        return date.getFullYear().toString();
-      default:
-        return date.toISOString().split("T")[0];
+    } catch (e) {
+      console.error("Error formatting date:", e);
+      return "N/A";
     }
   };
 
-  const getWeekNumber = (date) => {
-    const startOfYear = new Date(date.getFullYear(), 0, 1);
-    const diff =
-      date -
-      startOfYear +
-      (startOfYear.getTimezoneOffset() - date.getTimezoneOffset()) * 60 * 1000;
-    const oneWeek = 1000 * 60 * 60 * 24 * 7;
-    return Math.floor(diff / oneWeek) + 1; // Fixed: Removed "dije"
+  const createSortKey = (dateStr, range) => {
+    try {
+      if (range === "weekly" && dateStr.includes("-")) {
+        return dateStr;
+      }
+
+      if (range === "monthly") {
+        if (dateStr.includes("-")) {
+          return dateStr;
+        }
+        const date = new Date(dateStr);
+        return `${date.getFullYear()}-${(date.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}`;
+      }
+
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+
+      if (range === "weekly") {
+        return `${date.getFullYear()}-${getWeekNumber(date)
+          .toString()
+          .padStart(2, "0")}`;
+      }
+      return date.toISOString();
+    } catch (e) {
+      console.error("Error creating sort key:", e);
+      return dateStr;
+    }
   };
 
   const calculateProfileProgress = (data) => {
@@ -186,79 +201,201 @@ const Profile = () => {
     }[metric];
     const { limit } = TIME_RANGES[timeRange];
 
+    // Handle monthly range specifically
+    if (timeRange === "monthly") {
+      if (!analyticsData.length) {
+        return Array.from({ length: limit }, (_, i) => {
+          const date = new Date();
+          date.setMonth(date.getMonth() - (limit - 1 - i));
+          return {
+            date: date.toLocaleString("default", {
+              month: "short",
+              year: "2-digit",
+            }),
+            value: 0,
+            sortKey: `${date.getFullYear()}-${(date.getMonth() + 1)
+              .toString()
+              .padStart(2, "0")}`,
+          };
+        }).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+      }
+
+      const monthlyData = analyticsData.reduce((acc, item) => {
+        if (!item.formattedMonth) return acc;
+
+        const monthKey = item.formattedMonth;
+        const [year, month] = monthKey.split("-");
+        const date = new Date(year, month - 1);
+
+        if (!acc[monthKey]) {
+          acc[monthKey] = {
+            date: date.toLocaleString("default", {
+              month: "short",
+              year: "2-digit",
+            }),
+            value: 0,
+            sortKey: monthKey,
+          };
+        }
+        acc[monthKey].value += Number(item[metricKey]) || 0;
+        return acc;
+      }, {});
+
+      const processedData = Object.values(monthlyData)
+        .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+        .slice(-limit);
+
+      if (processedData.length < limit) {
+        const oldestDate = processedData.length
+          ? new Date(
+              processedData[0].sortKey.split("-")[0],
+              processedData[0].sortKey.split("-")[1] - 1
+            )
+          : new Date();
+        const existingMonths = new Set(processedData.map((d) => d.sortKey));
+
+        const fillerData = Array.from(
+          { length: limit - processedData.length },
+          (_, i) => {
+            const date = new Date(oldestDate);
+            date.setMonth(oldestDate.getMonth() - (i + 1));
+            const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1)
+              .toString()
+              .padStart(2, "0")}`;
+
+            if (existingMonths.has(monthKey)) {
+              return null;
+            }
+
+            return {
+              date: date.toLocaleString("default", {
+                month: "short",
+                year: "2-digit",
+              }),
+              value: 0,
+              sortKey: monthKey,
+            };
+          }
+        ).filter(Boolean);
+
+        return [...fillerData, ...processedData]
+          .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+          .slice(-limit);
+      }
+
+      return processedData;
+    }
+
+    // Handle other time ranges (daily, weekly, yearly)
     const dateField = {
       daily: "formattedDate",
       weekly: "formattedWeek",
-      monthly: "formattedMonth",
       yearly: "formattedYear",
     }[timeRange];
 
     if (!analyticsData.length) {
-      const fallbackData = Array.from({ length: limit }, (_, i) => {
+      return Array.from({ length: limit }, (_, i) => {
         const date = new Date();
-        date.setDate(
-          date.getDate() -
-            i *
-              (timeRange === "daily"
-                ? 1
-                : timeRange === "weekly"
-                ? 7
-                : timeRange === "monthly"
-                ? 30
-                : 365)
-        );
+        let offset;
+        switch (timeRange) {
+          case "daily":
+            offset = limit - 1 - i;
+            date.setDate(date.getDate() - offset);
+            break;
+          case "weekly":
+            offset = (limit - 1 - i) * 7;
+            date.setDate(date.getDate() - offset);
+            break;
+          case "yearly":
+            offset = limit - 1 - i;
+            date.setFullYear(date.getFullYear() - offset);
+            break;
+          default:
+            offset = limit - 1 - i;
+            date.setDate(date.getDate() - offset);
+        }
+
         return {
           date: formatDateForRange(date, timeRange),
-          value: profileData[metricKey] || 0,
+          value: 0,
+          sortKey:
+            timeRange === "yearly"
+              ? date.getFullYear().toString()
+              : createSortKey(date.toISOString(), timeRange),
         };
-      }).reverse();
-      return fallbackData;
+      }).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
     }
 
-    const graphData = analyticsData
+    const processedData = analyticsData
       .map((item) => {
         if (!item || !item[dateField]) return null;
+
         return {
           date: formatDateForRange(item[dateField], timeRange),
           value: Number(item[metricKey]) || 0,
+          sortKey:
+            timeRange === "yearly"
+              ? item[dateField]
+              : createSortKey(item[dateField], timeRange),
         };
       })
-      .filter(Boolean)
-      .sort((a, b) => new Date(a.date) - new Date(b.date))
-      .slice(-limit);
+      .filter(Boolean);
 
-    if (graphData.length < limit) {
-      let lastDate = new Date(
-        graphData[graphData.length - 1]?.date || Date.now()
-      );
-      if (isNaN(lastDate.getTime())) lastDate = new Date();
-      const filler = Array.from(
-        { length: limit - graphData.length },
+    if (processedData.length < limit) {
+      const oldestDate = processedData.length
+        ? new Date(
+            timeRange === "yearly"
+              ? `${processedData[0].sortKey}-01-01`
+              : processedData[0].sortKey
+          )
+        : new Date();
+      const existingKeys = new Set(processedData.map((d) => d.sortKey));
+
+      const fillerData = Array.from(
+        { length: limit - processedData.length },
         (_, i) => {
-          const newDate = new Date(lastDate);
-          newDate.setDate(
-            newDate.getDate() -
-              (i + 1) *
-                (timeRange === "daily"
-                  ? 1
-                  : timeRange === "weekly"
-                  ? 7
-                  : timeRange === "monthly"
-                  ? 30
-                  : 365)
-          );
+          let date = new Date(oldestDate);
+          let sortKey;
+
+          switch (timeRange) {
+            case "daily":
+              date.setDate(oldestDate.getDate() - (i + 1));
+              sortKey = createSortKey(date.toISOString(), timeRange);
+              break;
+            case "weekly":
+              date.setDate(oldestDate.getDate() - (i + 1) * 7);
+              sortKey = createSortKey(date.toISOString(), timeRange);
+              break;
+            case "yearly":
+              date.setFullYear(oldestDate.getFullYear() - (i + 1));
+              sortKey = date.getFullYear().toString();
+              break;
+            default:
+              date.setDate(oldestDate.getDate() - (i + 1));
+              sortKey = createSortKey(date.toISOString(), timeRange);
+          }
+
+          if (existingKeys.has(sortKey)) return null;
+
           return {
-            date: formatDateForRange(newDate, timeRange),
+            date: formatDateForRange(date, timeRange),
             value: 0,
+            sortKey: sortKey,
           };
         }
-      ).reverse();
-      return [...filler, ...graphData];
+      ).filter(Boolean);
+
+      return [...fillerData, ...processedData]
+        .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+        .slice(-limit);
     }
 
-    return graphData;
+    return processedData
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+      .slice(-limit);
   }, [analyticsData, metric, timeRange, profileData]);
 
+  // Fetch profile data
   useEffect(() => {
     if (!isAuthenticated || !token) {
       setError("Please log in to view your profile.");
@@ -269,12 +406,14 @@ const Profile = () => {
 
     const fetchProfileData = async () => {
       try {
+        setLoading(true);
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/member/my-profile`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
+
         const { data } = response.data;
         if (!data) throw new Error("No profile data found.");
 
@@ -284,8 +423,10 @@ const Profile = () => {
           ...memberData,
           subscriptionStatus: memberData.subscriptionStatus || "Unknown",
         };
-        if (JSON.stringify(user) !== JSON.stringify(newUserData))
+
+        if (JSON.stringify(user) !== JSON.stringify(newUserData)) {
           dispatch(login({ token, user: newUserData }));
+        }
 
         const updatedProfileData = {
           businessName: data.businessName || "User Name",
@@ -305,14 +446,16 @@ const Profile = () => {
 
         setProfileData(updatedProfileData);
         setIsVisible(!data.deletedAt);
+
         const { progress, isComplete } =
           calculateProfileProgress(updatedProfileData);
         setProfileProgress(progress);
         setIsProfileComplete(isComplete);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load profile data.");
-        if (err.response?.status === 404)
+        if (err.response?.status === 404) {
           navigate("/business-profile", { replace: true });
+        }
       } finally {
         setLoading(false);
       }
@@ -321,11 +464,13 @@ const Profile = () => {
     fetchProfileData();
   }, [isAuthenticated, token, dispatch, navigate, user]);
 
+  // Fetch analytics data
   useEffect(() => {
     if (!isAuthenticated || !token) return;
 
     const fetchAnalyticsData = async () => {
       try {
+        setLoading(true);
         const response = await axios.get(
           `${
             import.meta.env.VITE_BASE_URL
@@ -334,48 +479,64 @@ const Profile = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        if (!response.data.success || !Array.isArray(response.data.data))
+
+        if (!response.data.success || !Array.isArray(response.data.data)) {
           throw new Error("Invalid analytics data received.");
+        }
+
         setAnalyticsData(response.data.data);
       } catch (err) {
         setError(
           err.response?.data?.message || "Failed to load analytics data."
         );
         setAnalyticsData([]);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchAnalyticsData();
   }, [isAuthenticated, token, timeRange]);
 
+  // Handle click outside dropdowns
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (isDropdownOpen && !e.target.closest(".dropdown-container"))
+      if (isDropdownOpen && !e.target.closest(".dropdown-container")) {
         setIsDropdownOpen(false);
+      }
       if (
         isProfileVisibleDropdownOpen &&
         !e.target.closest(".profile-visible-dropdown")
-      )
+      ) {
         setIsProfileVisibleDropdownOpen(false);
+      }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [isDropdownOpen, isProfileVisibleDropdownOpen]);
 
+  // Toggle profile visibility
   const toggleVisibility = async (action) => {
-    if (!profileData.id || !token)
+    if (!profileData.id || !token) {
       return toast.error("Missing profile ID or token.");
+    }
+
     try {
       const url = `${import.meta.env.VITE_BASE_URL}/member/${
         action === "hide" ? "hide" : "unhide"
       }-profile`;
+
       const response = await axios.patch(
         url,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       if (response.data.success) {
-        setIsVisible(action === "restore");
+        setIsVisible(action !== "hide");
         toast.success(
           `Profile ${action === "hide" ? "hidden" : "restored"} successfully!`
         );
@@ -388,13 +549,18 @@ const Profile = () => {
       toast.error(
         err.response?.data?.message || "Failed to update visibility."
       );
-      if (err.response?.status === 401) navigate("/login", { replace: true });
+      if (err.response?.status === 401) {
+        navigate("/login", { replace: true });
+      }
     } finally {
       setIsProfileVisibleDropdownOpen(false);
     }
   };
 
-  const handleMetricChange = (selectedMetric) => setMetric(selectedMetric);
+  const handleMetricChange = (selectedMetric) => {
+    setMetric(selectedMetric);
+  };
+
   const handleTimeRangeChange = (range) => {
     setTimeRange(range);
     setIsDropdownOpen(false);
@@ -437,11 +603,12 @@ const Profile = () => {
         closeOnClick
         pauseOnHover
       />
+
       <header className="h-[12vh] p-4 sm:p-8 text-[#6A7368] flex justify-between items-center gap-2">
         <strong className="text-[16px]">Dashboard</strong>
         <div className="flex items-center gap-2 sm:gap-4 px-2 sm:px-4">
-          <Link to="/">
-            <IoIosNotificationsOutline className="text-[24px] sm:text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
+          <Link to="/user-dashboard/notification">
+            <IoIosNotificationsOutline className="hidden text-[24px] sm:text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
           </Link>
           <Link to="/user-dashboard/profile">
             <motion.figure
@@ -587,7 +754,7 @@ const Profile = () => {
                   : "bg-[#F5F7F5] hover:bg-[#043D12] hover:text-[#FFFDF2]"
               } ${!isVisible ? "opacity-50" : ""}`}
             >
-              <h5 className="text-start text-[12px] sm:text-[14px] font-semibold">
+              <h5 className="text-center text-[12px] sm:text-[14px] font-semibold">
                 {title}
               </h5>
               <figcaption className="text-[10px] sm:text-[12px]">
@@ -647,8 +814,13 @@ const Profile = () => {
                   content={({ payload }) =>
                     payload?.length ? (
                       <div className="bg-white p-2 border border-gray-300 rounded shadow">
-                        <p>{payload[0].payload.date}</p>
-                        <p>{payload[0].value}</p>
+                        <p className="font-semibold">
+                          {payload[0].payload.date}
+                        </p>
+                        <p>
+                          {METRICS.find((m) => m.key === metric)?.title}:{" "}
+                          {payload[0].value}
+                        </p>
                       </div>
                     ) : null
                   }
@@ -657,9 +829,10 @@ const Profile = () => {
                   type="monotone"
                   dataKey="value"
                   stroke="#82ca9d"
+                  strokeWidth={2}
                   activeDot={{ r: 8 }}
+                  dot={{ r: 4 }}
                 />
-                <Legend verticalAlign="top" align="right" />
               </LineChart>
             </ResponsiveContainer>
           </div>

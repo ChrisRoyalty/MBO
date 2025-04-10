@@ -12,7 +12,8 @@ import {
 } from "react-icons/fa";
 import NetworkError from "../NetworkError";
 import { Player } from "@lottiefiles/react-lottie-player";
-
+import { CiLocationOn } from "react-icons/ci";
+import { BsBodyText } from "react-icons/bs";
 // Contact Dropdown Component (unchanged)
 const ContactDropdown = ({ socialLinks, onClose }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -131,12 +132,13 @@ const Modal = ({ profile, onClose }) => {
             <p className="text-sm text-gray-600">
               {profile.categories[0]?.name || "Unknown Category"}
             </p>
-            <p className="text-gray-700">
-              <strong>Location:</strong> {profile.location || "Not specified"}
+            <p className="text-gray-700 flex items-center gap-2">
+              <CiLocationOn />
+
+              {profile.location || "Not specified"}
             </p>
-            <p className="text-gray-700">
-              <strong>Description:</strong>{" "}
-              {profile.description || "No description available"}
+            <p className="text-gray-700 flex items-center gap-2">
+              <BsBodyText /> {profile.description || "No description available"}
             </p>
             <div className="flex gap-4 items-center mt-4">
               <button

@@ -15,7 +15,7 @@ import NetworkError from "../NetworkError";
 import { Player } from "@lottiefiles/react-lottie-player";
 import Start from "../home/Start";
 import Footer from "../Footer";
-
+import { BsBodyText } from "react-icons/bs";
 const BASE_URL = "https://mbo.bookbank.com.ng";
 
 // Contact Dropdown Component
@@ -140,11 +140,11 @@ const Modal = ({ profile, onClose }) => {
             <p className="text-sm text-gray-600 cursor-pointer">
               {profile.categories[0]?.name || "Unknown Category"}
             </p>
-            <p className="text-gray-700">
-              <strong>Location:</strong> {profile.location || "Not specified"}
+            <p className="text-gray-700 flex items-center gap-2">
+              <CiLocationOn /> {profile.location || "Not specified"}
             </p>
-            <p className="text-gray-700">
-              <strong>Description:</strong>{" "}
+            <p className="text-gray-700 flex items-center gap-2">
+              <BsBodyText />
               {profile.description || "No description available"}
             </p>
             <div className="flex gap-4 items-center mt-4">
@@ -275,33 +275,57 @@ const AllBusiness = () => {
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
                 {/* Product Images Grid */}
-                <div className="imgs w-full h-[80px] relative grid grid-cols-3 gap-1">
-                  {(profile.productImages || [])
-                    .filter((img) => img?.imageUrl)
-                    .slice(0, 3)
-                    .map((img, i) => (
-                      <img
-                        key={i}
-                        src={img.imageUrl || profile.businesImg || BusinessImg}
-                        alt={profile.businessName}
-                        className={`w-full h-[80px] object-cover ${
-                          i === 0
-                            ? "rounded-l-[8px]"
-                            : i === 2
-                            ? "rounded-r-[8px]"
-                            : ""
-                        }`}
-                        onError={(e) => (e.target.src = BusinessImg)}
-                      />
-                    ))}
-                  {(!profile.productImages ||
-                    profile.productImages.length === 0) && (
+                <div className="imgs w-full h-[80px] relative">
+                  {!profile.productImages ||
+                  profile.productImages.length === 0 ? (
                     <img
                       src={profile.businesImg || BusinessImg}
                       alt={profile.businessName}
-                      className="w-full h-[80px] object-cover rounded-[8px] col-span-3"
+                      className="w-full h-[80px] object-cover rounded-[8px]"
                       onError={(e) => (e.target.src = BusinessImg)}
                     />
+                  ) : (
+                    <div
+                      className={`w-full h-[80px] grid gap-2 justify-center items-center ${
+                        (profile.productImages || []).filter(
+                          (img) => img?.imageUrl
+                        ).length === 1
+                          ? "grid-cols-1"
+                          : (profile.productImages || []).filter(
+                              (img) => img?.imageUrl
+                            ).length === 2
+                          ? "grid-cols-2"
+                          : "grid-cols-3"
+                      }`}
+                    >
+                      {(profile.productImages || [])
+                        .filter((img) => img?.imageUrl)
+                        .slice(0, 3)
+                        .map((img, i, arr) => {
+                          const imageCount = arr.length;
+                          return (
+                            <img
+                              key={i}
+                              src={
+                                img.imageUrl ||
+                                profile.businesImg ||
+                                BusinessImg
+                              }
+                              alt={profile.businessName}
+                              className={`w-full h-[80px] object-cover ${
+                                imageCount === 1
+                                  ? "rounded-[8px]"
+                                  : i === 0
+                                  ? "rounded-l-[8px]"
+                                  : i === imageCount - 1
+                                  ? "rounded-r-[8px]"
+                                  : ""
+                              }`}
+                              onError={(e) => (e.target.src = BusinessImg)}
+                            />
+                          );
+                        })}
+                    </div>
                   )}
                   <img
                     src={profile.businesImg || BusinessImg}
@@ -329,17 +353,11 @@ const AllBusiness = () => {
                       {profile.categories[0]?.name || "Unknown Category"}
                     </p>
                     <div className="details flex items-center justify-center">
-                      <div className="followers px-4 border-r-[1px] border-[#6A736866]">
+                      <div className="views px-4">
                         <h4 className="text-[12px] text-[#043D12] font-bold">
-                          30
+                          {profile.views}
                         </h4>
-                        <p className="text-[8px] text-[#6A7368]">Followers</p>
-                      </div>
-                      <div className="profile px-4">
-                        <h4 className="text-[12px] text-[#043D12] font-bold">
-                          30
-                        </h4>
-                        <p className="text-[8px] text-[#6A7368]">Followers</p>
+                        <p className="text-[8px] text-[#6A7368]">Views</p>
                       </div>
                     </div>
                     {profile.socialLinks?.whatsapp ? (

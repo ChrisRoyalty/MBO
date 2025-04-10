@@ -256,7 +256,7 @@ const BusinessProfile = () => {
             >
               <button
                 type="button"
-                className="flex items-center justify-between text-[#6A7368] w-full h-[48px] focus:outline-none"
+                className="flex items-center justify-between text-[#6A7368] w-full h-[48px] focus:outline-none cursor-pointer"
                 onClick={toggleDropdown}
               >
                 <div className="flex items-center gap-2">
@@ -325,7 +325,7 @@ const BusinessProfile = () => {
                     value={currentKeyword}
                     onChange={(e) => setCurrentKeyword(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    className="border-[1px] rounded-[20px] px-4 py-2 border-[#363636] text-[#6A7368] focus:outline-none w-40 h-10"
+                    className="border-[1px] rounded-[20px] px-4 py-2 border-[#363636] text-[#6A7368] focus:outline-none w-40 h-10 "
                   />
                   <button
                     type="button"

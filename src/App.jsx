@@ -158,6 +158,7 @@ function App() {
 
           {/* <Route path="help" element={<HelpAndSupport />} /> */}
           <Route path="create-profile" element={<CreateProfile />} />
+          <Route path="notification" element={<Notification />} />
         </Route>
 
         {/* Admin Dashboard */}

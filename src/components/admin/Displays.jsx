@@ -37,6 +37,11 @@ const Display = () => {
     lastname: "",
   });
   const [analyticsData, setAnalyticsData] = useState([]);
+  const [totals, setTotals] = useState({
+    totalUsers: 0,
+    totalActiveSubscribers: 0,
+    totalWebsiteVisits: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -121,6 +126,17 @@ const Display = () => {
           `Fetched data for ${currentType}:`,
           analyticsResponse.data.data
         );
+        setTotals({
+          totalUsers: parseInt(analyticsResponse.data.totalUsers || 0, 10),
+          totalActiveSubscribers: parseInt(
+            analyticsResponse.data.totalActiveSubscribers || 0,
+            10
+          ),
+          totalWebsiteVisits: parseInt(
+            analyticsResponse.data.totalWebsiteVisits || 0,
+            10
+          ),
+        });
         setAnalyticsData(analyticsResponse.data.data);
       } catch (error) {
         console.error("❌ Error Fetching Data:", error);
@@ -416,6 +432,62 @@ const Display = () => {
         pauseOnHover
         style={{ zIndex: 9999 }}
       />
+
+      {/* Modern Marquee for Totals */}
+      <div className="relative overflow-hidden bg-[#043D12] text-[#FFFDF2] py-4 rounded-xl shadow-lg">
+        <motion.div
+          className="flex whitespace-nowrap lg:gap-20 gap-10"
+          initial={{ x: "100%" }}
+          animate={{ x: "-100%" }}
+          transition={{
+            duration: 20,
+            ease: "linear",
+            repeat: Infinity,
+          }}
+        >
+          <div className="flex items-center lg:gap-20 gap-10 mx-4">
+            <span className="text-sm sm:text-base font-semibold">
+              Total Users:{" "}
+              <span className="text-[#FFCF00]">{totals.totalUsers}</span>
+            </span>
+            <span className="text-sm sm:text-base font-semibold">
+              Active Subscribers:{" "}
+              <span className="text-[#FFCF00]">
+                {totals.totalActiveSubscribers}
+              </span>
+            </span>
+            <span className="text-sm sm:text-base font-semibold">
+              Website Visits:{" "}
+              <span className="text-[#FFCF00]">
+                {totals.totalWebsiteVisits}
+              </span>
+            </span>
+          </div>
+          {/* Duplicate for seamless looping */}
+          <div className="flex items-center lg:gap-20 gap-10 mx-4">
+            <span className="text-sm sm:text-base font-semibold">
+              Total Users:{" "}
+              <span className="text-[#FFCF00]">{totals.totalUsers}</span>
+            </span>
+            <span className="text-sm sm:text-base font-semibold">
+              Active Subscribers:{" "}
+              <span className="text-[#FFCF00]">
+                {totals.totalActiveSubscribers}
+              </span>
+            </span>
+            <span className="text-sm sm:text-base font-semibold">
+              Website Visits:{" "}
+              <span className="text-[#FFCF00]">
+                {totals.totalWebsiteVisits}
+              </span>
+            </span>
+          </div>
+        </motion.div>
+        {/* Gradient overlays for fade effect */}
+        <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#043D12] to-transparent pointer-events-none"></div>
+        <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#043D12] to-transparent pointer-events-none"></div>
+      </div>
+
       <div className="h-[12vh] p-4 sm:p-8 text-[#6A7368] flex flex-col sm:flex-row justify-between items-center gap-2">
         <div className="welcome flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
           <h2 className="text-base sm:text-xl md:text-2xl">
@@ -472,7 +544,7 @@ const Display = () => {
                 metric === key ? "bg-[#043D12] text-[#FFFDF2]" : "bg-gray-200"
               }`}
             >
-              <h5 className="text-start text-xs sm:text-sm">{title}</h5>
+              <h5 className="text-center text-xs sm:text-sm">{title}</h5>
               <figcaption className="text-xs">{label}</figcaption>
               <h3 className="count text-xl sm:text-2xl md:text-3xl">
                 {value(analyticsData[0] || {})}

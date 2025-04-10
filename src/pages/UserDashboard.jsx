@@ -113,7 +113,9 @@ const UserDashboard = () => {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/member/my-profile`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
         if (response.data && response.data.success && response.data.data) {
           const profile = response.data.data;
@@ -138,7 +140,9 @@ const UserDashboard = () => {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/member/share`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
         if (
           response.data &&
@@ -228,6 +232,13 @@ const UserDashboard = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Function to close sidebar on nav link click for small screens
+  const handleNavLinkClick = () => {
+    if (window.innerWidth < 1024) {
+      setIsSidebarOpen(false);
+    }
+  };
+
   return (
     <div className="w-full flex flex-col md:flex-row h-screen overflow-hidden relative">
       <ToastContainer
@@ -277,6 +288,7 @@ const UserDashboard = () => {
               >
                 <Link
                   to={item.to}
+                  onClick={handleNavLinkClick} // Add onClick handler
                   className={`text-[15px] flex items-center gap-4 px-6 py-2 rounded-[11px] transition-all duration-300 relative overflow-hidden ${
                     location.pathname === item.to
                       ? "bg-[#043D12] text-white shadow-lg"
@@ -407,7 +419,7 @@ const UserDashboard = () => {
                 )}
               </AnimatePresence>
             </motion.div>
-
+            {/* 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -415,6 +427,7 @@ const UserDashboard = () => {
             >
               <Link
                 to={helpItem.to}
+                onClick={handleNavLinkClick} // Add onClick handler
                 className={`text-[15px] flex items-center gap-4 px-6 py-2 rounded-[11px] transition-all duration-300 relative overflow-hidden ${
                   location.pathname === helpItem.to
                     ? "bg-[#043D12] text-white shadow-lg"
@@ -433,7 +446,7 @@ const UserDashboard = () => {
                   {helpItem.label}
                 </motion.span>
               </Link>
-            </motion.div>
+            </motion.div> */}
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}

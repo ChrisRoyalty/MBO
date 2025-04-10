@@ -22,7 +22,7 @@ const navItemVariants = {
 const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { identifier } = useParams();
   const [isOpen, setIsOpen] = useState(false);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -42,7 +42,6 @@ const Header = () => {
   useEffect(() => {
     if (isAuthenticated) {
       if (isAdmin) {
-        // Admins bypass all checks
         setIsSubscribed(true);
         setHasBusinessProfile(true);
         setIsStatusLoading(false);
@@ -84,13 +83,13 @@ const Header = () => {
 
   // Fetch business profile data when on a profile page
   useEffect(() => {
-    if (location.pathname.startsWith("/community/profile/")) {
+    if (location.pathname.startsWith("/community/profile/") && identifier) {
       setLoading(true);
       const fetchProfile = async () => {
         try {
           const API_URL = `${
             import.meta.env.VITE_BASE_URL
-          }/member/get-profile/${id}`;
+          }/member/get-profile/${identifier}`;
           const response = await axios.get(API_URL);
           setProfile(response.data?.profile || null);
         } catch (error) {
@@ -104,7 +103,7 @@ const Header = () => {
     } else {
       setProfile(null);
     }
-  }, [location.pathname, id]);
+  }, [location.pathname, identifier]);
 
   // Track dashboard visits
   useEffect(() => {
@@ -167,7 +166,7 @@ const Header = () => {
         <img
           src={profile?.businesImg || ProfilePic}
           alt="Business Profile"
-          className="absolute bottom-[-60px] w-[120px] h-[120px] rounded-full border-4 border-[#FFCF00] shadow-lg lg:left-[12%] left-[calc(50%-60px)] z-20"
+          className="absolute bottom-[-60px] w-[120px] h-[120px] rounded-full border-4 border-[#FFCF00] shadow-lg lg:left-[12%] left-[calc(50%-60px)] z-20 object-cover"
           onError={(e) => (e.target.src = ProfilePic)}
         />
       )}

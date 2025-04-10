@@ -12,10 +12,10 @@ import { motion } from "framer-motion";
 
 // Example country codes and their length requirements
 const countryCodes = [
-  { code: "+1", label: "US (+1)" },
-  { code: "+234", label: "Nigeria (+234)" },
-  { code: "+44", label: "UK (+44)" },
-  { code: "+91", label: "India (+91)" },
+  { code: "+1", label: "+1" },
+  { code: "+234", label: "+234" },
+  { code: "+44", label: "+44" },
+  { code: "+91", label: "+91" },
 ];
 
 const countryCodeLengths = {
@@ -136,18 +136,25 @@ const BusinessProfile2 = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const fullWhatsapp = `${whatsappCountryCode}${whatsappNumber}`;
-    const fullPhone = `${phoneCountryCode}${phoneNumber}`;
+    const fullPhone = phoneNumber ? `${phoneCountryCode}${phoneNumber}` : "";
 
+    // Validate WhatsApp number (required)
     if (!whatsappNumber.trim() || whatsappStatus !== "valid") {
       toast.error("Please enter a valid WhatsApp number.", { autoClose: 3000 });
       return;
     }
-    if (!phoneNumber.trim() || phoneStatus !== "valid") {
-      toast.error("Please enter a valid alternative phone number.", {
-        autoClose: 3000,
-      });
+
+    // Validate alternative phone number only if provided
+    if (phoneNumber.trim() && phoneStatus !== "valid") {
+      toast.error(
+        "Please enter a valid alternative phone number, or leave it blank.",
+        {
+          autoClose: 3000,
+        }
+      );
       return;
     }
+
     if (!location.trim()) {
       toast.error("Please enter your location (e.g., Lagos, Nigeria).", {
         autoClose: 3000,
@@ -166,7 +173,7 @@ const BusinessProfile2 = () => {
       keyword: step1Data.keyword
         ? step1Data.keyword.split(",").map((kw) => kw.trim())
         : [],
-      contactNo: [fullPhone],
+      contactNo: fullPhone ? [fullPhone] : [], // Only include if provided
       location,
       socialLinks: { whatsapp: whatsappLink },
     };

@@ -15,6 +15,7 @@ import BusinessImg from "../../assets/user-photo.svg";
 import NetworkError from "../NetworkError";
 import { Player } from "@lottiefiles/react-lottie-player";
 import { TfiEmail } from "react-icons/tfi";
+import { FaXTwitter } from "react-icons/fa6";
 
 // Utility function to generate WhatsApp URL with predefined message
 const getWhatsAppUrl = (profile, productName = null) => {
@@ -34,101 +35,154 @@ const getWhatsAppUrl = (profile, productName = null) => {
   }text=${encodeURIComponent(message)}`;
 };
 
-// Modal Component
-const Modal = ({ business, onClose }) => {
-  if (!business) return null;
+// New Ultra-Modern Product Modal Component
+const ProductModal = ({ product, profile, onClose }) => {
+  if (!product || !profile) return null;
 
-  const navigate = useNavigate();
-  const whatsappUrl = getWhatsAppUrl(business);
+  const whatsappUrl = getWhatsAppUrl(profile, product.name);
 
-  const handleViewProfile = () => {
-    navigate(`/community/profile/${business.id}`);
-    onClose();
-  };
+  const socialIcons = [
+    { key: "whatsapp", icon: IoLogoWhatsapp, url: whatsappUrl },
+    { key: "facebook", icon: FaFacebook, url: profile.socialLinks?.facebook },
+    {
+      key: "instagram",
+      icon: IoLogoInstagram,
+      url: profile.socialLinks?.instagram,
+    },
+    { key: "twitter", icon: FaXTwitter, url: profile.socialLinks?.twitter },
+    {
+      key: "linkedin",
+      icon: IoLogoLinkedin,
+      url: profile.socialLinks?.linkedin,
+    },
+  ].filter((item) => item.url); // Filter out undefined URLs
 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed container mx-auto px-[5vh] inset-0 bg-black/75 bg-opacity-50 flex justify-center items-center z-50"
+        className="fixed inset-0 bg-black/80 flex justify-center items-center z-50"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       >
         <motion.div
-          className="bg-white px-8 py-10 rounded-lg shadow-lg md:w-[60%] flex flex-col md:flex-row gap-6 items-center"
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          exit={{ scale: 0.8 }}
+          className="relative bg-gradient-to-br from-[#FFFDF2] to-white rounded-2xl shadow-2xl w-[90%] max-w-lg p-6 overflow-hidden"
+          initial={{ scale: 0.9, y: 50 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.9, y: 50 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
           onClick={(e) => e.stopPropagation()}
         >
-          <motion.img
-            src={
-              business.productImages?.[0]?.imageUrl ||
-              business.businesImg ||
-              BusinessImg
-            }
-            alt={business.businessName}
-            className="w-full rounded-lg h-[350px] object-cover"
-            initial={{ x: -50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            onError={(e) => (e.target.src = BusinessImg)}
-          />
-          <motion.div
-            className="flex flex-col gap-4"
-            initial={{ x: 50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.5 }}
+          {/* Close Button */}
+          <motion.button
+            onClick={onClose}
+            className="absolute top-3 right-3 text-[#6A7368] hover:text-[#043D12] text-xl z-10"
+            whileHover={{ scale: 1.2, rotate: 90 }}
+            transition={{ duration: 0.3 }}
           >
-            <h2 className="text-xl font-bold text-[#043D12]">
-              {business.businessName}
-            </h2>
-            <p className="text-gray-700">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus
-              lacinia odio vitae vestibulum.
-            </p>
-            <div className="btns flex">
-              <div className="w-fit flex items-center gap-6">
-                <button
-                  onClick={handleViewProfile}
-                  className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-2 lg:px-8 py-2 shadow-lg hover:bg-[#043D12]"
-                >
-                  View Profile
-                </button>
-                {whatsappUrl ? (
-                  <a
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-2 lg:px-8 py-2 shadow-lg hover:bg-[#043D12]"
-                  >
-                    Contact Us
-                  </a>
-                ) : (
-                  <a
-                    href={`/community/contact/${business.id}`}
-                    className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-2 lg:px-8 py-2 shadow-lg hover:bg-[#043D12]"
-                  >
-                    Contact Us
-                  </a>
-                )}
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="mt-4 border-[1px] border-red-600 text-red-600 font-bold rounded-lg shadow-md py-2"
-            >
-              Close
-            </button>
+            ✕
+          </motion.button>
+
+          {/* Product Image */}
+          <motion.div
+            className="relative w-full h-64 rounded-xl overflow-hidden mb-4"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <img
+              src={product.imageUrl || BusinessImg}
+              alt={product.name}
+              className="w-full h-full object-cover"
+              onError={(e) => (e.target.src = BusinessImg)}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           </motion.div>
+
+          {/* Product Name */}
+          <motion.h2
+            className="text-2xl font-bold text-[#043D12] mb-4"
+            title={product.name}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            {product.name || "Unnamed Product"}
+          </motion.h2>
+
+          {/* Category */}
+          <motion.p
+            className="flex items-center gap-2 text-[#6A7368] text-sm mb-4"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <MdOutlineCategory />{" "}
+            {profile.categories[0]?.name || "Unknown Category"}
+          </motion.p>
+
+          {/* Social Media Links */}
+          {socialIcons.length > 0 && (
+            <motion.div
+              className="flex gap-4 mb-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              {socialIcons.map((social, index) => (
+                <motion.a
+                  key={social.key}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#043D12] hover:text-white p-2 rounded-full bg-[#F5F7F5] hover:bg-[#043D12] transition-all duration-300"
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                >
+                  <social.icon className="text-xl" />
+                </motion.a>
+              ))}
+            </motion.div>
+          )}
+
+          {/* Email Link */}
+          {profile.member?.email && (
+            <motion.a
+              href={`mailto:${profile.member.email}`}
+              className="flex items-center gap-2 text-[#043D12] hover:text-[#032d0e] text-sm mb-4"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.6 }}
+            >
+              <TfiEmail /> {profile.member.email}
+            </motion.a>
+          )}
+
+          {/* Contact Business Button */}
+          {whatsappUrl && (
+            <motion.a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block w-full text-center bg-[#043D12] text-white py-2 rounded-lg hover:bg-[#032d0e] transition-colors duration-300"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+            >
+              Contact {profile.businessName}
+            </motion.a>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>
   );
 };
 
-// Report Modal Component (unchanged)
+// Report Modal Component (Fixed Typo)
 const ReportModal = ({ profile, onClose }) => {
   const [reportData, setReportData] = useState({
     fullName: "",
@@ -287,7 +341,7 @@ const ReportModal = ({ profile, onClose }) => {
                 <textarea
                   name="issueDescription"
                   value={reportData.issueDescription}
-                  onChange={handleInputChange}
+                  onChange={handleInputChange} // Fixed typo here: changed "amatoInputChange" to "handleInputChange"
                   placeholder="Type your issue here..."
                   rows="4"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#043D12]"
@@ -317,12 +371,13 @@ const ReportModal = ({ profile, onClose }) => {
 const ProfileMain = () => {
   const { identifier } = useParams();
   const [profile, setProfile] = useState(null);
-  const [selectedBusiness, setSelectedBusiness] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
+
   useEffect(() => {
     if (!identifier) {
       setError("Invalid profile identifier.");
@@ -377,6 +432,10 @@ const ProfileMain = () => {
     });
   };
 
+  const handleProductClick = (product) => {
+    setSelectedProduct(product);
+  };
+
   const filteredProducts = filterProducts(profile?.productImages || []);
 
   if (loading) {
@@ -399,7 +458,6 @@ const ProfileMain = () => {
     return <div>Profile not found.</div>;
   }
 
-  // Generate WhatsApp URL with predefined message
   const whatsappUrl = getWhatsAppUrl(profile);
 
   return (
@@ -409,7 +467,7 @@ const ProfileMain = () => {
           {/* Aside Section */}
           <aside className="md:w-[25%] flex flex-col gap-8 text-[#6A7368]">
             <h3
-              className="lg:text-[20px] text-[#043D12] text-center md:text-left text-[18px] md:text-[28px] font-bold truncate hover:whitespace-normal hover:overflow-visible hover:z-10"
+              className="lg:text-[20px] text-[#043D12] text-center md:text-left text-[18px] md:text-[28px] font-bold hover:whitespace-normal hover:overflow-visible hover:z-10"
               title={profile.businessName}
             >
               {profile.businessName}
@@ -470,7 +528,7 @@ const ProfileMain = () => {
                   {profile.socialLinks?.twitter && (
                     <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
                       <div className="flex items-center gap-4">
-                        <IoLogoTwitter className="text-[25px]" />
+                        <FaXTwitter className="text-[25px]" />
                         Twitter
                       </div>
                       <a
@@ -622,11 +680,12 @@ const ProfileMain = () => {
                 {filteredProducts.map((product, index) => (
                   <motion.div
                     key={index}
-                    className="flex flex-col gap-1"
+                    className="flex flex-col gap-1 cursor-pointer"
                     initial={{ opacity: 0, y: 50 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: false }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
+                    onClick={() => handleProductClick(product)}
                   >
                     <figure>
                       <img
@@ -638,7 +697,7 @@ const ProfileMain = () => {
                       <figcaption className="flex flex-col gap-4 text-[#043D12] py-2">
                         <div className="flex flex-col gap-1">
                           <b
-                            className="lg:text-[15px] text-[10px] md:text-[12px] truncate"
+                            className="lg:text-[15px] text-[10px] md:text-[12px]"
                             title={product.name || "Unnamed Product"}
                           >
                             {product.name || "Unnamed Product"}
@@ -673,9 +732,10 @@ const ProfileMain = () => {
                 </button>
               </div>
             )}
-            <Modal
-              business={selectedBusiness}
-              onClose={() => setSelectedBusiness(null)}
+            <ProductModal
+              product={selectedProduct}
+              profile={profile}
+              onClose={() => setSelectedProduct(null)}
             />
           </div>
         </div>

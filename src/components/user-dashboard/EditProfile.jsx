@@ -922,7 +922,7 @@ const EditProfile = () => {
                 </div>
               </div>
               <div className="text-[#6A7368] flex flex-col gap-2">
-                <label className="text-sm">Location</label>
+                <label className="text-sm">Location </label>
                 <div className="flex justify-between gap-4">
                   <input
                     type="text"

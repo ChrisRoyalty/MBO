@@ -56,7 +56,9 @@ const ContactAndSocials = () => {
       whatsapp: /^https:\/\/wa\.me\/[0-9]{10,13}$/,
       facebook: /^(https?:\/\/)?(www\.)?(facebook|fb)\.com\/.+/i,
       instagram: /^(https?:\/\/)?(www\.)?instagram\.com\/.+/i,
-      twitter: /^(https?:\/\/)?(www\.)?twitter\.com\/.+/i,
+      // twitter: /^(https?:\/\/)?(www\.)?twitter\.com\/.+/i,
+      twitter:
+        /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/[A-Za-z0-9_]{1,15}$/i,
       tiktok: /^(https?:\/\/)?(www\.)?tiktok\.com\/.+/i,
       linkedin: /^(https?:\/\/)?(www\.)?linkedin\.com\/.+/i,
     };

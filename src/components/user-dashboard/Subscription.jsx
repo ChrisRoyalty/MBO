@@ -139,7 +139,7 @@ const Subscription = () => {
           </div>
         </div>
 
-        <div className="btns flex justify-start lg:pt-6 pb-12">
+        <div className=" btns hidden justify-start lg:pt-6 pb-12">
           <button
             onClick={handleChangePlan}
             className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-2 lg:px-8 py-3 shadow-lg hover:text-white hover:bg-[#043D12]"

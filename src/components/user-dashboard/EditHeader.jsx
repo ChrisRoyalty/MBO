@@ -95,8 +95,8 @@ const EditHeader = () => {
             Edit Profile
           </strong>
           <div className="flex items-center md:gap-4 pr-8">
-            <Link to="/">
-              <IoIosNotificationsOutline className="text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
+            <Link to="/user-dashboard/notification">
+              <IoIosNotificationsOutline className="hidden text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
             </Link>
             <Link to="/user-dashboard/profile">
               <motion.figure
