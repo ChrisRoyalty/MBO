@@ -35,14 +35,46 @@ const getWhatsAppUrl = (profile, productName = null) => {
   }text=${encodeURIComponent(message)}`;
 };
 
-// New Ultra-Modern Product Modal Component
+// Function to track WhatsApp link clicks
+const trackWhatsAppClick = async (profileId) => {
+  if (!profileId) {
+    console.error("❌ No profileId provided for WhatsApp tracking");
+    return;
+  }
+
+  try {
+    await axios.post(
+      `${import.meta.env.VITE_BASE_URL}/member/track-click/${profileId}`,
+      { platform: "whatsapp" },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error) {
+    console.error(
+      "❌ Error tracking WhatsApp click:",
+      error.response?.data || error
+    );
+    // Optionally show a toast for critical errors
+    // toast.error("Failed to track WhatsApp click.", { position: "top-right", autoClose: 3000 });
+  }
+};
+
+// Product Modal Component
 const ProductModal = ({ product, profile, onClose }) => {
   if (!product || !profile) return null;
 
   const whatsappUrl = getWhatsAppUrl(profile, product.name);
 
   const socialIcons = [
-    { key: "whatsapp", icon: IoLogoWhatsapp, url: whatsappUrl },
+    {
+      key: "whatsapp",
+      icon: IoLogoWhatsapp,
+      url: whatsappUrl,
+      onClick: () => trackWhatsAppClick(profile.id),
+    },
     { key: "facebook", icon: FaFacebook, url: profile.socialLinks?.facebook },
     {
       key: "instagram",
@@ -86,7 +118,7 @@ const ProductModal = ({ product, profile, onClose }) => {
 
           {/* Product Image */}
           <motion.div
-            className="relative w-full h-64 rounded-xl overflow-hidden mb-4"
+            className="relative w-full h-64 rounded-xl overflow-hidden mb-4 bg-white flex items-center justify-center"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -94,7 +126,7 @@ const ProductModal = ({ product, profile, onClose }) => {
             <img
               src={product.imageUrl || BusinessImg}
               alt={product.name}
-              className="w-full h-full object-cover"
+              className="max-w-full max-h-full object-contain p-2"
               onError={(e) => (e.target.src = BusinessImg)}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -122,13 +154,23 @@ const ProductModal = ({ product, profile, onClose }) => {
             {profile.categories[0]?.name || "Unknown Category"}
           </motion.p>
 
+          {/* Product Description */}
+          <motion.p
+            className="text-[#6A7368] text-sm mb-4"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            {product.description || "No product description available"}
+          </motion.p>
+
           {/* Social Media Links */}
           {socialIcons.length > 0 && (
             <motion.div
               className="flex gap-4 mb-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
+              transition={{ delay: 0.6 }}
             >
               {socialIcons.map((social, index) => (
                 <motion.a
@@ -141,7 +183,8 @@ const ProductModal = ({ product, profile, onClose }) => {
                   whileTap={{ scale: 0.95 }}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 + index * 0.1 }}
+                  transition={{ delay: 0.6 + index * 0.1 }}
+                  onClick={social.onClick}
                 >
                   <social.icon className="text-xl" />
                 </motion.a>
@@ -156,7 +199,7 @@ const ProductModal = ({ product, profile, onClose }) => {
               className="flex items-center gap-2 text-[#043D12] hover:text-[#032d0e] text-sm mb-4"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6 }}
+              transition={{ delay: 0.7 }}
             >
               <TfiEmail /> {profile.member.email}
             </motion.a>
@@ -171,7 +214,8 @@ const ProductModal = ({ product, profile, onClose }) => {
               className="inline-block w-full text-center bg-[#043D12] text-white py-2 rounded-lg hover:bg-[#032d0e] transition-colors duration-300"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
+              transition={{ delay: 0.8 }}
+              onClick={() => trackWhatsAppClick(profile.id)}
             >
               Contact {profile.businessName}
             </motion.a>
@@ -182,7 +226,7 @@ const ProductModal = ({ product, profile, onClose }) => {
   );
 };
 
-// Report Modal Component (Fixed Typo)
+// Report Modal Component
 const ReportModal = ({ profile, onClose }) => {
   const [reportData, setReportData] = useState({
     fullName: "",
@@ -341,7 +385,7 @@ const ReportModal = ({ profile, onClose }) => {
                 <textarea
                   name="issueDescription"
                   value={reportData.issueDescription}
-                  onChange={handleInputChange} // Fixed typo here: changed "amatoInputChange" to "handleInputChange"
+                  onChange={handleInputChange}
                   placeholder="Type your issue here..."
                   rows="4"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#043D12]"
@@ -407,7 +451,7 @@ const ProfileMain = () => {
           throw new Error("Profile not found.");
         }
       } catch (error) {
-        console.error(" Error Fetching Profile:", error);
+        console.error("Error Fetching Profile:", error);
         setError(
           error.response?.data?.message ||
             error.message ||
@@ -451,7 +495,9 @@ const ProfileMain = () => {
   }
 
   if (error) {
-    return <NetworkError message={error} onRetry={fetchProfile} />;
+    return (
+      <NetworkError message={error} onRetry={() => window.location.reload()} />
+    );
   }
 
   if (!profile) {
@@ -491,6 +537,7 @@ const ProfileMain = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 border-[1px] border-[#043D12] hover:bg-[#043D12] hover:text-white rounded-[28px] px-4 md:px-12 py-2 shadow text-[14px]"
+                  onClick={() => trackWhatsAppClick(profile.id)}
                 >
                   <FaWhatsapp />
                   Message
@@ -644,6 +691,7 @@ const ProfileMain = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex justify-between items-center text-[14px] py-2 px-8"
+                      onClick={() => trackWhatsAppClick(profile.id)}
                     >
                       <div className="flex items-center gap-4">WhatsApp</div>
                       <IoLogoWhatsapp className="text-[18px]" />
@@ -682,7 +730,7 @@ const ProfileMain = () => {
                     key={index}
                     className="flex flex-col gap-1 cursor-pointer"
                     initial={{ opacity: 0, y: 50 }}
-                    whileInView={{ opacity: 1, y: 0 }}
+                    animate={{ opacity: 1, y: 0 }}
                     viewport={{ once: false }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
                     onClick={() => handleProductClick(product)}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
@@ -9,13 +9,42 @@ import {
   FaTwitter,
   FaFacebook,
   FaInstagram,
+  FaLinkedin,
 } from "react-icons/fa";
+import { RiArrowDropDownLine, RiArrowDropUpLine } from "react-icons/ri";
+import { CiSearch } from "react-icons/ci";
 import NetworkError from "../NetworkError";
 import { Player } from "@lottiefiles/react-lottie-player";
 import { CiLocationOn } from "react-icons/ci";
 import { BsBodyText } from "react-icons/bs";
-// Contact Dropdown Component (unchanged)
-const ContactDropdown = ({ socialLinks, onClose }) => {
+
+// Function to track WhatsApp link clicks
+const trackWhatsAppClick = async (profileId) => {
+  if (!profileId) {
+    console.error("❌ No profileId provided for WhatsApp tracking");
+    return;
+  }
+
+  try {
+    await axios.post(
+      `${import.meta.env.VITE_BASE_URL}/member/track-click/${profileId}`,
+      { platform: "whatsapp" },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error) {
+    console.error(
+      "❌ Error tracking WhatsApp click:",
+      error.response?.data || error
+    );
+  }
+};
+
+// Contact Dropdown Component
+const ContactDropdown = ({ socialLinks, profileId, onClose }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   if (!socialLinks || Object.keys(socialLinks).length === 0) {
@@ -23,10 +52,11 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
   }
 
   const socialIcons = {
-    whatsapp: { icon: FaWhatsapp, label: "WhatsApp" },
-    twitter: { icon: FaTwitter, label: "Twitter" },
-    facebook: { icon: FaFacebook, label: "Facebook" },
-    instagram: { icon: FaInstagram, label: "Instagram" },
+    whatsapp: { icon: FaWhatsapp, label: "WhatsApp", color: "#25D366" },
+    twitter: { icon: FaTwitter, label: "Twitter", color: "#1DA1F2" },
+    facebook: { icon: FaFacebook, label: "Facebook", color: "#1877F2" },
+    instagram: { icon: FaInstagram, label: "Instagram", color: "#E1306C" },
+    linkedin: { icon: FaLinkedin, label: "LinkedIn", color: "#0077B5" },
   };
 
   return (
@@ -36,7 +66,7 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
         className="w-fit border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[12px] md:text-[15px] px-2 md:px-4 py-2 shadow-lg hover:bg-[#043D12] hover:text-white text-center flex items-center gap-2"
       >
         Contact Us
-        <span>{isOpen ? "▲" : "▼"}</span>
+        {isOpen ? <RiArrowDropUpLine /> : <RiArrowDropDownLine />}
       </button>
       <AnimatePresence>
         {isOpen && (
@@ -44,12 +74,17 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="absolute w-full bg-white border-[1px] border-[#6A7368] rounded-[11px] shadow-lg mt-2 pb-8 overflow-y-auto"
+            className="absolute w-full bg-white border-[1px] border-[#6A7368] rounded-[11px] shadow-lg mt-2 pb-4 overflow-y-auto"
             style={{ zIndex: 50 }}
           >
             {Object.entries(socialLinks).map(([platform, url]) => {
-              const Icon = socialIcons[platform.toLowerCase()]?.icon;
-              return Icon ? (
+              const {
+                icon: Icon,
+                label,
+                color,
+              } = socialIcons[platform.toLowerCase()] || {};
+              if (!url || !Icon) return null;
+              return (
                 <a
                   key={platform}
                   href={url}
@@ -57,15 +92,18 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
                   rel="noopener noreferrer"
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (platform.toLowerCase() === "whatsapp") {
+                      trackWhatsAppClick(profileId);
+                    }
                     setIsOpen(false);
                     onClose();
                   }}
                   className="flex items-center gap-2 w-full text-left px-4 py-2 text-[15px] text-[#043D12] hover:bg-[#F5F7F5] transition-colors duration-300"
                 >
-                  <Icon className="text-[#043D12]" />
-                  {socialIcons[platform.toLowerCase()].label}
+                  <Icon style={{ color }} />
+                  {label}
                 </a>
-              ) : null;
+              );
             })}
           </motion.div>
         )}
@@ -74,8 +112,8 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
   );
 };
 
-// Modal Component (unchanged)
-const Modal = ({ profile, onClose }) => {
+// Modal Component (Updated for Products)
+const Modal = ({ profile, product, onClose }) => {
   if (!profile) return null;
 
   const navigate = useNavigate();
@@ -109,11 +147,12 @@ const Modal = ({ profile, onClose }) => {
           </button>
           <motion.img
             src={
+              product?.imageUrl ||
               profile.productImages?.[0]?.imageUrl ||
               profile.businesImg ||
               BusinessImg
             }
-            alt={profile.businessName}
+            alt={product?.name || profile.businessName}
             className="w-full md:w-1/2 h-full object-cover rounded-lg"
             initial={{ x: -50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -127,18 +166,24 @@ const Modal = ({ profile, onClose }) => {
             transition={{ duration: 0.5 }}
           >
             <h2 className="text-2xl font-bold text-[#043D12]">
-              {profile.businessName}
+              {product?.name || profile.businessName}
             </h2>
             <p className="text-sm text-gray-600">
+              <strong>Business:</strong> {profile.businessName}
+            </p>
+            <p className="text-sm text-gray-600">
+              <strong>Category:</strong>{" "}
               {profile.categories[0]?.name || "Unknown Category"}
             </p>
             <p className="text-gray-700 flex items-center gap-2">
               <CiLocationOn />
-
               {profile.location || "Not specified"}
             </p>
             <p className="text-gray-700 flex items-center gap-2">
-              <BsBodyText /> {profile.description || "No description available"}
+              <BsBodyText />
+              {product?.description ||
+                profile.description ||
+                "No description available"}
             </p>
             <div className="flex gap-4 items-center mt-4">
               <button
@@ -149,6 +194,7 @@ const Modal = ({ profile, onClose }) => {
               </button>
               <ContactDropdown
                 socialLinks={profile.socialLinks}
+                profileId={profile.id}
                 onClose={onClose}
               />
             </div>
@@ -159,21 +205,22 @@ const Modal = ({ profile, onClose }) => {
   );
 };
 
-// Main Component with Enhanced Error Handling and No Results Design
+// Main Component
 const NewBusinesses = () => {
-  const [selectedProfile, setSelectedProfile] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
   const [newProfiles, setNewProfiles] = useState([]);
   const [trendingProfiles, setTrendingProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filterCategory, setFilterCategory] = useState("");
   const [filterLocation, setFilterLocation] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
 
   const fetchProfiles = async () => {
     setLoading(true);
-    setError(null); // Reset error before fetching
+    setError(null);
     try {
       const newURL = `${import.meta.env.VITE_BASE_URL}/member/all-profiles`;
       const newResponse = await axios.get(newURL);
@@ -213,16 +260,29 @@ const NewBusinesses = () => {
     fetchProfiles();
   }, []);
 
-  const getUniqueCategories = () => {
-    const categories = [...newProfiles, ...trendingProfiles]
+  // Combine profiles for unique categories and locations
+  const allProfiles = useMemo(() => {
+    const uniqueProfiles = [];
+    const profileIds = new Set();
+    [...newProfiles, ...trendingProfiles].forEach((profile) => {
+      if (!profileIds.has(profile.id)) {
+        uniqueProfiles.push(profile);
+        profileIds.add(profile.id);
+      }
+    });
+    return uniqueProfiles;
+  }, [newProfiles, trendingProfiles]);
+
+  const getUniqueCategories = useMemo(() => {
+    const categories = allProfiles
       .flatMap((profile) => profile.categories?.map((cat) => cat.name) || [])
       .filter((value, index, self) => self.indexOf(value) === index)
       .sort();
     return ["All Categories", ...categories];
-  };
+  }, [allProfiles]);
 
-  const getUniqueLocations = () => {
-    const locations = [...newProfiles, ...trendingProfiles]
+  const getUniqueLocations = useMemo(() => {
+    const locations = allProfiles
       .map((profile) => profile.location)
       .filter(
         (value, index, self) =>
@@ -230,10 +290,24 @@ const NewBusinesses = () => {
       )
       .sort();
     return ["All Locations", ...locations];
-  };
+  }, [allProfiles]);
 
-  const filterProfiles = (profiles) => {
-    return profiles.filter((profile) => {
+  // Flatten profiles into product items
+  const productItems = useMemo(() => {
+    return allProfiles.flatMap((profile) =>
+      profile.productImages?.length > 0
+        ? profile.productImages.map((product) => ({
+            profile,
+            product,
+          }))
+        : [{ profile, product: null }]
+    );
+  }, [allProfiles]);
+
+  // Filter products
+  const filterProducts = useMemo(() => {
+    return productItems.filter(({ profile, product }) => {
+      const query = searchQuery.toLowerCase().trim();
       const matchesCategory =
         !filterCategory ||
         filterCategory === "All Categories" ||
@@ -242,12 +316,42 @@ const NewBusinesses = () => {
         !filterLocation ||
         filterLocation === "All Locations" ||
         profile.location === filterLocation;
-      return matchesCategory && matchesLocation;
+      const matchesSearch =
+        !query ||
+        profile.businessName?.toLowerCase().includes(query) ||
+        profile.description?.toLowerCase().includes(query) ||
+        profile.categories?.some((cat) =>
+          cat.name.toLowerCase().includes(query)
+        ) ||
+        (product &&
+          (product.name?.toLowerCase().includes(query) ||
+            (product.description &&
+              product.description.toLowerCase().includes(query))));
+      return matchesCategory && matchesLocation && matchesSearch;
     });
+  }, [productItems, searchQuery, filterCategory, filterLocation]);
+
+  const toggleCategory = () => {
+    setIsCategoryOpen(!isCategoryOpen);
+    setIsLocationOpen(false);
   };
 
-  const filteredNewProfiles = filterProfiles(newProfiles);
-  const filteredTrendingProfiles = filterProfiles(trendingProfiles);
+  const toggleLocation = () => {
+    setIsLocationOpen(!isLocationOpen);
+    setIsCategoryOpen(false);
+  };
+
+  const handleCategoryFilter = (category) => {
+    setFilterCategory(category === "All Categories" ? "" : category);
+    setSearchQuery("");
+    setIsCategoryOpen(false);
+  };
+
+  const handleLocationFilter = (location) => {
+    setFilterLocation(location === "All Locations" ? "" : location);
+    setSearchQuery("");
+    setIsLocationOpen(false);
+  };
 
   if (loading) {
     return (
@@ -265,95 +369,101 @@ const NewBusinesses = () => {
     return <NetworkError message={error} onRetry={fetchProfiles} />;
   }
 
-  const toggleCategory = () => {
-    setIsCategoryOpen(!isCategoryOpen);
-    setIsLocationOpen(false);
-  };
-
-  const toggleLocation = () => {
-    setIsLocationOpen(!isLocationOpen);
-    setIsCategoryOpen(false);
-  };
-
   return (
     <div className="w-full h-fit pb-8 flex justify-center bg-[#FFFDF2]">
       <div className="container mx-auto px-[5vw] h-fit flex flex-col gap-8">
-        <div className="flex gap-4">
-          <div className="relative w-1/2">
-            <button
-              onClick={toggleCategory}
-              className="w-full border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-4 py-2 shadow-lg bg-transparent flex justify-between items-center hover:bg-[#F5F7F5] transition-all duration-300"
-            >
-              {filterCategory || "Category"}
-              <span className="ml-2">▼</span>
-            </button>
-            <AnimatePresence>
-              {isCategoryOpen && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="absolute w-full bg-[#FFFDF2] border-[1px] border-[#6A7368] rounded-[11px] shadow-lg mt-2 overflow-hidden"
-                  style={{ zIndex: 40 }}
-                >
-                  {getUniqueCategories().map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => {
-                        setFilterCategory(
-                          category === "All Categories" ? "" : category
-                        );
-                        setIsCategoryOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-[15px] text-[#043D12] hover:bg-[#F5F7F5] transition-colors duration-300"
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+        {/* Filters and Search */}
+        <div className="flex flex-col gap-4">
+          <div className="relative w-full md:w-1/2">
+            <input
+              type="text"
+              className="w-full pl-10 pr-4 py-2 border-[1px] border-[#6A7368] rounded-[11px] text-[#043D12] placeholder-gray-600 text-[15px] shadow-lg focus:outline-none focus:ring-2 focus:ring-[#043D12] transition-all"
+              placeholder="Search products, businesses, or services..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <CiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#043D12] text-xl" />
           </div>
-          <div className="relative w-1/2">
-            <button
-              onClick={toggleLocation}
-              className="w-full border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-4 py-2 shadow-lg bg-transparent flex justify-between items-center hover:bg-[#F5F7F5] transition-all duration-300"
-            >
-              {filterLocation || "Location"}
-              <span className="ml-2">▼</span>
-            </button>
-            <AnimatePresence>
-              {isLocationOpen && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="absolute w-full bg-[#FFFDF2] border-[1px] border-[#6A7368] rounded-[11px] shadow-lg mt-2 overflow-hidden"
-                  style={{ zIndex: 40 }}
-                >
-                  {getUniqueLocations().map((location) => (
-                    <button
-                      key={location}
-                      onClick={() => {
-                        setFilterLocation(
-                          location === "All Locations" ? "" : location
-                        );
-                        setIsLocationOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-[15px] text-[#043D12] hover:bg-[#F5F7F5] transition-colors duration-300"
-                    >
-                      {location}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+          <div className="flex gap-4">
+            <div className="relative w-1/2">
+              <button
+                onClick={toggleCategory}
+                className="w-full border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-4 py-2 shadow-lg bg-transparent flex justify-between items-center hover:bg-[#F5F7F5] transition-all duration-300"
+              >
+                {filterCategory || "Category"}
+                <span className="ml-2">
+                  {isCategoryOpen ? (
+                    <RiArrowDropUpLine />
+                  ) : (
+                    <RiArrowDropDownLine />
+                  )}
+                </span>
+              </button>
+              <AnimatePresence>
+                {isCategoryOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="absolute w-full bg-[#FFFDF2] border-[1px] border-[#6A7368] rounded-[11px] shadow-lg mt-2 overflow-hidden"
+                    style={{ zIndex: 40 }}
+                  >
+                    {getUniqueCategories.map((category) => (
+                      <button
+                        key={category}
+                        onClick={() => handleCategoryFilter(category)}
+                        className="w-full text-left px-4 py-2 text-[15px] text-[#043D12] hover:bg-[#F5F7F5] transition-colors duration-300"
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <div className="relative w-1/2">
+              <button
+                onClick={toggleLocation}
+                className="w-full border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-4 py-2 shadow-lg bg-transparent flex justify-between items-center hover:bg-[#F5F7F5] transition-all duration-300"
+              >
+                {filterLocation || "Location"}
+                <span className="ml-2">
+                  {isLocationOpen ? (
+                    <RiArrowDropUpLine />
+                  ) : (
+                    <RiArrowDropDownLine />
+                  )}
+                </span>
+              </button>
+              <AnimatePresence>
+                {isLocationOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="absolute w-full bg-[#FFFDF2] border-[1px] border-[#6A7368] rounded-[11px] shadow-lg mt-2 overflow-hidden"
+                    style={{ zIndex: 40 }}
+                  >
+                    {getUniqueLocations.map((location) => (
+                      <button
+                        key={location}
+                        onClick={() => handleLocationFilter(location)}
+                        className="w-full text-left px-4 py-2 text-[15px] text-[#043D12] hover:bg-[#F5F7F5] transition-colors duration-300"
+                      >
+                        {location}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
 
-        {/* Check if both filtered arrays are empty */}
-        {filteredNewProfiles.length === 0 &&
-        filteredTrendingProfiles.length === 0 ? (
+        {/* Business and Product Sections */}
+        {newProfiles.length === 0 &&
+        trendingProfiles.length === 0 &&
+        filterProducts.length === 0 ? (
           <div className="w-full flex flex-col items-center justify-center gap-8 py-16">
             <Player
               autoplay
@@ -365,15 +475,16 @@ const NewBusinesses = () => {
               No Results Found
             </h2>
             <p className="text-sm text-[#6A7368] text-center max-w-2xl">
-              It looks like there are no businesses matching your filter
-              criteria. Try adjusting your filters or explore other businesses
-              in the community!
+              It looks like there are no businesses or products matching your
+              filter criteria. Try adjusting your filters or explore other
+              businesses in the community!
             </p>
             <button
               className="mt-4 bg-[#043D12] text-white px-8 py-3 rounded-lg text-sm font-semibold hover:bg-[#032d0e] transition-colors cursor-pointer"
               onClick={() => {
                 setFilterCategory("");
                 setFilterLocation("");
+                setSearchQuery("");
               }}
             >
               Clear Filters
@@ -381,117 +492,238 @@ const NewBusinesses = () => {
           </div>
         ) : (
           <div className="all-business flex flex-col gap-24">
+            {/* Newly Added Businesses */}
             <div>
               <h1 className="text-[#043D12] lg:text-[32px] text-[24px] font-medium">
                 Newly Added Businesses
               </h1>
               <div className="w-full grid xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
-                {filteredNewProfiles.map((profile, index) => (
-                  <motion.div
-                    key={profile.id}
-                    className="flex flex-col gap-2 cursor-pointer h-[350px] my-8"
-                    initial={{ opacity: 0, y: 50 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: false }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    onClick={() => setSelectedProfile(profile)}
-                  >
-                    <div className="profile flex items-center gap-2">
-                      <img
-                        src={profile.businesImg || BusinessImg}
-                        alt={profile.businessName}
-                        className="w-8 h-8 rounded-full object-cover"
-                        onError={(e) => (e.target.src = BusinessImg)}
-                      />
-                      <p className="text-[12px] text-[#043D12]">
-                        {profile.businessName}
-                      </p>
-                    </div>
-                    <figure className="flex-1">
-                      <img
-                        src={
-                          profile.productImages?.[0]?.imageUrl ||
-                          profile.businesImg ||
-                          BusinessImg
-                        }
-                        alt={profile.businessName}
-                        className="w-full h-[300px] object-cover rounded-lg"
-                        onError={(e) => (e.target.src = BusinessImg)}
-                      />
-                      <figcaption className="flex flex-col gap-2 text-[#043D12] py-2">
-                        <div className="flex flex-col gap-1">
-                          <b className="lg:text-[15px] text-[10px]">
-                            {profile.businessName}
-                          </b>
-                          <p className="text-[10px]">
-                            {profile.categories[0]?.name || "Unknown Category"}
-                          </p>
-                        </div>
-                      </figcaption>
-                    </figure>
-                  </motion.div>
-                ))}
+                {newProfiles
+                  .filter((profile) => {
+                    const matchesCategory =
+                      !filterCategory ||
+                      filterCategory === "All Categories" ||
+                      profile.categories?.some(
+                        (cat) => cat.name === filterCategory
+                      );
+                    const matchesLocation =
+                      !filterLocation ||
+                      filterLocation === "All Locations" ||
+                      profile.location === filterLocation;
+                    return matchesCategory && matchesLocation;
+                  })
+                  .map((profile, index) => (
+                    <motion.div
+                      key={profile.id}
+                      className="flex flex-col gap-2 cursor-pointer h-[350px] my-8"
+                      initial={{ opacity: 0, y: 50 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: false }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      onClick={() =>
+                        setSelectedItem({ profile, product: null })
+                      }
+                    >
+                      <div className="profile flex items-center gap-2">
+                        <img
+                          src={profile.businesImg || BusinessImg}
+                          alt={profile.businessName}
+                          className="w-8 h-8 rounded-full object-cover"
+                          onError={(e) => (e.target.src = BusinessImg)}
+                        />
+                        <p className="text-[12px] text-[#043D12]">
+                          {profile.businessName}
+                        </p>
+                      </div>
+                      <figure className="flex-1">
+                        <img
+                          src={
+                            profile.productImages?.[0]?.imageUrl ||
+                            profile.businesImg ||
+                            BusinessImg
+                          }
+                          alt={profile.businessName}
+                          className="w-full h-[300px] object-cover rounded-lg"
+                          onError={(e) => (e.target.src = BusinessImg)}
+                        />
+                        <figcaption className="flex flex-col gap-2 text-[#043D12] py-2">
+                          <div className="flex flex-col gap-1">
+                            <b className="lg:text-[15px] text-[10px]">
+                              {profile.businessName}
+                            </b>
+                            <p className="text-[10px]">
+                              {profile.categories[0]?.name ||
+                                "Unknown Category"}
+                            </p>
+                          </div>
+                        </figcaption>
+                      </figure>
+                    </motion.div>
+                  ))}
               </div>
             </div>
 
+            {/* Trending Businesses */}
             <div>
               <h1 className="text-[#043D12] lg:text-[32px] text-[24px] font-medium">
                 Trending Businesses
               </h1>
               <div className="w-full grid xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
-                {filteredTrendingProfiles.map((profile, index) => (
-                  <motion.div
-                    key={profile.id}
-                    className="flex flex-col gap-2 cursor-pointer h-[350px] my-8"
-                    initial={{ opacity: 0, y: 50 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: false }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    onClick={() => setSelectedProfile(profile)}
-                  >
-                    <div className="profile flex items-center gap-2">
-                      <img
-                        src={profile.businesImg || BusinessImg}
-                        alt={profile.businessName}
-                        className="w-8 h-8 rounded-full object-cover"
-                        onError={(e) => (e.target.src = BusinessImg)}
-                      />
-                      <p className="text-[12px] text-[#043D12]">
-                        {profile.businessName}
-                      </p>
-                    </div>
-                    <figure className="flex-1">
-                      <img
-                        src={
-                          profile.productImages?.[0]?.imageUrl ||
-                          profile.businesImg ||
-                          BusinessImg
-                        }
-                        alt={profile.businessName}
-                        className="w-full h-[300px] object-cover rounded-lg"
-                        onError={(e) => (e.target.src = BusinessImg)}
-                      />
-                      <figcaption className="flex flex-col gap-2 text-[#043D12] py-2">
-                        <div className="flex flex-col gap-1">
-                          <b className="lg:text-[15px] text-[10px]">
-                            {profile.businessName}
-                          </b>
-                          <p className="text-[10px]">
-                            {profile.categories[0]?.name || "Unknown Category"}
-                          </p>
-                        </div>
-                      </figcaption>
-                    </figure>
-                  </motion.div>
-                ))}
+                {trendingProfiles
+                  .filter((profile) => {
+                    const matchesCategory =
+                      !filterCategory ||
+                      filterCategory === "All Categories" ||
+                      profile.categories?.some(
+                        (cat) => cat.name === filterCategory
+                      );
+                    const matchesLocation =
+                      !filterLocation ||
+                      filterLocation === "All Locations" ||
+                      profile.location === filterLocation;
+                    return matchesCategory && matchesLocation;
+                  })
+                  .map((profile, index) => (
+                    <motion.div
+                      key={profile.id}
+                      className="flex flex-col gap-2 cursor-pointer h-[350px] my-8"
+                      initial={{ opacity: 0, y: 50 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: false }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      onClick={() =>
+                        setSelectedItem({ profile, product: null })
+                      }
+                    >
+                      <div className="profile flex items-center gap-2">
+                        <img
+                          src={profile.businesImg || BusinessImg}
+                          alt={profile.businessName}
+                          className="w-8 h-8 rounded-full object-cover"
+                          onError={(e) => (e.target.src = BusinessImg)}
+                        />
+                        <p className="text-[12px] text-[#043D12]">
+                          {profile.businessName}
+                        </p>
+                      </div>
+                      <figure className="flex-1">
+                        <img
+                          src={
+                            profile.productImages?.[0]?.imageUrl ||
+                            profile.businesImg ||
+                            BusinessImg
+                          }
+                          alt={profile.businessName}
+                          className="w-full h-[300px] object-cover rounded-lg"
+                          onError={(e) => (e.target.src = BusinessImg)}
+                        />
+                        <figcaption className="flex flex-col gap-2 text-[#043D12] py-2">
+                          <div className="flex flex-col gap-1">
+                            <b className="lg:text-[15px] text-[10px]">
+                              {profile.businessName}
+                            </b>
+                            <p className="text-[10px]">
+                              {profile.categories[0]?.name ||
+                                "Unknown Category"}
+                            </p>
+                          </div>
+                        </figcaption>
+                      </figure>
+                    </motion.div>
+                  ))}
               </div>
+            </div>
+
+            {/* All Products */}
+            <div>
+              <h1 className="text-[#043D12] lg:text-[32px] text-[24px] font-medium">
+                All Products
+              </h1>
+              {filterProducts.length > 0 ? (
+                <div className="w-full grid xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
+                  {filterProducts.map(({ profile, product }, index) => (
+                    <motion.div
+                      key={`${profile.id}-${product?.name || index}`}
+                      className="flex flex-col gap-2 cursor-pointer h-[350px] my-8"
+                      initial={{ opacity: 0, y: 50 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: false }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      onClick={() => setSelectedItem({ profile, product })}
+                    >
+                      <div className="profile flex items-center gap-2">
+                        <img
+                          src={profile.businesImg || BusinessImg}
+                          alt={profile.businessName}
+                          className="w-8 h-8 rounded-full object-cover"
+                          onError={(e) => (e.target.src = BusinessImg)}
+                        />
+                        <p className="text-[12px] text-[#043D12]">
+                          {profile.businessName}
+                        </p>
+                      </div>
+                      <figure className="flex-1">
+                        <img
+                          src={
+                            product?.imageUrl ||
+                            profile.businesImg ||
+                            BusinessImg
+                          }
+                          alt={product?.name || profile.businessName}
+                          className="w-full h-[300px] object-cover rounded-lg"
+                          onError={(e) => (e.target.src = BusinessImg)}
+                        />
+                        <figcaption className="flex flex-col gap-2 text-[#043D12] py-2">
+                          <div className="flex flex-col gap-1">
+                            <b className="lg:text-[15px] text-[10px]">
+                              {product?.name || "No Product Listed"}
+                            </b>
+                            <p className="text-[10px]">
+                              {profile.categories[0]?.name ||
+                                "Unknown Category"}
+                            </p>
+                          </div>
+                        </figcaption>
+                      </figure>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="w-full flex flex-col items-center justify-center gap-8 py-16">
+                  <Player
+                    autoplay
+                    loop
+                    src="https://lottie.host/7fd33a4f-2e59-4f34-ba0c-4af37814586e/Cq1qkcf16G.lottie"
+                    style={{ height: "300px", width: "300px" }}
+                  />
+                  <h2 className="text-md font-bold text-[#043D12]">
+                    No Products Found
+                  </h2>
+                  <p className="text-sm text-[#6A7368] text-center max-w-2xl">
+                    It looks like there are no products matching your search or
+                    filter criteria. Try adjusting your filters or explore other
+                    businesses in the community!
+                  </p>
+                  <button
+                    className="mt-4 bg-[#043D12] text-white px-8 py-3 rounded-lg text-sm font-semibold hover:bg-[#032d0e] transition-colors cursor-pointer"
+                    onClick={() => {
+                      setFilterCategory("");
+                      setFilterLocation("");
+                      setSearchQuery("");
+                    }}
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
       </div>
       <Modal
-        profile={selectedProfile}
-        onClose={() => setSelectedProfile(null)}
+        profile={selectedItem?.profile}
+        product={selectedItem?.product}
+        onClose={() => setSelectedItem(null)}
       />
     </div>
   );

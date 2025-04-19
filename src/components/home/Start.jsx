@@ -93,13 +93,7 @@ const Start = () => {
         >
           Create your profile and let the world discover you!
         </motion.p>
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: false }}
-          variants={animations.rotate}
-          className="w-fit h-fit mx-auto"
-        >
+        <div className="w-fit h-fit mx-auto">
           <motion.a
             variants={animations.buttonHover}
             whileHover="hover"
@@ -107,9 +101,9 @@ const Start = () => {
             href="/create-account"
             className="bg-[#FFFDF2] text-[#043D12] rounded-[48px] shadow-lg lg:text-[18px] text-[14px] md:px-8 px-4 py-3 md:py-4 w-fit mx-auto font-medium"
           >
-            Create my Profile
+            Set Up My Business
           </motion.a>
-        </motion.div>
+        </div>
       </motion.div>
     </motion.div>
   );

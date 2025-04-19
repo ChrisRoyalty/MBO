@@ -60,13 +60,13 @@ const Footer = () => {
             <strong>Address:</strong> 3 CONVENANT CLOSE BEHIND RUFUS OBI
             CHEMIST, ALONG ABA-OWERRI ROAD, Aba 450272
           </p>
-          <ul className="flex items-center gap-1">
+          <ul className="flex max-sm:flex-col items-center gap-1">
             <li className="font-bold">Customer Support:</li>
             <li>09078987890</li>
           </ul>
-          <ul className="flex items-center gap-1">
+          <ul className="flex max-sm:flex-col items-center gap-1 max-sm:w-[90%] m-auto">
             <li className="font-bold">Email:</li>
-            <li>admin@mindpowerbusinessonline.com</li>
+            <li className="max-sm:px-4">admin@mindpowerbusinessonline.com</li>
           </ul>
         </motion.div>
         <motion.nav
@@ -96,9 +96,7 @@ const Footer = () => {
         variants={fadeInUp}
         className="max-md:w-[90%] mx-auto lg:h-[10vh] h-[15vh] policies text-[14px] flex flex-col gap-2 w-full items-center justify-center border-t-[1px] border-[#043D12] py-4 max-md:text-center"
       >
-        <p className="text-[#043D12]">
-          © 2025 Mind Power Aba. All rights reserved.
-        </p>
+        <p className="text-[#043D12]">© 2025 MindPower. All rights reserved.</p>
         <a
           href="https://api.whatsapp.com/send?phone=2348188155501"
           className="border-b-[1px] hover:font-bold"

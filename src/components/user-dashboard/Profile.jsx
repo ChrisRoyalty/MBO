@@ -64,13 +64,13 @@ const Profile = () => {
     {
       title: "Shared Links",
       key: "sharedLinks",
-      label: "Number of links shared",
+      label: "Number of people that visited your profile from the shared link",
       value: (data) => data.sharedClicks,
     },
     {
       title: "Social Clicks",
       key: "socialClicks",
-      label: "Clicks on social media links (e.g., WhatsApp)",
+      label: "WhatsApp Clicks from Profile Page",
       value: (data) => data.whatsappClicks,
     },
   ];

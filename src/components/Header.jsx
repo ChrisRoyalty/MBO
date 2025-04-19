@@ -128,7 +128,7 @@ const Header = () => {
 
   const navItems = [
     { name: "Home", path: "/" },
-    { name: "Community", path: "/community" },
+    { name: "Marketplace", path: "/community" },
     isAuthenticated &&
     (isAdmin || (isSubscribed && hasBusinessProfile)) &&
     !isStatusLoading
@@ -148,7 +148,7 @@ const Header = () => {
 
   return (
     <div
-      className={`relative bg-[#FFFDF2] py-[5vh] lg:py-[6vh] ${
+      className={`global-header relative bg-[#FFFDF2] py-[3vh] z-[100] ${
         location.pathname.startsWith("/community/profile/") ? "pb-[40px]" : ""
       }`}
     >
@@ -173,7 +173,7 @@ const Header = () => {
 
       <div className="container mx-auto px-[5vw]">
         <div
-          className={`bg-[#043D12] px-5 md:px-12 py-4 flex justify-between items-center rounded-[48px] shadow-lg relative z-30 ${
+          className={`bg-[#043D12] px-5 md:px-12 py-4 flex justify-between items-center rounded-[48px] shadow-lg relative z-[110] ${
             location.pathname.startsWith("/community/profile/")
               ? "mb-[50px]"
               : ""
@@ -195,7 +195,7 @@ const Header = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.3 }}
-                className="absolute top-[15vh] left-0 w-full bg-[#FFFDF2] flex flex-col items-center py-6 shadow-lg md:hidden rounded-b-[40px] z-20"
+                className="absolute top-[15vh] left-0 w-full bg-[#FFFDF2] flex flex-col items-center py-6 shadow-lg md:hidden rounded-b-[40px] z-[120]"
               >
                 <nav className="flex flex-col items-center gap-6 w-full">
                   {navItems.map((item, index) => (
@@ -242,12 +242,17 @@ const Header = () => {
                   }`}
                 >
                   {item.name}
-                  {item.path !== "/login" && item.path !== "/" && (
+                  {item.path !== "/login" && ( // Removed exclusion of "/" from border-bottom
                     <motion.div
                       className="absolute bottom-[-3px] left-0 h-[3px] bg-[#FFCF00]"
                       initial={{ width: 0 }}
                       animate={{
-                        width: location.pathname === item.path ? "100%" : "0%",
+                        width:
+                          (item.path === "/community" &&
+                            location.pathname.startsWith("/community")) ||
+                          location.pathname === item.path
+                            ? "100%"
+                            : "0%",
                       }}
                       whileHover={{ width: "100%" }}
                       transition={{ duration: 0.3 }}

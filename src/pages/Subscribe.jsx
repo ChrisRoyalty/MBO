@@ -20,6 +20,7 @@ import {
 
 const PUBLIC_KEY = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
 const MAIN_URL = import.meta.env.VITE_BASE_URL_MAIN;
+const SUBACCOUNT_ID = "RS_3B38D8439E07F7FACC77DEDC01FACE59";
 
 const IntroModal = ({ onClose, onProceed, subscriptions }) => {
   const hasMultiple = subscriptions.length > 1;
@@ -354,17 +355,39 @@ const Subscribe = () => {
   };
 
   const handlePaymentCallback = async (paymentResponse) => {
-  if (
-    paymentResponse.status === "completed" ||
-    paymentResponse.status === "successful"
-  ) {
-    setShowSuccessModal(true);
-  } else {
-    toast.error("Payment failed. Please try again.");
-  }
-  closePaymentModal();
-};
+    if (
+      paymentResponse.status === "completed" ||
+      paymentResponse.status === "successful"
+    ) {
+      setShowSuccessModal(true);
+    } else {
+      toast.error("Payment failed. Please try again.");
+    }
+    closePaymentModal();
+  };
 
+  const getFlutterwaveConfig = (subscription, txRef, user) => ({
+    public_key: PUBLIC_KEY,
+    tx_ref: txRef,
+    amount: subscription.price || 0,
+    currency: "NGN",
+    redirect_url: `${MAIN_URL}/business-profile`,
+    payment_options: "banktransfer, card, ussd",
+    customer: {
+      email: user.email || "guest@example.com",
+      name: `${user.firstName || "Guest"} ${user.lastName || ""}`,
+    },
+    customizations: {
+      title: "MBO Subscription",
+      description: `Payment for ${subscription.name || "Subscription"}`,
+      logo: "/mbo-logo.png",
+    },
+    subaccounts: [
+      {
+        id: SUBACCOUNT_ID,
+      },
+    ],
+  });
 
   if (isLoadingUser) {
     return (
@@ -490,26 +513,11 @@ const Subscribe = () => {
                           </p>
                         ) : txRefs[subscription.id] ? (
                           <FlutterWaveButton
-                            className="cursor-pointer bg-transparent text-white font-medium text-[18px] border-2 border-white px-4 py-2 rounded-lg w-full"
-                            public_key={PUBLIC_KEY}
-                            tx_ref={txRefs[subscription.id]}
-                            amount={subscription.price || 0}
-                            currency="NGN"
-                            redirect_url={`${MAIN_URL}/business-profile`}
-                            payment_options="banktransfer, card, ussd"
-                            customer={{
-                              email: user.email || "guest@example.com",
-                              name: `${user.firstName || "Guest"} ${
-                                user.lastName || ""
-                              }`,
-                            }}
-                            customizations={{
-                              title: "MBO Subscription",
-                              description: `Payment for ${
-                                subscription.name || "Subscription"
-                              }`,
-                              logo: "/mbo-logo.png",
-                            }}
+                            {...getFlutterwaveConfig(
+                              subscription,
+                              txRefs[subscription.id],
+                              user
+                            )}
                             callback={handlePaymentCallback}
                             onClose={() => console.log("Payment modal closed")}
                             text="Pay Now"

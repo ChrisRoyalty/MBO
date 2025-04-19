@@ -41,7 +41,7 @@ const Subscription = () => {
           setSubscriptionData({
             planName: subscription.name || "No Active Plan",
             price: subscription.price
-              ? `$${parseFloat(subscription.price).toFixed(2)}`
+              ? `₦${parseFloat(subscription.price).toFixed(2)}`
               : "0.00",
             nextBillingDate: member.subscriptionEndDate
               ? new Date(member.subscriptionEndDate).toLocaleDateString(

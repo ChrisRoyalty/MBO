@@ -73,9 +73,9 @@ function App() {
           <Route path="faq" element={<Faq />} />
 
           <Route path="community" element={<Community />}>
-            <Route index element={<CommunityMain />} />
+            <Route index element={<SearchPage />} />
             <Route path="all-businesses" element={<AllBusiness />} />
-            <Route path="search" element={<SearchPage />} />
+            <Route path="search" element={<CommunityMain />} />
             <Route path="profile/:identifier" element={<ProfilePage />} />{" "}
             {/* Updated to dynamic route with :id */}
           </Route>
