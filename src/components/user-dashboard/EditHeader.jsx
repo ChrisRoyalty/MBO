@@ -100,7 +100,7 @@ const EditHeader = () => {
             </Link>
             <Link to="/user-dashboard/profile">
               <motion.figure
-                className="flex items-center bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200"
+                className="flex items-center bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200 "
                 whileHover={{ scale: 1.05 }}
                 animate={{ opacity: [1, 0.8, 1] }}
                 transition={{

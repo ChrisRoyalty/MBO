@@ -92,7 +92,7 @@ const ProductModal = ({ product, profile, onClose }) => {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black/80 flex justify-center items-center z-50"
+        className="fixed inset-0 bg-black/80 flex justify-center items-center z-100"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -294,7 +294,7 @@ const ReportModal = ({ profile, onClose }) => {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black/75 bg-opacity-50 flex justify-center items-center z-50"
+        className="fixed inset-0 bg-black/75 bg-opacity-50 flex justify-center items-center z-100"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}

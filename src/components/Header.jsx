@@ -5,6 +5,7 @@ import axios from "axios";
 import MindPowerLogo from "../assets/mbo-logo.png";
 import MenuIcon from "../assets/menu.svg";
 import ProfilePic from "../assets/user-photo.svg";
+import DefaultBackgroundImg from "../assets/businessImg.jpeg"; // Ensure this exists
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
 import { logout, selectAuth, setLastDashboard } from "../redux/authSlice";
@@ -81,20 +82,69 @@ const Header = () => {
     }
   }, [isAuthenticated, auth.token, isAdmin]);
 
-  // Fetch business profile data when on a profile page
+  // Fetch business profile data for profile pages
   useEffect(() => {
     if (location.pathname.startsWith("/community/profile/") && identifier) {
       setLoading(true);
       const fetchProfile = async () => {
         try {
-          const API_URL = `${
-            import.meta.env.VITE_BASE_URL
-          }/member/get-profile/${identifier}`;
+          let API_URL;
+          // Check if identifier is a slug (not a UUID)
+          if (
+            identifier.match(
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+            )
+          ) {
+            API_URL = `${
+              import.meta.env.VITE_BASE_URL
+            }/member/get-profile/${identifier}`;
+          } else {
+            API_URL = `${
+              import.meta.env.VITE_BASE_URL
+            }/member/get-slug/${identifier}`;
+          }
+          console.log("Fetching profile from:", API_URL);
           const response = await axios.get(API_URL);
-          setProfile(response.data?.profile || null);
+          const profileData = response.data?.profile || null;
+          console.log(
+            "Profile API Response for",
+            identifier,
+            ":",
+            response.data
+          );
+          console.log("Profile Images:", {
+            businesImg: profileData?.businesImg,
+            backgroundImg: profileData?.backgroundImg,
+          });
+          console.log("Profile State Set:", profileData);
+          setProfile(profileData);
+          if (!profileData?.businesImg) {
+            console.warn("No businesImg found for identifier:", identifier);
+          }
+          if (!profileData?.backgroundImg) {
+            console.warn("No backgroundImg found for identifier:", identifier);
+          }
         } catch (error) {
-          console.error("Error fetching business profile:", error);
+          console.error(
+            "Error fetching business profile for",
+            identifier,
+            ":",
+            error
+          );
           setError(error.response?.data?.message || "Failed to load profile");
+          setProfile(null);
+          if (error.response?.status === 404) {
+            console.warn(
+              `Profile not found for identifier: ${identifier}. Check if the slug or ID exists in the backend database.`
+            );
+            toast.error(
+              `Profile '${identifier}' not found. The link may be invalid or not yet available. Contact support for assistance.`
+            );
+          } else {
+            toast.error(
+              "An error occurred while loading the profile. Please try again later."
+            );
+          }
         } finally {
           setLoading(false);
         }
@@ -102,6 +152,8 @@ const Header = () => {
       fetchProfile();
     } else {
       setProfile(null);
+      setError(null);
+      setLoading(false);
     }
   }, [location.pathname, identifier]);
 
@@ -148,18 +200,27 @@ const Header = () => {
 
   return (
     <div
-      className={`global-header relative bg-[#FFFDF2] py-[3vh] z-[100] ${
+      className={`global-header relative bg-[#FFFDF2] py-[3vh] z-[70] ${
         location.pathname.startsWith("/community/profile/") ? "pb-[40px]" : ""
       }`}
     >
       {/* Background image for profile pages */}
-      {location.pathname.startsWith("/community/profile/") &&
-        profile?.backgroundImg && (
-          <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0"
-            style={{ backgroundImage: `url(${profile.backgroundImg})` }}
-          />
-        )}
+      {profile && (
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0"
+          style={{
+            backgroundImage: `url(${
+              profile?.backgroundImg || DefaultBackgroundImg
+            })`,
+          }}
+          onError={(e) =>
+            console.error(
+              "Background image failed to load:",
+              profile?.backgroundImg || DefaultBackgroundImg
+            )
+          }
+        />
+      )}
 
       {/* Business profile picture - centered on mobile */}
       {location.pathname.startsWith("/community/profile/") && (
@@ -167,7 +228,13 @@ const Header = () => {
           src={profile?.businesImg || ProfilePic}
           alt="Business Profile"
           className="absolute bottom-[-60px] w-[120px] h-[120px] rounded-full border-4 border-[#FFCF00] shadow-lg lg:left-[12%] left-[calc(50%-60px)] z-20 object-cover"
-          onError={(e) => (e.target.src = ProfilePic)}
+          onError={(e) => {
+            console.warn(
+              "Business image failed to load, using fallback:",
+              profile?.businesImg
+            );
+            e.target.src = ProfilePic;
+          }}
         />
       )}
 
@@ -195,7 +262,7 @@ const Header = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.3 }}
-                className="absolute top-[15vh] left-0 w-full bg-[#FFFDF2] flex flex-col items-center py-6 shadow-lg md:hidden rounded-b-[40px] z-[120]"
+                className="absolute top-[13vh] left-0 w-full bg-[#FFFDF2] flex flex-col items-center py-6 shadow-lg md:hidden rounded-b-[40px] z-[120]"
               >
                 <nav className="flex flex-col items-center gap-6 w-full">
                   {navItems.map((item, index) => (
@@ -242,7 +309,7 @@ const Header = () => {
                   }`}
                 >
                   {item.name}
-                  {item.path !== "/login" && ( // Removed exclusion of "/" from border-bottom
+                  {item.path !== "/login" && (
                     <motion.div
                       className="absolute bottom-[-3px] left-0 h-[3px] bg-[#FFCF00]"
                       initial={{ width: 0 }}

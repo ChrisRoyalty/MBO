@@ -604,9 +604,9 @@ const Profile = () => {
         pauseOnHover
       />
 
-      <header className="h-[12vh] p-4 sm:p-8 text-[#6A7368] flex justify-between items-center gap-2">
+      <header className="h-[12vh] max-sm:h-[8vh] p-4 sm:p-8 text-[#6A7368] flex justify-between items-center gap-2">
         <strong className="text-[16px]">Dashboard</strong>
-        <div className="flex items-center gap-2 sm:gap-4 px-2 sm:px-4">
+        <div className="flex items-center gap-2 sm:gap-4 px-2 sm:px-4 mr-8">
           <Link to="/user-dashboard/notification">
             <IoIosNotificationsOutline className="hidden text-[24px] sm:text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
           </Link>

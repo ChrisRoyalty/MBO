@@ -483,7 +483,7 @@ const UserDashboard = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="absolute z-50 top-4 lg:left-4 right-4 cursor-pointer border w-fit rounded shadow p-1 bg-white lg:hidden"
+            className="absolute z-50 top-9 lg:left-4 right-4 cursor-pointer border w-fit rounded shadow p-1 bg-white lg:hidden"
           >
             <CgMenuLeftAlt
               onClick={toggleSidebar}

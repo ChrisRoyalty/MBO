@@ -353,10 +353,10 @@ const SearchPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#FFFDF2] to-[#E8EFE5] font-sans">
-      <div className="container px-[5vw] mx-auto py-8">
+      <div className="container px-[5vw] mx-auto pb-8">
         {/* Responsive Header with Search and Filters */}
         <header
-          className="border-[1px] border-gray-200 flex flex-col gap-2 mb-6 sticky top-0 z-50 bg-white/80 backdrop-blur-md py-2 md:py-3 rounded-lg shadow-sm md:shadow-md px-2 md:px-3 mt-[60px] md:mt-0"
+          className="border-[1px] border-gray-200 flex flex-col gap-2 mb-6 sticky top-0 z-50 bg-white/80 backdrop-blur-md pb-2 md:pb-3 rounded-lg shadow-sm md:shadow-md px-2 md:px-3 md:mt-0"
           style={{ position: "sticky", zIndex: 50, overflow: "visible" }}
         >
           <div className="relative">
