@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { IoCallOutline, IoLocationOutline } from "react-icons/io5";
+import {
+  IoCallOutline,
+  IoLocationOutline,
+  IoLogoYoutube,
+} from "react-icons/io5";
 import { FaFacebook, FaWhatsapp } from "react-icons/fa6";
 import { IoLogoInstagram, IoLogoTwitter, IoLogoLinkedin } from "react-icons/io";
 import { IoLogoWhatsapp } from "react-icons/io5";
@@ -16,6 +20,7 @@ import NetworkError from "../NetworkError";
 import { Player } from "@lottiefiles/react-lottie-player";
 import { TfiEmail } from "react-icons/tfi";
 import { FaXTwitter } from "react-icons/fa6";
+import { debounce } from "lodash";
 
 // Utility function to generate WhatsApp URL with predefined message
 const getWhatsAppUrl = (profile, productName = null) => {
@@ -57,9 +62,68 @@ const trackWhatsAppClick = async (profileId) => {
       "❌ Error tracking WhatsApp click:",
       error.response?.data || error
     );
-    // Optionally show a toast for critical errors
-    // toast.error("Failed to track WhatsApp click.", { position: "top-right", autoClose: 3000 });
   }
+};
+
+// Utility function to extract YouTube video ID from URL
+const getYouTubeVideoId = (url) => {
+  if (!url) return null;
+  const regex =
+    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+  const match = url.match(regex);
+  return match ? match[1] : null;
+};
+
+// Video Modal Component
+const VideoModal = ({ videoUrl, onClose }) => {
+  const videoId = getYouTubeVideoId(videoUrl);
+  if (!videoId) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 bg-black/80 flex justify-center items-center z-[1000]"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      >
+        <motion.div
+          className="relative bg-white rounded-2xl shadow-2xl w-[90%] max-w-4xl p-4 overflow-hidden"
+          initial={{ scale: 0.9, y: 50 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.9, y: 50 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          on
+          WClick={(e) => e.stopPropagation()}
+        >
+          <motion.button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-white bg-[#043D12]/80 rounded-full p-2 hover:bg-[#043D12] transition-colors z-50"
+            whileHover={{ scale: 1.2, rotate: 90 }}
+            transition={{ duration: 0.3 }}
+          >
+            ✕
+          </motion.button>
+          <motion.div
+            className="relative w-full h-0 pb-[56.25%] rounded-xl overflow-hidden"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <iframe
+              className="absolute top-0 left-0 w-full h-full"
+              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </motion.div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
 };
 
 // Product Modal Component
@@ -87,7 +151,7 @@ const ProductModal = ({ product, profile, onClose }) => {
       icon: IoLogoLinkedin,
       url: profile.socialLinks?.linkedin,
     },
-  ].filter((item) => item.url); // Filter out undefined URLs
+  ].filter((item) => item.url);
 
   return (
     <AnimatePresence>
@@ -99,26 +163,23 @@ const ProductModal = ({ product, profile, onClose }) => {
         onClick={onClose}
       >
         <motion.div
-          className="relative bg-gradient-to-br from-[#FFFDF2] to-white rounded-2xl shadow-2xl w-[90%] max-w-lg p-6 overflow-hidden"
+          className="relative bg-gradient-to-br from-[#FFFDF2] to-white rounded-2xl shadow-2xl w-[90%] max-w-lg p-8 overflow-hidden"
           initial={{ scale: 0.9, y: 50 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: 50 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Close Button */}
           <motion.button
             onClick={onClose}
-            className="absolute top-3 right-3 text-[#6A7368] hover:text-[#043D12] text-xl z-10"
+            className="absolute top-2 right-6 text-[#6A7368] hover:text-[#043D12] text-xl z-10"
             whileHover={{ scale: 1.2, rotate: 90 }}
             transition={{ duration: 0.3 }}
           >
             ✕
           </motion.button>
-
-          {/* Product Image */}
           <motion.div
-            className="relative w-full h-64 rounded-xl overflow-hidden mb-4 bg-white flex items-center justify-center"
+            className="w-full h-64 rounded-xl overflow-hidden mb-4 bg-white flex items-center justify-center"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -131,8 +192,6 @@ const ProductModal = ({ product, profile, onClose }) => {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           </motion.div>
-
-          {/* Product Name */}
           <motion.h2
             className="text-2xl font-bold text-[#043D12] mb-4"
             title={product.name}
@@ -142,8 +201,6 @@ const ProductModal = ({ product, profile, onClose }) => {
           >
             {product.name || "Unnamed Product"}
           </motion.h2>
-
-          {/* Category */}
           <motion.p
             className="flex items-center gap-2 text-[#6A7368] text-sm mb-4"
             initial={{ opacity: 0, x: -20 }}
@@ -153,8 +210,6 @@ const ProductModal = ({ product, profile, onClose }) => {
             <MdOutlineCategory />{" "}
             {profile.categories[0]?.name || "Unknown Category"}
           </motion.p>
-
-          {/* Product Description */}
           <motion.p
             className="text-[#6A7368] text-sm mb-4"
             initial={{ opacity: 0, x: -20 }}
@@ -163,8 +218,6 @@ const ProductModal = ({ product, profile, onClose }) => {
           >
             {product.description || "No product description available"}
           </motion.p>
-
-          {/* Social Media Links */}
           {socialIcons.length > 0 && (
             <motion.div
               className="flex gap-4 mb-4"
@@ -191,8 +244,6 @@ const ProductModal = ({ product, profile, onClose }) => {
               ))}
             </motion.div>
           )}
-
-          {/* Email Link */}
           {profile.member?.email && (
             <motion.a
               href={`mailto:${profile.member.email}`}
@@ -204,8 +255,6 @@ const ProductModal = ({ product, profile, onClose }) => {
               <TfiEmail /> {profile.member.email}
             </motion.a>
           )}
-
-          {/* Contact Business Button */}
           {whatsappUrl && (
             <motion.a
               href={whatsappUrl}
@@ -417,52 +466,102 @@ const ProfileMain = () => {
   const [profile, setProfile] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
-  useEffect(() => {
+  // Use a ref to track if the fetch has already been initiated
+  const hasFetchedRef = useRef(false);
+
+  const fetchProfile = debounce(async (cancelToken) => {
+    // Prevent duplicate fetches
+    if (hasFetchedRef.current) {
+      console.log(
+        `Fetch skipped for identifier: ${identifier}, already fetched`
+      );
+      return;
+    }
+    hasFetchedRef.current = true;
+
+    console.log(
+      `Fetching profile for identifier: ${identifier}, time: ${new Date().toISOString()}`
+    );
     if (!identifier) {
       setError("Invalid profile identifier.");
       setLoading(false);
       return;
     }
 
-    const fetchProfile = async () => {
-      setLoading(true);
-      setError(null);
-      const validateUUID = (uuid) => {
-        const regex =
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        return regex.test(uuid);
-      };
+    let isMounted = true;
 
-      try {
-        const isUUID = validateUUID(identifier);
-        const API_URL = isUUID
-          ? `${import.meta.env.VITE_BASE_URL}/member/get-profile/${identifier}`
-          : `${import.meta.env.VITE_BASE_URL}/member/get-slug/${identifier}`;
+    setLoading(true);
+    setError(null);
+    const validateUUID = (uuid) => {
+      const regex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      return regex.test(uuid);
+    };
 
-        const response = await axios.get(API_URL);
-        if (response.data && response.data.profile) {
-          setProfile(response.data.profile);
-        } else {
-          throw new Error("Profile not found.");
-        }
-      } catch (error) {
+    try {
+      const isUUID = validateUUID(identifier);
+      const API_URL = isUUID
+        ? `${import.meta.env.VITE_BASE_URL}/member/get-profile/${identifier}`
+        : `${import.meta.env.VITE_BASE_URL}/member/get-slug/${identifier}`;
+
+      const response = await axios.get(API_URL, {
+        cancelToken,
+        maxRedirects: 0,
+        timeout: 5000,
+      });
+      if (isMounted && response.data && response.data.profile) {
+        setProfile({
+          ...response.data.profile,
+          views: Number(response.data.profile.views) || 0,
+        });
+      } else if (isMounted) {
+        throw new Error("Profile not found.");
+      }
+    } catch (error) {
+      if (axios.isCancel(error)) {
+        console.log(`Request canceled for identifier: ${identifier}`);
+        return;
+      }
+      if (isMounted) {
         console.error("Error Fetching Profile:", error);
         setError(
           error.response?.data?.message ||
             error.message ||
             "Failed to fetch profile data."
         );
-      } finally {
-        setLoading(false);
       }
-    };
+    } finally {
+      if (isMounted) setLoading(false);
+    }
 
-    fetchProfile();
+    return () => {
+      isMounted = false;
+    };
+  }, 300);
+
+  useEffect(() => {
+    console.log(
+      `ProfileMain mounted for identifier: ${identifier}, time: ${new Date().toISOString()}`
+    );
+    const source = axios.CancelToken.source();
+
+    // Reset the fetch flag on mount to allow a new fetch if identifier changes
+    hasFetchedRef.current = false;
+    fetchProfile(source.token);
+
+    return () => {
+      console.log(
+        `ProfileMain unmounted for identifier: ${identifier}, time: ${new Date().toISOString()}`
+      );
+      source.cancel("Component unmounted");
+      fetchProfile.cancel();
+    };
   }, [identifier]);
 
   const filterProducts = (products) => {
@@ -510,7 +609,6 @@ const ProfileMain = () => {
     <div className="w-full min-h-screen bg-[#FFFDF2] flex flex-col items-center pt-[10vh]">
       <div className="container px-[5vw] mx-auto py-8">
         <div className="w-full text-[#043D12] flex flex-col md:flex-row gap-8">
-          {/* Aside Section */}
           <aside className="md:w-[25%] flex flex-col gap-8 text-[#6A7368]">
             <h3
               className="lg:text-[20px] text-[#043D12] text-center md:text-left text-[18px] md:text-[28px] font-bold hover:whitespace-normal hover:overflow-visible hover:z-10"
@@ -555,85 +653,99 @@ const ProfileMain = () => {
                 <p className="text-[12px] text-[#043D12] font-medium px-2 py-1 w-fit">
                   ON THE WEB
                 </p>
-                <div className="content border-[1px] border-[#6A7368] rounded-[11px]">
+                <div className="content border-[1px] border-[#6A7368] rounded-[11px] cursor-pointer">
                   {profile.socialLinks?.instagram && (
-                    <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
+                    <a
+                      href={profile.socialLinks.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]"
+                    >
                       <div className="flex items-center gap-4">
                         <IoLogoInstagram className="text-[25px]" />
                         Instagram
                       </div>
-                      <a
-                        href={profile.socialLinks.instagram}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="cursor-pointer text-[18px]"
-                      >
+                      <span className="cursor-pointer text-[18px]">
                         <CiShare1 />
-                      </a>
-                    </div>
+                      </span>
+                    </a>
                   )}
                   {profile.socialLinks?.twitter && (
-                    <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
+                    <a
+                      href={profile.socialLinks.twitter}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]"
+                    >
                       <div className="flex items-center gap-4">
                         <FaXTwitter className="text-[25px]" />
                         Twitter
                       </div>
-                      <a
-                        href={profile.socialLinks.twitter}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="cursor-pointer text-[18px]"
-                      >
+                      <span className="cursor-pointer text-[18px]">
                         <CiShare1 />
-                      </a>
-                    </div>
+                      </span>
+                    </a>
                   )}
                   {profile.socialLinks?.facebook && (
-                    <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
+                    <a
+                      href={profile.socialLinks.facebook}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]"
+                    >
                       <div className="flex items-center gap-4">
                         <FaFacebook className="text-[18px]" />
                         Facebook
                       </div>
-                      <a
-                        href={profile.socialLinks.facebook}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="cursor-pointer text-[18px]"
-                      >
+                      <span className="cursor-pointer text-[18px]">
                         <CiShare1 />
-                      </a>
-                    </div>
+                      </span>
+                    </a>
                   )}
                   {profile.socialLinks?.linkedin && (
-                    <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
+                    <a
+                      href={profile.socialLinks.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]"
+                    >
                       <div className="flex items-center gap-4">
                         <IoLogoLinkedin className="text-[25px]" />
                         LinkedIn
                       </div>
-                      <a
-                        href={profile.socialLinks.linkedin}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="cursor-pointer text-[18px]"
-                      >
+                      <span className="cursor-pointer text-[18px]">
                         <CiShare1 />
-                      </a>
-                    </div>
+                      </span>
+                    </a>
                   )}
                   {profile.socialLinks?.tiktok && (
-                    <div className="flex justify-between items-center text-[14px] py-2 px-8">
+                    <a
+                      href={profile.socialLinks.tiktok}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]"
+                    >
                       <div className="flex items-center gap-4">
                         <BsTiktok className="text-[25px]" />
                         TikTok
                       </div>
-                      <a
-                        href={profile.socialLinks.tiktok}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="cursor-pointer text-[18px]"
-                      >
+                      <span className="cursor-pointer text-[18px]">
                         <CiShare1 />
-                      </a>
+                      </span>
+                    </a>
+                  )}
+                  {profile.socialLinks?.youtube && (
+                    <div
+                      className="flex justify-between items-center text-[14px] py-2 px-8 cursor-pointer"
+                      onClick={() => setIsVideoModalOpen(true)}
+                    >
+                      <div className="flex items-center gap-4">
+                        <IoLogoYoutube className="text-[25px]" />
+                        YouTube
+                      </div>
+                      <span className="cursor-pointer text-[18px]">
+                        <CiShare1 />
+                      </span>
                     </div>
                   )}
                 </div>
@@ -717,8 +829,6 @@ const ProfileMain = () => {
               </div>
             </div>
           </aside>
-
-          {/* Products/Services Section */}
           <div className="md:w-[75%] flex flex-col gap-8">
             <h1 className="border-b-[1px] border-[#6A7368] text-[20px] text-[#6A7368] pb-1 text-center md:text-left">
               Products/Services
@@ -794,9 +904,15 @@ const ProfileMain = () => {
           onClose={() => setIsReportModalOpen(false)}
         />
       )}
+      {isVideoModalOpen && (
+        <VideoModal
+          videoUrl={profile.socialLinks?.youtube}
+          onClose={() => setIsVideoModalOpen(false)}
+        />
+      )}
       <ToastContainer />
     </div>
   );
 };
 
-export default ProfileMain;
+export default React.memo(ProfileMain);

@@ -82,7 +82,7 @@ const Start = () => {
           variants={animations.fadeIn}
           className="lg:text-[35px] text-[25px]"
         >
-          Don’t Hesitate, Get Started Now!
+          Your next customer is looking for you.
         </motion.h1>
         <motion.p
           initial="hidden"
@@ -91,7 +91,7 @@ const Start = () => {
           variants={animations.fadeIn}
           className="lg:text-[20px] text-[18px]"
         >
-          Create your profile and let the world discover you!
+          Let them discover your business.{" "}
         </motion.p>
         <div className="w-fit h-fit mx-auto">
           <motion.a

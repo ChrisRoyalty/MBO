@@ -182,7 +182,7 @@ const Header = () => {
     { name: "Home", path: "/" },
     { name: "Marketplace", path: "/community" },
     isAuthenticated &&
-    (isAdmin || (isSubscribed && hasBusinessProfile)) &&
+    (isAdmin || isSubscribed || hasBusinessProfile) &&
     !isStatusLoading
       ? {
           name: "Dashboard",
@@ -331,7 +331,7 @@ const Header = () => {
           </div>
 
           <button
-            className="md:hidden"
+            className="md:hidden cursor-pointer"
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle menu"
           >

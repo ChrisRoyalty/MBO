@@ -34,7 +34,7 @@ const navItems = [
   {
     to: "/community",
     icon: <PiUserCircle className="text-[25px]" />,
-    label: "Community",
+    label: "Marketplace",
   },
   {
     to: "/user-dashboard/profile",
@@ -258,7 +258,7 @@ const UserDashboard = () => {
           x: isSidebarOpen || window.innerWidth >= 1024 ? "0%" : "-100%",
         }}
         transition={{ duration: 0.5, ease: "easeInOut" }}
-        className={`fixed lg:static z-50 top-0 left-0 lg:w-[25%] max-md:h-screen overflow-y-auto py-14 px-10 md:h-full h-auto bg-white shadow-xl custom-scrollbar ${
+        className={`fixed lg:static z-50 top-0 left-0 w-[84%] lg:w-[25%] max-md:h-screen overflow-y-auto py-14 px-10 md:h-full h-auto bg-white shadow-xl custom-scrollbar ${
           isSidebarOpen ? "absolute md:relative" : "absolute"
         } flex flex-col`}
       >
@@ -483,7 +483,7 @@ const UserDashboard = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="absolute z-50 top-9 lg:left-4 right-4 cursor-pointer border w-fit rounded shadow p-1 bg-white lg:hidden"
+            className="absolute z-50 top-6 lg:left-4 right-4 cursor-pointer border w-fit rounded shadow p-1 bg-white lg:hidden"
           >
             <CgMenuLeftAlt
               onClick={toggleSidebar}

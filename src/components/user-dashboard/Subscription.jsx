@@ -4,6 +4,8 @@ import axios from "axios";
 import { useSelector } from "react-redux";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import EditHeader from "./EditHeader";
 
 const Subscription = () => {
@@ -14,9 +16,10 @@ const Subscription = () => {
     subscriptionStatus: "inactive",
   });
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const [subscribeLoading, setSubscribeLoading] = useState(false);
 
   const { token } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!token) {
@@ -31,6 +34,7 @@ const Subscription = () => {
           `${import.meta.env.VITE_BASE_URL}/member/my-profile`,
           {
             headers: { Authorization: `Bearer ${token}` },
+            timeout: 10000,
           }
         );
 
@@ -41,7 +45,10 @@ const Subscription = () => {
           setSubscriptionData({
             planName: subscription.name || "No Active Plan",
             price: subscription.price
-              ? `₦${parseFloat(subscription.price).toFixed(2)}`
+              ? `₦${parseFloat(subscription.price).toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`
               : "0.00",
             nextBillingDate: member.subscriptionEndDate
               ? new Date(member.subscriptionEndDate).toLocaleDateString(
@@ -57,7 +64,10 @@ const Subscription = () => {
           });
         }
       } catch (error) {
-        console.error("Error fetching profile:", error);
+        console.error(
+          "Error fetching profile:",
+          error.response?.data || error.message
+        );
         toast.error(
           error.response?.data?.message || "Failed to fetch subscription data."
         );
@@ -69,8 +79,16 @@ const Subscription = () => {
     fetchProfile();
   }, [token]);
 
-  const handleChangePlan = () => setShowModal(true);
-  const closeModal = () => setShowModal(false);
+  const handleSubscribe = () => {
+    if (subscribeLoading) return;
+    setSubscribeLoading(true);
+    console.log("Navigating to /subscribe from UserDashboard");
+    toast.info("Redirecting to subscription plans...");
+    setTimeout(() => {
+      navigate("/subscribe", { state: { fromUserDashboard: true } });
+      setSubscribeLoading(false);
+    }, 500);
+  };
 
   const Loader = () => (
     <div className="flex space-x-2 items-center">
@@ -139,34 +157,28 @@ const Subscription = () => {
           </div>
         </div>
 
-        <div className=" btns hidden justify-start lg:pt-6 pb-12">
-          <button
-            onClick={handleChangePlan}
-            className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-2 lg:px-8 py-3 shadow-lg hover:text-white hover:bg-[#043D12]"
-          >
-            Change Plan
-          </button>
-        </div>
-
-        {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg max-w-md w-full">
-              <h2 className="text-xl font-semibold text-[#043D12] mb-4">
-                Change Plan
-              </h2>
-              <p className="text-[#6A7368] mb-6">
-                The change plan feature is not yet available. Please check back
-                later.
-              </p>
-              <div className="flex justify-end">
-                <button
-                  onClick={closeModal}
-                  className="px-4 py-2 bg-[#043D12] text-white rounded hover:bg-[#043D12]/90"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
+        {subscriptionData.subscriptionStatus === "inactive" && (
+          <div className="flex justify-start pt-6 pb-12">
+            <motion.button
+              onClick={handleSubscribe}
+              disabled={subscribeLoading}
+              className={`flex items-center justify-center text-[15px] px-8 py-3 rounded-[11px] shadow-lg transition-all duration-300 ${
+                subscribeLoading
+                  ? "bg-[#043D12]/50 text-[#FFFDF2]/50 cursor-not-allowed"
+                  : "bg-[#043D12] text-[#FFFDF2] hover:bg-[#032d0e]"
+              }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {subscribeLoading ? (
+                <div className="flex space-x-2 items-center">
+                  <div className="w-4 h-4 border-2 border-[#FFFDF2] border-t-transparent rounded-full animate-spin" />
+                  <span>Redirecting...</span>
+                </div>
+              ) : (
+                "Subscribe Now"
+              )}
+            </motion.button>
           </div>
         )}
       </div>

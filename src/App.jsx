@@ -93,9 +93,9 @@ function App() {
         <Route
           path="/business-profile"
           element={
-            // <PrivateRoute>
-            <BusinessProfile />
-            // </PrivateRoute>
+            <PrivateRoute>
+              <BusinessProfile />
+            </PrivateRoute>
           }
         />
         <Route

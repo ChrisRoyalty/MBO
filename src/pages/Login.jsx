@@ -1,3 +1,4 @@
+// src/components/Login.jsx
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -18,7 +19,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loginAttempted, setLoginAttempted] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false); // State for "Remember Me"
+  const [rememberMe, setRememberMe] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -27,23 +28,17 @@ const Login = () => {
   const routes = {
     admin: "/admin",
     user: {
-      inactiveSubscription: "/subscribe",
       incompleteProfile: "/business-profile",
+      inactiveSubscription: "/subscribe",
       activeUser: "/user-dashboard",
     },
   };
 
-  // Load saved credentials from localStorage on component mount
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberMeEmail");
     const savedPassword = localStorage.getItem("rememberMePassword");
-
-    if (savedEmail) {
-      setEmail(savedEmail);
-    }
-    if (savedPassword) {
-      setPassword(savedPassword);
-    }
+    if (savedEmail) setEmail(savedEmail);
+    if (savedPassword) setPassword(savedPassword);
   }, []);
 
   const handleSubmit = async (e) => {
@@ -54,10 +49,7 @@ const Login = () => {
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/member/login`,
-        {
-          email,
-          password,
-        }
+        { email, password }
       );
       const { token, member } = response.data;
       const decodedToken = jwtDecode(token);
@@ -66,28 +58,27 @@ const Login = () => {
       const user = {
         id,
         role,
-        subscriptionStatus,
-        profileStatus,
+        subscriptionStatus: subscriptionStatus || "inactive", // Default to inactive
+        profileStatus: profileStatus || false, // Default to false
         firstName: member.firstname,
         lastName: member.lastname,
         email: member.email,
       };
 
+      console.log("Login user data:", user); // Debug
       dispatch(login({ token, user }));
+      localStorage.setItem("token", token); // Sync with authSlice
       toast.success(response.data.message || "Login successful!");
 
-      // Save credentials to localStorage if "Remember Me" is checked
       if (rememberMe) {
         localStorage.setItem("rememberMeEmail", email);
         localStorage.setItem("rememberMePassword", password);
       } else {
-        // Clear saved credentials if "Remember Me" is unchecked
         localStorage.removeItem("rememberMeEmail");
         localStorage.removeItem("rememberMePassword");
       }
     } catch (error) {
       const errorResponse = error.response?.data || {};
-
       if (errorResponse.status === 403) {
         toast.error(
           errorResponse.message || "Access denied. Please verify your email."
@@ -97,7 +88,6 @@ const Login = () => {
       } else {
         toast.error("An unexpected error occurred. Please try again.");
       }
-
       console.error("Login error:", error.response?.data || error);
       setLoginAttempted(false);
     } finally {
@@ -107,16 +97,16 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated && user && loginAttempted) {
+      console.log("Navigation user data:", user); // Debug
       const route =
         user.role === "admin"
           ? routes.admin
-          : user.subscriptionStatus !== "active"
-          ? routes.user.inactiveSubscription
           : !user.profileStatus
           ? routes.user.incompleteProfile
+          : user.subscriptionStatus !== "active"
+          ? routes.user.inactiveSubscription
           : routes.user.activeUser;
-
-      console.log("useEffect - Calculated route:", route);
+      console.log("Navigating to:", route); // Debug
       navigate(route, { replace: true });
       setLoginAttempted(false);
     }
@@ -132,7 +122,7 @@ const Login = () => {
       <div className="w-full h-screen flex justify-center lg:grid grid-cols-2">
         <div className="max-lg:hidden w-full h-full flex justify-center items-center bg-[url('/Group2.svg')] bg-cover bg-center bg-green-800">
           <div className="w-full h-[90%] flex flex-col items-center">
-            <div className="container mx-auto px-[5vw] text-[#FFFDF2] ">
+            <div className="container mx-auto px-[5vw] text-[#FFFDF2]">
               <Link to="/" className="lg:text-[35px] text-[32px] font-medium">
                 Welcome to <br /> MindPower Business Online
               </Link>

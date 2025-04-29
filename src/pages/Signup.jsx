@@ -242,7 +242,7 @@ const Signup = () => {
             <div className="text-center flex flex-col gap-4">
               <button
                 type="submit"
-                className="mt-6 w-full text-[#FFFDF2] password bg-[#043D12] hover:bg-[#043D12]/75 shadow-lg rounded-[27px] px-8 flex justify-center items-center lg:h-[60px] h-[48px]"
+                className="mt-6 w-full text-[#FFFDF2] password bg-[#043D12] hover:bg-[#043D12]/75 shadow-lg rounded-[27px] px-8 flex justify-center items-center lg:h-[60px] h-[48px] cursor-pointer"
                 disabled={loading}
               >
                 {loading ? "Registering..." : "Register"}

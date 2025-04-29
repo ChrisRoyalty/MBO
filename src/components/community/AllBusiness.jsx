@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
@@ -49,9 +49,14 @@ const trackWhatsAppClick = async (profileId) => {
 // Contact Dropdown Component
 const ContactDropdown = ({ socialLinks, profileId, onClose }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [positionAbove, setPositionAbove] = useState(false);
+  const buttonRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   if (!socialLinks || Object.keys(socialLinks).length === 0) {
-    return <p className="text-gray-500 text-sm">No contact info available</p>;
+    return (
+      <p className="text-gray-500 text-sm py-2">No contact info available</p>
+    );
   }
 
   const socialIcons = {
@@ -62,46 +67,86 @@ const ContactDropdown = ({ socialLinks, profileId, onClose }) => {
     linkedin: { icon: FaLinkedin, label: "LinkedIn", color: "#0077B5" },
   };
 
+  const validLinks = Object.entries(socialLinks).filter(
+    ([platform, url]) => url && socialIcons[platform.toLowerCase()]
+  );
+
+  useEffect(() => {
+    if (isOpen && buttonRef.current && dropdownRef.current) {
+      const buttonRect = buttonRef.current.getBoundingClientRect();
+      const dropdownRect = dropdownRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - buttonRect.bottom;
+      const dropdownHeight = dropdownRect.height;
+
+      // Position above if not enough space below and enough space above
+      if (spaceBelow < dropdownHeight && buttonRect.top > dropdownHeight) {
+        setPositionAbove(true);
+      } else {
+        setPositionAbove(false);
+      }
+    }
+  }, [isOpen]);
+
   return (
-    <div className="relative">
-      <button
+    <div className="relative flex-1">
+      <motion.button
+        ref={buttonRef}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="cursor-pointer flex items-center gap-2 rounded-full bg-gradient-to-r from-[#043D12] to-[#02530c] px-6 py-2 text-white text-sm font-medium shadow-lg hover:scale-105 transition-transform duration-300 max-sm:w-full max-sm:justify-center"
+        className="w-fit cursor-pointer flex items-center justify-center gap-0 rounded-full bg-gradient-to-r from-[#043D12] to-[#02530c] px-4 py-2 text-white text-sm font-medium shadow-lg transition-transform duration-300 max-sm:w-full"
       >
         Contact Business
-        {isOpen ? <RiArrowDropUpLine /> : <RiArrowDropDownLine />}
-      </button>
-      {isOpen && (
-        <div className="absolute mt-2 w-48 rounded-lg bg-white shadow-xl z-50 border border-gray-100">
-          {Object.entries(socialLinks).map(([platform, url]) => {
-            const {
-              icon: Icon,
-              label,
-              color,
-            } = socialIcons[platform.toLowerCase()] || {};
-            if (!url || !Icon) return null;
-            return (
-              <a
-                key={platform}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => {
-                  if (platform.toLowerCase() === "whatsapp") {
-                    trackWhatsAppClick(profileId);
-                  }
-                  setIsOpen(false);
-                  onClose();
-                }}
-                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 transition-colors"
-              >
-                <Icon style={{ color }} />
-                {label}
-              </a>
-            );
-          })}
-        </div>
-      )}
+        <motion.span
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <RiArrowDropDownLine className="text-lg" />
+        </motion.span>
+      </motion.button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            ref={dropdownRef}
+            initial={{ opacity: 0, y: positionAbove ? 10 : -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: positionAbove ? 10 : -10 }}
+            transition={{ duration: 0.2 }}
+            className={`absolute w-full max-w-[200px] rounded-lg bg-white shadow-xl z-[60] border border-gray-100 ${
+              positionAbove ? "bottom-[calc(100%+8px)]" : "top-[calc(100%+8px)]"
+            }`}
+            style={{ maxHeight: "200px" }}
+          >
+            {validLinks.map(([platform, url]) => {
+              const {
+                icon: Icon,
+                label,
+                color,
+              } = socialIcons[platform.toLowerCase()];
+              return (
+                <a
+                  key={platform}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    if (platform.toLowerCase() === "whatsapp") {
+                      trackWhatsAppClick(profileId);
+                    }
+                    setIsOpen(false);
+                    onClose();
+                  }}
+                  className="flex items-center gap-3 px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 transition-colors"
+                >
+                  <Icon style={{ color }} className="text-lg" />
+                  <span>{label}</span>
+                </a>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -118,21 +163,31 @@ const Modal = ({ profile, onClose }) => {
   };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 "
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4"
       onClick={onClose}
     >
-      <div
-        className="bg-white rounded-2xl w-[90%] max-w-4xl flex flex-col md:flex-row max-h-[90vh] shadow-2xl overflow-y-auto "
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.8, opacity: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="relative bg-white rounded-2xl w-[90%] max-w-4xl flex flex-col md:flex-row max-h-[90vh] shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <button
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           onClick={onClose}
-          className="absolute z-50 top-4 right-4 text-gray-500 hover:text-[#043D12] text-xl"
+          className="absolute z-50 top-4 right-4 text-gray-500 hover:text-[#043D12] text-xl bg-white/80 rounded-full p-2 shadow-sm"
         >
           <FaTimes />
-        </button>
-        <div className="md:w-1/2 p-6">
+        </motion.button>
+        <div className="md:w-1/2 p-6 md:p-8 bg-gradient-to-b from-[#FFFDF2] to-[#E8EFE5]">
           <img
             src={
               profile.productImages?.[0]?.imageUrl ||
@@ -140,32 +195,37 @@ const Modal = ({ profile, onClose }) => {
               BusinessImg
             }
             alt={profile.businessName}
-            className="w-full h-[300px] object-cover rounded-xl"
+            className="w-full h-[250px] md:h-[350px] object-cover rounded-xl shadow-md"
             onError={(e) => (e.target.src = BusinessImg)}
           />
         </div>
-        <div className="md:w-1/2 p-6 flex flex-col gap-4">
-          <h2 className="text-2xl font-bold text-[#043D12] truncate">
+        <div className="md:w-1/2 p-6 md:p-8 flex flex-col gap-4 bg-white overflow-y-auto">
+          <h2 className="text-2xl md:text-3xl font-bold text-[#043D12] truncate">
             {profile.businessName}
           </h2>
-          <p className="text-sm text-gray-600">
-            <strong>Category:</strong>{" "}
-            {profile.categories?.[0]?.name || "No Category"}
-          </p>
-          <p className="text-sm text-gray-600">
-            <strong>Location:</strong> {profile.location || "Not specified"}
-          </p>
-          <p className="text-sm text-gray-600">
-            <strong>Description:</strong>{" "}
-            {profile.description || "No description available"}
-          </p>
-          <div className="flex max-sm:flex-col gap-4 mt-6">
-            <button
+          <div className="space-y-3 text-sm text-gray-600">
+            <p>
+              <strong className="text-[#043D12]">Category:</strong>{" "}
+              {profile.categories?.[0]?.name || "No Category"}
+            </p>
+            <p>
+              <strong className="text-[#043D12]">Location:</strong>{" "}
+              {profile.location || "Not specified"}
+            </p>
+            <p>
+              <strong className="text-[#043D12]">Description:</strong>{" "}
+              {profile.description || "No description available"}
+            </p>
+          </div>
+          <div className="flex max-sm:flex-col gap-4 mt-6 relative z-10">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleViewProfile}
-              className="cursor-pointer rounded-full bg-[#043D12] text-white px-6 py-2 text-sm font-medium hover:bg-[#02530c] transition-colors"
+              className="flex-1 cursor-pointer rounded-full bg-[#043D12] text-white px-4 py-2 text-sm font-medium hover:bg-[#02530c] transition-colors shadow-md"
             >
               View Profile
-            </button>
+            </motion.button>
             <ContactDropdown
               socialLinks={profile.socialLinks}
               profileId={profile.id}
@@ -173,8 +233,8 @@ const Modal = ({ profile, onClose }) => {
             />
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 
@@ -374,13 +434,8 @@ const AllBusiness = () => {
             <div className="relative">
               <button
                 onClick={() => {
-                  console.log(
-                    "Category button clicked, current state:",
-                    isCategoryOpen
-                  );
                   setIsCategoryOpen((prev) => {
                     const newState = !prev;
-                    console.log("Category state updated to:", newState);
                     setIsLocationOpen(false);
                     return newState;
                   });
@@ -403,7 +458,6 @@ const AllBusiness = () => {
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
                     className="absolute left-0 top-[calc(100%+4px)] w-48 bg-white rounded-lg shadow-xl z-[100] border border-gray-100 max-h-96 overflow-y-auto"
-                    style={{ backgroundColor: "#" }}
                   >
                     {visibleCategories.map((category) => (
                       <button
@@ -443,13 +497,8 @@ const AllBusiness = () => {
             <div className="relative">
               <button
                 onClick={() => {
-                  console.log(
-                    "Location button clicked, current state:",
-                    isLocationOpen
-                  );
                   setIsLocationOpen((prev) => {
                     const newState = !prev;
-                    console.log("Location state updated to:", newState);
                     setIsCategoryOpen(false);
                     return newState;
                   });
@@ -472,7 +521,6 @@ const AllBusiness = () => {
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
                     className="absolute left-0 top-[calc(100%+4px)] w-48 bg-white rounded-lg shadow-xl z-[100] border border-gray-100 max-h-96 overflow-y-auto"
-                    style={{ backgroundColor: "#" }}
                   >
                     {visibleLocations.map((location) => (
                       <button

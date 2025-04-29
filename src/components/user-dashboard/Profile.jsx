@@ -201,7 +201,6 @@ const Profile = () => {
     }[metric];
     const { limit } = TIME_RANGES[timeRange];
 
-    // Handle monthly range specifically
     if (timeRange === "monthly") {
       if (!analyticsData.length) {
         return Array.from({ length: limit }, (_, i) => {
@@ -286,7 +285,6 @@ const Profile = () => {
       return processedData;
     }
 
-    // Handle other time ranges (daily, weekly, yearly)
     const dateField = {
       daily: "formattedDate",
       weekly: "formattedWeek",
@@ -395,7 +393,6 @@ const Profile = () => {
       .slice(-limit);
   }, [analyticsData, metric, timeRange, profileData]);
 
-  // Fetch profile data
   useEffect(() => {
     if (!isAuthenticated || !token) {
       setError("Please log in to view your profile.");
@@ -404,15 +401,19 @@ const Profile = () => {
       return;
     }
 
+    let isMounted = true;
     const fetchProfileData = async () => {
       try {
         setLoading(true);
+        const txId = Date.now().toString();
         const response = await axios.get(
-          `${import.meta.env.VITE_BASE_URL}/member/my-profile`,
+          `${import.meta.env.VITE_BASE_URL}/member/my-profile?txId=${txId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
+
+        if (!isMounted) return;
 
         const { data } = response.data;
         if (!data) throw new Error("No profile data found.");
@@ -430,7 +431,8 @@ const Profile = () => {
 
         const updatedProfileData = {
           businessName: data.businessName || "User Name",
-          category: data.categories?.[0]?.name || "Category",
+          category:
+            data.categories?.[0]?.name || " Highlighted in comments" > Category,
           businesImg: data.businesImg || "",
           id: data.id || "",
           subscriptionStatus: memberData.subscriptionStatus || "Unknown",
@@ -452,33 +454,43 @@ const Profile = () => {
         setProfileProgress(progress);
         setIsProfileComplete(isComplete);
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to load profile data.");
-        if (err.response?.status === 404) {
-          navigate("/business-profile", { replace: true });
+        if (isMounted) {
+          setError(
+            err.response?.data?.message || "Failed to load profile data."
+          );
+          if (err.response?.status === 404) {
+            navigate("/business-profile", { replace: true });
+          }
         }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchProfileData();
-  }, [isAuthenticated, token, dispatch, navigate, user]);
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, token, dispatch, navigate]);
 
-  // Fetch analytics data
   useEffect(() => {
     if (!isAuthenticated || !token) return;
 
+    let isMounted = true;
     const fetchAnalyticsData = async () => {
       try {
         setLoading(true);
+        const txId = Date.now().toString();
         const response = await axios.get(
           `${
             import.meta.env.VITE_BASE_URL
-          }/member/get-analytics?range=${timeRange}`,
+          }/member/get-analytics?range=${timeRange}&txId=${txId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
+
+        if (!isMounted) return;
 
         if (!response.data.success || !Array.isArray(response.data.data)) {
           throw new Error("Invalid analytics data received.");
@@ -486,19 +498,23 @@ const Profile = () => {
 
         setAnalyticsData(response.data.data);
       } catch (err) {
-        setError(
-          err.response?.data?.message || "Failed to load analytics data."
-        );
-        setAnalyticsData([]);
+        if (isMounted) {
+          setError(
+            err.response?.data?.message || "Failed to load analytics data."
+          );
+          setAnalyticsData([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchAnalyticsData();
+    return () => {
+      isMounted = false;
+    };
   }, [isAuthenticated, token, timeRange]);
 
-  // Handle click outside dropdowns
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (isDropdownOpen && !e.target.closest(".dropdown-container")) {
@@ -518,7 +534,6 @@ const Profile = () => {
     };
   }, [isDropdownOpen, isProfileVisibleDropdownOpen]);
 
-  // Toggle profile visibility
   const toggleVisibility = async (action) => {
     if (!profileData.id || !token) {
       return toast.error("Missing profile ID or token.");
@@ -528,9 +543,9 @@ const Profile = () => {
       const url = `${import.meta.env.VITE_BASE_URL}/member/${
         action === "hide" ? "hide" : "unhide"
       }-profile`;
-
+      const txId = Date.now().toString();
       const response = await axios.patch(
-        url,
+        `${url}?txId=${txId}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
