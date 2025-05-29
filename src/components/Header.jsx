@@ -2,13 +2,15 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import MindPowerLogo from "../assets/mbo-logo.png";
-import MenuIcon from "../assets/menu.svg";
-import ProfilePic from "../assets/user-photo.svg";
-import DefaultBackgroundImg from "../assets/businessImg.jpeg"; // Ensure this exists
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
 import { logout, selectAuth, setLastDashboard } from "../redux/authSlice";
+import { fetchProfile, clearProfile } from "../redux/profileSlice";
+import { persistor } from "../redux/store";
+import MindPowerLogo from "../assets/mbo-logo.png";
+import MenuIcon from "../assets/menu.svg";
+import ProfilePic from "../assets/user-photo.svg";
+import DefaultBackgroundImg from "../assets/businessImg.jpeg";
 
 const navItemVariants = {
   hidden: { opacity: 0, scale: 0.5, y: -20 },
@@ -25,23 +27,83 @@ const Header = () => {
   const navigate = useNavigate();
   const { identifier } = useParams();
   const [isOpen, setIsOpen] = useState(false);
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [hasBusinessProfile, setHasBusinessProfile] = useState(false);
   const [isStatusLoading, setIsStatusLoading] = useState(false);
+  const [isRehydrated, setIsRehydrated] = useState(false);
 
   const auth = useSelector(selectAuth);
+  const { profile, loading, error } = useSelector((state) => state.profile);
   const dispatch = useDispatch();
   const isAuthenticated = auth.isAuthenticated;
   const userRole = auth.user?.role;
   const lastDashboard = auth.lastDashboard;
   const isAdmin = userRole === "admin";
 
+  // Wait for redux-persist to rehydrate
+  useEffect(() => {
+    const unsubscribe = persistor.subscribe(() => {
+      const { bootstrapped } = persistor.getState();
+      if (bootstrapped) {
+        setIsRehydrated(true);
+        console.log("Rehydration complete, auth state:", auth);
+        unsubscribe();
+      }
+    });
+
+    if (persistor.getState().bootstrapped) {
+      setIsRehydrated(true);
+      console.log("Rehydration already complete, auth state:", auth);
+      unsubscribe();
+    }
+
+    return () => unsubscribe();
+  }, [auth]);
+
+  // Validate token on mount, but only after rehydration
+  useEffect(() => {
+    const validateToken = async () => {
+      if (!isRehydrated) {
+        console.log("Waiting for rehydration, skipping token validation");
+        return;
+      }
+
+      if (!isAuthenticated || !auth.token) {
+        console.log("No authentication or token, skipping validation:", {
+          isAuthenticated,
+          token: auth.token,
+        });
+        return;
+      }
+
+      // Temporarily disable token validation due to 404 error
+      /*
+      try {
+        console.log("Validating token:", auth.token);
+        const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/member/validate-token`, {
+          headers: { Authorization: `Bearer ${auth.token}` },
+        });
+        console.log("Token validation successful:", response.data);
+      } catch (error) {
+        console.error("Token validation failed:", error.response?.data || error.message);
+        dispatch(logout());
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("lastDashboard");
+        toast.error("Session expired. Please log in again.");
+        navigate("/login");
+      }
+      */
+      console.log(
+        "Token validation disabled due to missing endpoint. Please implement /member/validate-token on https://mbo.bookbank.com.ng."
+      );
+    };
+    validateToken();
+  }, [isRehydrated, isAuthenticated, auth.token, dispatch, navigate]);
+
   // Fetch user's subscription and business profile status
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isRehydrated && isAuthenticated) {
       if (isAdmin) {
         setIsSubscribed(true);
         setHasBusinessProfile(true);
@@ -80,96 +142,52 @@ const Header = () => {
       setHasBusinessProfile(false);
       setIsStatusLoading(false);
     }
-  }, [isAuthenticated, auth.token, isAdmin]);
+  }, [isRehydrated, isAuthenticated, auth.token, isAdmin]);
 
-  // Fetch business profile data for profile pages
+  // Fetch business profile data for profile pages using Redux
   useEffect(() => {
     if (location.pathname.startsWith("/community/profile/") && identifier) {
-      setLoading(true);
-      const fetchProfile = async () => {
-        try {
-          let API_URL;
-          // Check if identifier is a slug (not a UUID)
-          if (
-            identifier.match(
-              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-            )
-          ) {
-            API_URL = `${
-              import.meta.env.VITE_BASE_URL
-            }/member/get-profile/${identifier}`;
-          } else {
-            API_URL = `${
-              import.meta.env.VITE_BASE_URL
-            }/member/get-slug/${identifier}`;
-          }
-          console.log("Fetching profile from:", API_URL);
-          const response = await axios.get(API_URL);
-          const profileData = response.data?.profile || null;
-          console.log(
-            "Profile API Response for",
-            identifier,
-            ":",
-            response.data
-          );
-          console.log("Profile Images:", {
-            businesImg: profileData?.businesImg,
-            backgroundImg: profileData?.backgroundImg,
-          });
-          console.log("Profile State Set:", profileData);
-          setProfile(profileData);
-          if (!profileData?.businesImg) {
-            console.warn("No businesImg found for identifier:", identifier);
-          }
-          if (!profileData?.backgroundImg) {
-            console.warn("No backgroundImg found for identifier:", identifier);
-          }
-        } catch (error) {
-          console.error(
-            "Error fetching business profile for",
-            identifier,
-            ":",
-            error
-          );
-          setError(error.response?.data?.message || "Failed to load profile");
-          setProfile(null);
-          if (error.response?.status === 404) {
-            console.warn(
-              `Profile not found for identifier: ${identifier}. Check if the slug or ID exists in the backend database.`
-            );
-            toast.error(
-              `Profile '${identifier}' not found. The link may be invalid or not yet available. Contact support for assistance.`
-            );
-          } else {
-            toast.error(
-              "An error occurred while loading the profile. Please try again later."
-            );
-          }
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchProfile();
+      const isUUID = identifier.match(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      );
+      dispatch(fetchProfile({ identifier, isUUID }));
     } else {
-      setProfile(null);
-      setError(null);
-      setLoading(false);
+      dispatch(clearProfile());
     }
-  }, [location.pathname, identifier]);
+  }, [location.pathname, identifier, dispatch]);
+
+  // Handle errors with toast notifications
+  useEffect(() => {
+    if (error) {
+      if (error.includes("not found")) {
+        toast.error(
+          `Profile '${identifier}' not found. The link may be invalid or not yet available. Contact support for assistance.`
+        );
+      } else {
+        toast.error(
+          "An error occurred while loading the profile. Please try again later."
+        );
+      }
+    }
+  }, [error, identifier]);
 
   // Track dashboard visits
   useEffect(() => {
-    if (location.pathname === "/admin") {
+    if (location.pathname === "/admin" && lastDashboard !== "/admin") {
       dispatch(setLastDashboard("/admin"));
-    } else if (location.pathname === "/user-dashboard") {
+    } else if (
+      location.pathname === "/user-dashboard" &&
+      lastDashboard !== "/user-dashboard"
+    ) {
       dispatch(setLastDashboard("/user-dashboard"));
     }
-  }, [location.pathname, dispatch]);
+  }, [location.pathname, lastDashboard, dispatch]);
 
   const handleLogout = () => {
     dispatch(logout());
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("lastDashboard");
     toast.success("Logged out successfully!");
     navigate("/login");
     setIsOpen(false);
@@ -204,7 +222,6 @@ const Header = () => {
         location.pathname.startsWith("/community/profile/") ? "pb-[40px]" : ""
       }`}
     >
-      {/* Background image for profile pages */}
       {profile && (
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0"
@@ -222,7 +239,6 @@ const Header = () => {
         />
       )}
 
-      {/* Business profile picture - centered on mobile */}
       {location.pathname.startsWith("/community/profile/") && (
         <img
           src={profile?.businesImg || ProfilePic}
@@ -254,7 +270,6 @@ const Header = () => {
             />
           </Link>
 
-          {/* Mobile menu */}
           <AnimatePresence>
             {isOpen && (
               <motion.div
@@ -294,7 +309,6 @@ const Header = () => {
             )}
           </AnimatePresence>
 
-          {/* Desktop menu */}
           <div className="hidden md:flex gap-8 items-center text-white">
             {navItems.map((item) => (
               <motion.div key={item.path} className="relative group">

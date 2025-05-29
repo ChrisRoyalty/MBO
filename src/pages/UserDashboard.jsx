@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout as reduxLogout } from "../redux/authSlice";
@@ -97,11 +97,15 @@ const UserDashboard = () => {
     businessName: "User Name",
     businesImg: BusinessImg,
     category: "Category",
+    subscriptionStatus: "Unknown", // Added subscriptionStatus
   });
   const [loading, setLoading] = useState(true);
   const [shareableLink, setShareableLink] = useState("");
   const [showShareOptions, setShowShareOptions] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showShareSubscriptionModal, setShowShareSubscriptionModal] =
+    useState(false); // Added modal state
+  const hasFetchedRef = useRef({ profile: false, share: false });
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
@@ -110,7 +114,9 @@ const UserDashboard = () => {
     }
 
     const fetchProfile = async () => {
+      if (hasFetchedRef.current.profile) return;
       try {
+        console.log("Fetching profile data in UserDashboard");
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/member/my-profile`,
           {
@@ -119,11 +125,13 @@ const UserDashboard = () => {
         );
         if (response.data && response.data.success && response.data.data) {
           const profile = response.data.data;
+          const member = profile.member || {};
           setProfileData({
             businessName: profile.businessName || "User Name",
             businesImg: profile.businesImg || BusinessImg,
             category:
               profile.categories?.[0]?.name || profile.category || "Category",
+            subscriptionStatus: member.subscriptionStatus || "Unknown", // Added subscriptionStatus
           });
         }
       } catch (error) {
@@ -133,11 +141,14 @@ const UserDashboard = () => {
         );
       } finally {
         setLoading(false);
+        hasFetchedRef.current.profile = true;
       }
     };
 
     const fetchShareableLink = async () => {
+      if (hasFetchedRef.current.share) return;
       try {
+        console.log("Fetching shareable link in UserDashboard");
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/member/share`,
           {
@@ -155,6 +166,8 @@ const UserDashboard = () => {
         toast.error(
           error.response?.data?.message || "Failed to fetch shareable link."
         );
+      } finally {
+        hasFetchedRef.current.share = true;
       }
     };
 
@@ -182,8 +195,30 @@ const UserDashboard = () => {
   };
 
   const handleShareClick = () => {
-    setShowShareOptions((prev) => !prev);
-    setCopied(false);
+    if (profileData.subscriptionStatus !== "active") {
+      setShowShareSubscriptionModal(true);
+    } else {
+      setShowShareOptions((prev) => !prev);
+      setCopied(false);
+      // Ensure shareable link is fetched if not already available
+      if (!shareableLink && !hasFetchedRef.current.share) {
+        fetchShareableLink();
+      }
+    }
+  };
+
+  const handleShareAction = (action, platform = null) => {
+    if (profileData.subscriptionStatus !== "active") {
+      setShowShareSubscriptionModal(true);
+      setShowShareOptions(false);
+    } else {
+      if (action === "copy") {
+        handleCopyLink();
+      } else if (action === "social" && platform) {
+        shareToSocialMedia(platform);
+      }
+      setShowShareOptions(false);
+    }
   };
 
   const shareToSocialMedia = (platform) => {
@@ -229,6 +264,7 @@ const UserDashboard = () => {
     }
     navigator.clipboard.writeText(shareableLink);
     setCopied(true);
+    toast.success("Profile link copied to clipboard!");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -288,7 +324,7 @@ const UserDashboard = () => {
               >
                 <Link
                   to={item.to}
-                  onClick={handleNavLinkClick} // Add onClick handler
+                  onClick={handleNavLinkClick}
                   className={`text-[15px] flex items-center gap-4 px-6 py-2 rounded-[11px] transition-all duration-300 relative overflow-hidden ${
                     location.pathname === item.to
                       ? "bg-[#043D12] text-white shadow-lg"
@@ -357,7 +393,7 @@ const UserDashboard = () => {
                     <motion.button
                       whileHover={{ scale: 1.2 }}
                       whileTap={{ scale: 0.9 }}
-                      onClick={() => shareToSocialMedia("whatsapp")}
+                      onClick={() => handleShareAction("social", "whatsapp")}
                       className="text-[#25D366] p-1"
                       title="Share on WhatsApp"
                     >
@@ -366,7 +402,7 @@ const UserDashboard = () => {
                     <motion.button
                       whileHover={{ scale: 1.2 }}
                       whileTap={{ scale: 0.9 }}
-                      onClick={() => shareToSocialMedia("facebook")}
+                      onClick={() => handleShareAction("social", "facebook")}
                       className="text-[#3b5998] p-1"
                       title="Share on Facebook"
                     >
@@ -375,7 +411,7 @@ const UserDashboard = () => {
                     <motion.button
                       whileHover={{ scale: 1.2 }}
                       whileTap={{ scale: 0.9 }}
-                      onClick={() => shareToSocialMedia("instagram")}
+                      onClick={() => handleShareAction("social", "instagram")}
                       className="text-[#E1306C] p-1"
                       title="Copy link for Instagram"
                     >
@@ -384,7 +420,7 @@ const UserDashboard = () => {
                     <motion.button
                       whileHover={{ scale: 1.2 }}
                       whileTap={{ scale: 0.9 }}
-                      onClick={() => shareToSocialMedia("linkedin")}
+                      onClick={() => handleShareAction("social", "linkedin")}
                       className="text-[#0077B5] p-1"
                       title="Share on LinkedIn"
                     >
@@ -393,7 +429,7 @@ const UserDashboard = () => {
                     <motion.button
                       whileHover={{ scale: 1.2 }}
                       whileTap={{ scale: 0.9 }}
-                      onClick={() => shareToSocialMedia("twitter")}
+                      onClick={() => handleShareAction("social", "twitter")}
                       className="text-[#1DA1F2] p-1"
                       title="Share on Twitter"
                     >
@@ -402,7 +438,7 @@ const UserDashboard = () => {
                     <motion.button
                       whileHover={{ scale: 1.2 }}
                       whileTap={{ scale: 0.9 }}
-                      onClick={handleCopyLink}
+                      onClick={() => handleShareAction("copy")}
                       className={`p-1 ${
                         copied ? "text-green-500" : "text-[#6A7368]"
                       }`}
@@ -419,7 +455,7 @@ const UserDashboard = () => {
                 )}
               </AnimatePresence>
             </motion.div>
-            {/* 
+            {/*
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -427,7 +463,7 @@ const UserDashboard = () => {
             >
               <Link
                 to={helpItem.to}
-                onClick={handleNavLinkClick} // Add onClick handler
+                onClick={handleNavLinkClick}
                 className={`text-[15px] flex items-center gap-4 px-6 py-2 rounded-[11px] transition-all duration-300 relative overflow-hidden ${
                   location.pathname === helpItem.to
                     ? "bg-[#043D12] text-white shadow-lg"
@@ -446,8 +482,8 @@ const UserDashboard = () => {
                   {helpItem.label}
                 </motion.span>
               </Link>
-            </motion.div> */}
-
+            </motion.div>
+            */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -493,6 +529,45 @@ const UserDashboard = () => {
         )}
         <Outlet />
       </main>
+
+      {/* Subscription Modal for Non-Subscribed Users Sharing Profile */}
+      {showShareSubscriptionModal && (
+        <div
+          className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 animate-fade-in"
+          role="dialog"
+          aria-labelledby="subscription-modal-title"
+          aria-modal="true"
+        >
+          <div className="bg-white p-8 rounded-2xl w-[32rem] max-w-[90%] shadow-2xl transform transition-all duration-300 scale-100 hover:scale-105">
+            <h2
+              id="subscription-modal-title"
+              className="text-2xl font-semibold text-[#043D12] mb-4"
+            >
+              Heads up!
+            </h2>
+            <p className="text-[#6A7368] mb-6">
+              You cannot share your profile until you subscribe.
+              <br />
+              Want to share your profile with others? Unlock it with a
+              subscription.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-6 py-2.5 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-200 text-[#6A7368] font-medium cursor-pointer"
+                onClick={() => setShowShareSubscriptionModal(false)}
+              >
+                Close
+              </button>
+              <a
+                href="/subscribe"
+                className="px-6 py-2.5 bg-[#043D12] text-white rounded-lg hover:bg-[#03280E] transition-colors duration-200 font-medium cursor-pointer"
+              >
+                Subscribe Now
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

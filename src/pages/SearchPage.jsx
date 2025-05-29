@@ -46,20 +46,24 @@ const trackWhatsAppClick = async (profileId) => {
 };
 
 // Contact Dropdown Component
-const ContactDropdown = ({ socialLinks, profileId, onClose }) => {
+const ContactDropdown = ({ socialLinks = {}, profileId, onClose }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [positionAbove, setPositionAbove] = useState(false);
   const buttonRef = useRef(null);
   const dropdownRef = useRef(null);
 
-  const parsedSocialLinks =
-    typeof socialLinks === "string" ? JSON.parse(socialLinks) : socialLinks;
-
-  if (!parsedSocialLinks || Object.keys(parsedSocialLinks).length === 0) {
-    return (
-      <p className="text-gray-500 text-sm py-3">No contact info available</p>
-    );
-  }
+  // Safely parse socialLinks
+  const parsedSocialLinks = useMemo(() => {
+    try {
+      if (!socialLinks) return {};
+      return typeof socialLinks === "string"
+        ? JSON.parse(socialLinks)
+        : socialLinks;
+    } catch (error) {
+      console.error("Error parsing socialLinks:", error);
+      return {};
+    }
+  }, [socialLinks]);
 
   const socialIcons = {
     whatsapp: { icon: FaWhatsapp, label: "WhatsApp", color: "#25D366" },
@@ -67,11 +71,23 @@ const ContactDropdown = ({ socialLinks, profileId, onClose }) => {
     facebook: { icon: FaFacebook, label: "Facebook", color: "#1877F2" },
     instagram: { icon: FaInstagram, label: "Instagram", color: "#E1306C" },
     linkedin: { icon: FaLinkedin, label: "LinkedIn", color: "#0077B5" },
+    youtube: { icon: FaLinkedin, label: "YouTube", color: "#FF0000" }, // Added YouTube support
   };
 
-  const validLinks = Object.entries(parsedSocialLinks).filter(
-    ([platform, url]) => url && socialIcons[platform.toLowerCase()]
-  );
+  const validLinks = Object.entries(parsedSocialLinks)
+    .filter(([platform, url]) => url && socialIcons[platform.toLowerCase()])
+    .map(([platform, url]) => {
+      const platformKey = platform.toLowerCase();
+      return {
+        platform,
+        url,
+        ...(socialIcons[platformKey] || {
+          icon: FaLinkedin,
+          label: platform,
+          color: "#333",
+        }),
+      };
+    });
 
   useEffect(() => {
     if (isOpen && buttonRef.current && dropdownRef.current) {
@@ -81,14 +97,17 @@ const ContactDropdown = ({ socialLinks, profileId, onClose }) => {
       const spaceBelow = viewportHeight - buttonRect.bottom;
       const dropdownHeight = dropdownRect.height;
 
-      // If there's not enough space below, position the dropdown above
-      if (spaceBelow < dropdownHeight && buttonRect.top > dropdownHeight) {
-        setPositionAbove(true);
-      } else {
-        setPositionAbove(false);
-      }
+      setPositionAbove(
+        spaceBelow < dropdownHeight && buttonRect.top > dropdownHeight
+      );
     }
   }, [isOpen]);
+
+  if (validLinks.length === 0) {
+    return (
+      <p className="text-gray-500 text-sm py-3">No contact info available</p>
+    );
+  }
 
   return (
     <div className="relative flex-1">
@@ -118,34 +137,26 @@ const ContactDropdown = ({ socialLinks, profileId, onClose }) => {
             className={`absolute w-full rounded-lg bg-white shadow-xl z-[60] border border-gray-100 ${
               positionAbove ? "bottom-[calc(100%+8px)]" : "top-[calc(100%+8px)]"
             }`}
-            style={{ maxHeight: "200px" }}
           >
-            {validLinks.map(([platform, url]) => {
-              const {
-                icon: Icon,
-                label,
-                color,
-              } = socialIcons[platform.toLowerCase()];
-              return (
-                <a
-                  key={platform}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => {
-                    if (platform.toLowerCase() === "whatsapp") {
-                      trackWhatsAppClick(profileId);
-                    }
-                    setIsOpen(false);
-                    onClose();
-                  }}
-                  className="flex items-center gap-3 px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 transition-colors"
-                >
-                  <Icon style={{ color }} className="text-lg" />
-                  <span>{label}</span>
-                </a>
-              );
-            })}
+            {validLinks.map(({ platform, url, icon: Icon, label, color }) => (
+              <a
+                key={platform}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  if (platform.toLowerCase() === "whatsapp") {
+                    trackWhatsAppClick(profileId);
+                  }
+                  setIsOpen(false);
+                  onClose();
+                }}
+                className="flex items-center gap-3 px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 transition-colors"
+              >
+                <Icon style={{ color }} className="text-lg" />
+                <span>{label}</span>
+              </a>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
@@ -158,20 +169,20 @@ const Modal = ({ product, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  if (!product) return null;
+  if (!product || !product.profile) {
+    console.error("Modal rendered without required data", { product });
+    return null;
+  }
 
   const { profile, name, description, imageUrl, category } = product;
 
   const handleViewProfile = () => {
-    console.log("Current location:", location.pathname);
     if (!profile?.id) {
       console.error("Cannot navigate: Profile ID is missing", { profile });
-      alert("Unable to view profile: Profile ID is not available");
+      alert("Unable to view profile: Profile information not available");
       return;
     }
-    const targetPath = `/community/profile/${profile.id}`;
-    console.log("Navigating to:", targetPath);
-    navigate(targetPath);
+    navigate(`/community/profile/${profile.id}`);
     onClose();
   };
 
@@ -192,7 +203,6 @@ const Modal = ({ product, onClose }) => {
         className="relative bg-white rounded-2xl w-full max-w-4xl flex flex-col md:flex-row max-h-[85vh] shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close Button */}
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -202,17 +212,15 @@ const Modal = ({ product, onClose }) => {
           <FaTimes />
         </motion.button>
 
-        {/* Image Section */}
         <div className="md:w-1/2 p-6 md:p-8 bg-gradient-to-b from-[#FFFDF2] to-[#E8EFE5]">
           <img
             src={imageUrl || profile.businesImg || BusinessImg}
-            alt={name || profile.businessName}
+            alt={name || profile.businessName || "Business"}
             className="w-full h-[250px] md:h-[350px] object-cover rounded-xl shadow-md"
             onError={(e) => (e.target.src = BusinessImg)}
           />
         </div>
 
-        {/* Content Section */}
         <div className="md:w-1/2 p-6 md:p-8 flex flex-col gap-5 bg-white overflow-y-auto">
           <h2 className="text-2xl md:text-3xl font-bold text-[#043D12] leading-tight">
             {name || "Unnamed Product"}
@@ -225,7 +233,7 @@ const Modal = ({ product, onClose }) => {
                 onClick={handleViewProfile}
               >
                 {" "}
-                {profile.businessName}
+                {profile.businessName || "Unknown Business"}
               </span>
             </p>
             <p>
@@ -242,7 +250,6 @@ const Modal = ({ product, onClose }) => {
             </p>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 mt-6 relative z-10">
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -287,28 +294,42 @@ const SearchPage = () => {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
+
         if (response.data?.success && response.data.products) {
           const parsedProducts = response.data.products
             .map((product) => {
-              if (!product.profileId) {
-                console.warn("Missing profileId for product:", product);
+              // Skip products with null profiles
+              if (!product.profile) {
+                console.warn("Skipping product with null profile:", product.id);
                 return null;
               }
+
               return {
                 ...product,
                 profile: {
+                  businessName: "Unknown Business",
+                  businesImg: BusinessImg,
+                  location: "Not specified",
+                  description: "No description available",
+                  socialLinks: {},
                   ...product.profile,
-                  id: product.profileId, // Add profileId as profile.id
+                  id: product.profileId,
                   socialLinks: product.profile.socialLinks
                     ? JSON.parse(product.profile.socialLinks)
                     : {},
                 },
+                category: {
+                  name: "Uncategorized",
+                  ...product.category,
+                },
               };
             })
-            .filter((product) => product !== null);
+            .filter(Boolean); // Remove null entries
+
           if (parsedProducts.length === 0) {
-            throw new Error("No valid products with profile IDs found.");
+            throw new Error("No valid products found.");
           }
+
           const shuffledProducts = parsedProducts.sort(
             () => Math.random() - 0.5
           );
@@ -339,7 +360,7 @@ const SearchPage = () => {
 
   const getUniqueLocations = useMemo(() => {
     const locations = products
-      .map((product) => product.profile.location)
+      .map((product) => product.profile?.location)
       .filter(
         (value, index, self) =>
           value && self.indexOf(value) === index && value !== "Not specified"
@@ -365,13 +386,13 @@ const SearchPage = () => {
       const matchesLocation =
         !filterLocation ||
         filterLocation === "All Locations" ||
-        product.profile.location === filterLocation;
+        product.profile?.location === filterLocation;
       const matchesSearch =
         !query ||
         product.name?.toLowerCase().includes(query) ||
         product.description?.toLowerCase().includes(query) ||
-        product.profile.businessName?.toLowerCase().includes(query) ||
-        product.profile.description?.toLowerCase().includes(query) ||
+        product.profile?.businessName?.toLowerCase().includes(query) ||
+        product.profile?.description?.toLowerCase().includes(query) ||
         product.category?.name.toLowerCase().includes(query);
       return matchesCategory && matchesLocation && matchesSearch;
     });
@@ -391,16 +412,6 @@ const SearchPage = () => {
     return (
       <div className="flex justify-center items-center h-screen bg-gradient-to-b from-[#FFFDF2] to-[#E8EFE5]">
         <div className="w-10 h-10 border-4 border-[#043D12] border-t-transparent rounded-full animate-spin"></div>
-        <style jsx>{`
-          @keyframes spin {
-            to {
-              transform: rotate(360deg);
-            }
-          }
-          .animate-spin {
-            animation: spin 1s linear infinite;
-          }
-        `}</style>
       </div>
     );
   }
@@ -422,11 +433,7 @@ const SearchPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#FFFDF2] to-[#E8EFE5] font-sans">
       <div className="container px-[5vw] mx-auto pb-8">
-        {/* Responsive Header with Search and Filters */}
-        <header
-          className="border-[1px] border-gray-200 flex flex-col gap-2 mb-6 sticky top-0 z-50 bg-white/80 backdrop-blur-md py-4 md:pb-3 rounded-lg shadow-sm md:shadow-md px-2 md:px-3 md:mt-0"
-          style={{ position: "sticky", zIndex: 50, overflow: "visible" }}
-        >
+        <header className="border-[1px] border-gray-200 flex flex-col gap-2 mb-6 sticky top-0 z-50 bg-white/80 backdrop-blur-md py-4 md:pb-3 rounded-lg shadow-sm md:shadow-md px-2 md:px-3 md:mt-0">
           <div className="relative">
             <input
               type="text"
@@ -588,7 +595,6 @@ const SearchPage = () => {
           </div>
         </header>
 
-        {/* Product Listings */}
         <div className="flex-1">
           <h1 className="text-2xl font-semibold text-[#043D12] mb-6">
             All Products
@@ -605,12 +611,12 @@ const SearchPage = () => {
                     <div className="flex items-center gap-2 mb-3">
                       <img
                         src={product.profile.businesImg || BusinessImg}
-                        alt={product.profile.businessName}
+                        alt={product.profile.businessName || "Business"}
                         className="w-10 h-10 rounded-full object-cover"
                         onError={(e) => (e.target.src = BusinessImg)}
                       />
                       <h3 className="text-sm font-semibold text-[#043D12] truncate">
-                        {product.profile.businessName}
+                        {product.profile.businessName || "Unknown Business"}
                       </h3>
                     </div>
                     <img
@@ -619,7 +625,11 @@ const SearchPage = () => {
                         product.profile.businesImg ||
                         BusinessImg
                       }
-                      alt={product.name || product.profile.businessName}
+                      alt={
+                        product.name ||
+                        product.profile.businessName ||
+                        "Product"
+                      }
                       className="w-full h-56 object-cover rounded-xl"
                       onError={(e) => (e.target.src = BusinessImg)}
                     />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import {
@@ -20,7 +20,7 @@ import NetworkError from "../NetworkError";
 import { Player } from "@lottiefiles/react-lottie-player";
 import { TfiEmail } from "react-icons/tfi";
 import { FaXTwitter } from "react-icons/fa6";
-import { debounce } from "lodash";
+import { useSelector } from "react-redux";
 
 // Utility function to generate WhatsApp URL with predefined message
 const getWhatsAppUrl = (profile, productName = null) => {
@@ -94,8 +94,7 @@ const VideoModal = ({ videoUrl, onClose }) => {
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: 50 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          on
-          WClick={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
         >
           <motion.button
             onClick={onClose}
@@ -179,7 +178,7 @@ const ProductModal = ({ product, profile, onClose }) => {
             ✕
           </motion.button>
           <motion.div
-            className="w-full h-64 rounded-xl overflow-hidden mb-4 bg-white flex items-center justify-center"
+            className="w-full h-64 rounded-xl overflow-hidden mb-4 bg-white flex items-center justify-center relative"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -187,10 +186,10 @@ const ProductModal = ({ product, profile, onClose }) => {
             <img
               src={product.imageUrl || BusinessImg}
               alt={product.name}
-              className="max-w-full max-h-full object-contain p-2"
+              className="max-w-full max-h-full object-contain p-2 z-10"
               onError={(e) => (e.target.src = BusinessImg)}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-0" />
           </motion.div>
           <motion.h2
             className="text-2xl font-bold text-[#043D12] mb-4"
@@ -461,108 +460,17 @@ const ReportModal = ({ profile, onClose }) => {
   );
 };
 
+// Main ProfileMain Component
 const ProfileMain = () => {
   const { identifier } = useParams();
-  const [profile, setProfile] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
-  // Use a ref to track if the fetch has already been initiated
-  const hasFetchedRef = useRef(false);
-
-  const fetchProfile = debounce(async (cancelToken) => {
-    // Prevent duplicate fetches
-    if (hasFetchedRef.current) {
-      console.log(
-        `Fetch skipped for identifier: ${identifier}, already fetched`
-      );
-      return;
-    }
-    hasFetchedRef.current = true;
-
-    console.log(
-      `Fetching profile for identifier: ${identifier}, time: ${new Date().toISOString()}`
-    );
-    if (!identifier) {
-      setError("Invalid profile identifier.");
-      setLoading(false);
-      return;
-    }
-
-    let isMounted = true;
-
-    setLoading(true);
-    setError(null);
-    const validateUUID = (uuid) => {
-      const regex =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      return regex.test(uuid);
-    };
-
-    try {
-      const isUUID = validateUUID(identifier);
-      const API_URL = isUUID
-        ? `${import.meta.env.VITE_BASE_URL}/member/get-profile/${identifier}`
-        : `${import.meta.env.VITE_BASE_URL}/member/get-slug/${identifier}`;
-
-      const response = await axios.get(API_URL, {
-        cancelToken,
-        maxRedirects: 0,
-        timeout: 5000,
-      });
-      if (isMounted && response.data && response.data.profile) {
-        setProfile({
-          ...response.data.profile,
-          views: Number(response.data.profile.views) || 0,
-        });
-      } else if (isMounted) {
-        throw new Error("Profile not found.");
-      }
-    } catch (error) {
-      if (axios.isCancel(error)) {
-        console.log(`Request canceled for identifier: ${identifier}`);
-        return;
-      }
-      if (isMounted) {
-        console.error("Error Fetching Profile:", error);
-        setError(
-          error.response?.data?.message ||
-            error.message ||
-            "Failed to fetch profile data."
-        );
-      }
-    } finally {
-      if (isMounted) setLoading(false);
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, 300);
-
-  useEffect(() => {
-    console.log(
-      `ProfileMain mounted for identifier: ${identifier}, time: ${new Date().toISOString()}`
-    );
-    const source = axios.CancelToken.source();
-
-    // Reset the fetch flag on mount to allow a new fetch if identifier changes
-    hasFetchedRef.current = false;
-    fetchProfile(source.token);
-
-    return () => {
-      console.log(
-        `ProfileMain unmounted for identifier: ${identifier}, time: ${new Date().toISOString()}`
-      );
-      source.cancel("Component unmounted");
-      fetchProfile.cancel();
-    };
-  }, [identifier]);
+  // Get profile data from Redux store
+  const { profile, loading, error } = useSelector((state) => state.profile);
 
   const filterProducts = (products) => {
     if (!products || products.length === 0) return [];
@@ -775,12 +683,9 @@ const ProfileMain = () => {
                       className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]"
                     >
                       <div className="flex items-center gap-4">Phone</div>
-                      <a
-                        href={`tel:${profile.contactNo[0]}`}
-                        className="cursor-pointer text-[18px]"
-                      >
+                      <span className="cursor-pointer text-[18px]">
                         <IoCallOutline />
-                      </a>
+                      </span>
                     </a>
                   )}
                   {profile.member?.email && (
@@ -789,12 +694,9 @@ const ProfileMain = () => {
                       className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]"
                     >
                       <div className="flex items-center gap-4">Email</div>
-                      <a
-                        href={`mailto:${profile.member.email}`}
-                        className="cursor-pointer text-[18px]"
-                      >
+                      <span className="cursor-pointer text-[18px]">
                         <TfiEmail />
-                      </a>
+                      </span>
                     </a>
                   )}
                   {profile.socialLinks?.whatsapp && (

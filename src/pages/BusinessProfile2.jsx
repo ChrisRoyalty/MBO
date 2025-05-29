@@ -47,14 +47,14 @@ const BusinessProfile2 = () => {
           if (response.data.success) {
             console.log("Profile exists, redirecting to /subscribe");
             toast.info("You already have a profile. Redirecting...", {
-              autoClose: 2000,
+              autoClose: 2500,
             });
             setTimeout(
               () =>
                 navigate("/subscribe", {
                   state: { fromBusinessProfile2: true },
                 }),
-              2000
+              3000
             );
             return;
           }
@@ -134,6 +134,17 @@ const BusinessProfile2 = () => {
     const step1Data = JSON.parse(
       sessionStorage.getItem("businessProfileStep1") || "{}"
     );
+
+    // Validate step1Data to ensure it contains required fields
+    if (!step1Data.businessName || !step1Data.categoryId) {
+      toast.error(
+        "Incomplete data from previous step. Please go back and fill all required fields.",
+        { autoClose: 3000 }
+      );
+      console.log("Invalid step1Data:", step1Data);
+      return;
+    }
+
     const payload = {
       businessName: step1Data.businessName || "",
       categoryIds: [step1Data.categoryId || ""],
@@ -164,23 +175,84 @@ const BusinessProfile2 = () => {
         console.log("Updated token and user in Redux and localStorage");
       }
 
+      // Re-fetch profile to ensure server state is consistent
+      try {
+        console.log("Fetching profile after creation to confirm state");
+        const profileResponse = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/member/my-profile`,
+          { headers: { Authorization: `Bearer ${newToken || token}` } }
+        );
+        console.log(
+          "Post-creation profile fetch response:",
+          profileResponse.data
+        );
+        if (!profileResponse.data.success) {
+          console.warn(
+            "Profile fetch after creation returned unsuccessful:",
+            profileResponse.data
+          );
+          toast.warn(
+            "Profile created, but unable to fetch latest profile data.",
+            {
+              autoClose: 3000,
+              toastId: "profile-fetch-warning",
+            }
+          );
+        }
+      } catch (profileError) {
+        console.error(
+          "Error fetching profile after creation:",
+          profileError.response?.data || profileError
+        );
+        toast.warn(
+          "Profile created, but unable to fetch latest profile data.",
+          {
+            autoClose: 3000,
+            toastId: "profile-fetch-warning",
+          }
+        );
+      }
+
+      // Show success toast immediately with debugging
+      console.log("Triggering success toast for profile creation");
       toast.success("Business profile created successfully!", {
         autoClose: 2000,
+        toastId: "profile-creation-success",
+        position: "top-center", // Ensure visibility
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        zIndex: 9999, // High z-index to avoid overlap
       });
+
       sessionStorage.removeItem("businessProfileStep1");
       console.log(
-        "Navigating to /subscribe with state: { fromBusinessProfile2: true }"
+        "Navigating to /subscribe with state: { fromBusinessProfile2: true, businessName: ",
+        step1Data.businessName,
+        "}"
       );
       setTimeout(
-        () => navigate("/subscribe", { state: { fromBusinessProfile2: true } }),
-        2000
+        () =>
+          navigate("/subscribe", {
+            state: {
+              fromBusinessProfile2: true,
+              businessName: step1Data.businessName,
+            },
+          }),
+        3000 // Reverted to 3000ms since toast is triggered earlier
       );
     } catch (error) {
       const errorData = error.response?.data;
       const status = errorData?.status;
       const message = errorData?.message || "An error occurred.";
       console.error("Submission error:", errorData || error);
-      if (status === 403 && message === "You already have a profile.") {
+
+      if (status === 400 && message.includes("already exists")) {
+        toast.error(message, { autoClose: 3000 });
+        console.log(
+          "Username already exists, staying on BusinessProfile2 page"
+        );
+      } else if (status === 403 && message === "You already have a profile.") {
         toast.error("You already have a profile. Redirecting...", {
           autoClose: 2000,
         });
@@ -190,14 +262,14 @@ const BusinessProfile2 = () => {
         setTimeout(
           () =>
             navigate("/subscribe", { state: { fromBusinessProfile2: true } }),
-          1500
+          2000
         );
       } else if (status === 401) {
         toast.error("Session expired. Please log in again.", {
           autoClose: 2000,
         });
         console.log("Navigating to /login due to 401 error");
-        setTimeout(() => navigate("/login"), 1500);
+        setTimeout(() => navigate("/login"), 2000);
       } else {
         toast.error(message || "Failed to submit profile.", {
           autoClose: 3000,

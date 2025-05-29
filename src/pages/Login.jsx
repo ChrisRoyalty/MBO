@@ -1,8 +1,7 @@
-// src/components/Login.jsx
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { login } from "../redux/authSlice";
+import { login, logout } from "../redux/authSlice";
 import { FaRegEnvelope } from "react-icons/fa";
 import { CiLock } from "react-icons/ci";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
@@ -12,6 +11,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
+import { IoArrowBackCircle } from "react-icons/io5";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -29,11 +29,18 @@ const Login = () => {
     admin: "/admin",
     user: {
       incompleteProfile: "/business-profile",
-      inactiveSubscription: "/subscribe",
+      inactiveSubscription: "/subscribe?fromUserDashboard=true",
       activeUser: "/user-dashboard",
     },
   };
 
+  // Clear previous session on mount
+  useEffect(() => {
+    dispatch(logout());
+    localStorage.removeItem("token");
+  }, [dispatch]);
+
+  // Remember me functionality
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberMeEmail");
     const savedPassword = localStorage.getItem("rememberMePassword");
@@ -47,6 +54,10 @@ const Login = () => {
     setLoginAttempted(true);
 
     try {
+      // Clear previous auth state
+      dispatch(logout());
+      localStorage.removeItem("token");
+
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/member/login`,
         { email, password }
@@ -58,16 +69,15 @@ const Login = () => {
       const user = {
         id,
         role,
-        subscriptionStatus: subscriptionStatus || "inactive", // Default to inactive
-        profileStatus: profileStatus || false, // Default to false
+        subscriptionStatus: subscriptionStatus || "inactive",
+        profileStatus: profileStatus || false,
         firstName: member.firstname,
         lastName: member.lastname,
         email: member.email,
       };
 
-      console.log("Login user data:", user); // Debug
+      localStorage.setItem("token", token);
       dispatch(login({ token, user }));
-      localStorage.setItem("token", token); // Sync with authSlice
       toast.success(response.data.message || "Login successful!");
 
       if (rememberMe) {
@@ -78,6 +88,9 @@ const Login = () => {
         localStorage.removeItem("rememberMePassword");
       }
     } catch (error) {
+      dispatch(logout());
+      localStorage.removeItem("token");
+
       const errorResponse = error.response?.data || {};
       if (errorResponse.status === 403) {
         toast.error(
@@ -97,7 +110,6 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated && user && loginAttempted) {
-      console.log("Navigation user data:", user); // Debug
       const route =
         user.role === "admin"
           ? routes.admin
@@ -106,9 +118,19 @@ const Login = () => {
           : user.subscriptionStatus !== "active"
           ? routes.user.inactiveSubscription
           : routes.user.activeUser;
-      console.log("Navigating to:", route); // Debug
-      navigate(route, { replace: true });
-      setLoginAttempted(false);
+
+      console.log("Navigating after login:", {
+        route,
+        userRole: user.role,
+        profileStatus: user.profileStatus,
+        subscriptionStatus: user.subscriptionStatus,
+      });
+
+      toast.info("Redirecting to your dashboard...");
+      setTimeout(() => {
+        navigate(route, { replace: true });
+        setLoginAttempted(false);
+      }, 3000); // Small delay to allow toast to be visible
     }
   }, [isAuthenticated, user, loginAttempted, navigate]);
 
@@ -135,6 +157,12 @@ const Login = () => {
         </div>
         <div className="relative max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
           <div className="container mx-auto px-[5vw] h-fit max-lg:mt-16">
+            <Link
+              to="/"
+              className="lg:text-[50px] text-[32px] font-bold text-[#363636] absolute top-4 left-4"
+            >
+              <IoArrowBackCircle className="text-[#043D12] text-[40px]" />
+            </Link>
             <Link
               to="/"
               className="lg:text-[50px] text-[32px] font-bold text-[#363636]"
@@ -206,7 +234,7 @@ const Login = () => {
                 to="/create-account"
                 className="text-[#6A7368] text-[16px] text-center"
               >
-                Don’t have an account?{" "}
+                Don't have an account?{" "}
                 <strong className="hover:text-[17px]">Register</strong>
               </Link>
             </form>

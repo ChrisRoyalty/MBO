@@ -64,7 +64,7 @@ const Footer = () => {
             <li className="font-bold">Customer Support:</li>
             <li>09078987890</li>
           </ul>
-          <ul className="flex max-sm:flex-col items-center gap-1 max-sm:w-[90%] m-auto">
+          <ul className="flex max-sm:flex-col items-center gap-1 max-sm:w-[90%] max-sm:m-auto">
             <li className="font-bold">Email:</li>
             <li className="max-sm:px-4">admin@mindpowerbusinessonline.com</li>
           </ul>

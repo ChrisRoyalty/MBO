@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import axios from "axios";
 import {
   LineChart,
@@ -11,9 +11,9 @@ import {
   CartesianGrid,
 } from "recharts";
 import { IoIosNotificationsOutline } from "react-icons/io";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { login } from "../../redux/authSlice";
+import { login, setProfileData } from "../../redux/authSlice";
 import { motion } from "framer-motion";
 import { CiUser } from "react-icons/ci";
 import BusinessImg from "../../assets/user-photo.svg";
@@ -22,6 +22,14 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
+// Global fetch tracker (survives component unmounts)
+const fetchTracker = {
+  profile: { hasFetched: false, lastFetched: 0 },
+  analytics: { hasFetched: false, lastFetched: 0 },
+};
+
+const FETCH_COOLDOWN = 300000; // 5 minutes cooldown (in milliseconds)
+
 const Profile = () => {
   const [timeRange, setTimeRange] = useState("daily");
   const [metric, setMetric] = useState("ProfileViews");
@@ -29,7 +37,23 @@ const Profile = () => {
   const [isProfileVisibleDropdownOpen, setIsProfileVisibleDropdownOpen] =
     useState(false);
   const [isVisible, setIsVisible] = useState(true);
-  const [profileData, setProfileData] = useState({
+  const [analyticsData, setAnalyticsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [profileProgress, setProfileProgress] = useState(0);
+  const [isProfileComplete, setIsProfileComplete] = useState(false);
+  const [showShareSubscriptionModal, setShowShareSubscriptionModal] =
+    useState(false); // New state for share modal
+
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const location = useLocation();
+  const { isAuthenticated, user, token, profileData } = useSelector(
+    (state) => state.auth
+  );
+  const hasFetchedRef = useRef(false); // Reset on mount
+
+  const defaultProfileData = {
     businessName: "User Name",
     category: "Category",
     businesImg: "",
@@ -43,16 +67,7 @@ const Profile = () => {
     location: "",
     keyword: [],
     socialLinks: {},
-  });
-  const [analyticsData, setAnalyticsData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [profileProgress, setProfileProgress] = useState(0);
-  const [isProfileComplete, setIsProfileComplete] = useState(false);
-
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { isAuthenticated, user, token } = useSelector((state) => state.auth);
+  };
 
   const METRICS = [
     {
@@ -391,13 +406,39 @@ const Profile = () => {
     return processedData
       .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
       .slice(-limit);
-  }, [analyticsData, metric, timeRange, profileData]);
+  }, [analyticsData, metric, timeRange]);
 
+  // Log component mount and unmount
+  useEffect(() => {
+    console.log("Profile component mounted at:", Date.now());
+    hasFetchedRef.current = false; // Reset on mount
+    return () => {
+      console.log("Profile component unmounted at:", Date.now());
+    };
+  }, []);
+
+  // Fetch profile data
   useEffect(() => {
     if (!isAuthenticated || !token) {
-      setError("Please log in to view your profile.");
       setLoading(false);
       navigate("/login", { replace: true });
+      return;
+    }
+
+    const now = Date.now();
+    // Only skip fetch if data is recent and profileData exists
+    if (
+      fetchTracker.profile.hasFetched &&
+      now - fetchTracker.profile.lastFetched < FETCH_COOLDOWN &&
+      profileData &&
+      Object.keys(profileData).length > 0
+    ) {
+      console.log("Using cached profile data");
+      setIsVisible(!profileData.deletedAt);
+      const { progress, isComplete } = calculateProfileProgress(profileData);
+      setProfileProgress(progress);
+      setIsProfileComplete(isComplete);
+      setLoading(false);
       return;
     }
 
@@ -405,9 +446,9 @@ const Profile = () => {
     const fetchProfileData = async () => {
       try {
         setLoading(true);
-        const txId = Date.now().toString();
+        console.log("Fetching profile data from Profile component");
         const response = await axios.get(
-          `${import.meta.env.VITE_BASE_URL}/member/my-profile?txId=${txId}`,
+          `${import.meta.env.VITE_BASE_URL}/member/my-profile`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -425,14 +466,15 @@ const Profile = () => {
           subscriptionStatus: memberData.subscriptionStatus || "Unknown",
         };
 
-        if (JSON.stringify(user) !== JSON.stringify(newUserData)) {
+        const hasUserChanged =
+          JSON.stringify(user) !== JSON.stringify(newUserData);
+        if (hasUserChanged) {
           dispatch(login({ token, user: newUserData }));
         }
 
         const updatedProfileData = {
           businessName: data.businessName || "User Name",
-          category:
-            data.categories?.[0]?.name || " Highlighted in comments" > Category,
+          category: data.categories?.[0]?.name || "Category",
           businesImg: data.businesImg || "",
           id: data.id || "",
           subscriptionStatus: memberData.subscriptionStatus || "Unknown",
@@ -444,15 +486,28 @@ const Profile = () => {
           location: data.location || "",
           keyword: data.keyword || [],
           socialLinks: data.socialLinks || {},
+          deletedAt: data.deletedAt || null,
         };
 
-        setProfileData(updatedProfileData);
-        setIsVisible(!data.deletedAt);
+        console.log(
+          "Profile views fetched in Profile:",
+          updatedProfileData.views
+        );
+        console.log(
+          "Shared clicks fetched in Profile:",
+          updatedProfileData.sharedClicks
+        );
+
+        dispatch(setProfileData(updatedProfileData));
+        setIsVisible(!updatedProfileData.deletedAt);
 
         const { progress, isComplete } =
           calculateProfileProgress(updatedProfileData);
         setProfileProgress(progress);
         setIsProfileComplete(isComplete);
+
+        fetchTracker.profile = { hasFetched: true, lastFetched: now };
+        hasFetchedRef.current = true;
       } catch (err) {
         if (isMounted) {
           setError(
@@ -471,16 +526,30 @@ const Profile = () => {
     return () => {
       isMounted = false;
     };
-  }, [isAuthenticated, token, dispatch, navigate]);
+  }, [isAuthenticated, token, navigate, dispatch, user, location.pathname]);
 
+  // Fetch analytics data
   useEffect(() => {
     if (!isAuthenticated || !token) return;
+
+    const now = Date.now();
+    // Only skip fetch if data is recent and analyticsData exists
+    if (
+      fetchTracker.analytics.hasFetched &&
+      now - fetchTracker.analytics.lastFetched < FETCH_COOLDOWN &&
+      analyticsData.length > 0
+    ) {
+      console.log("Using cached analytics data");
+      setLoading(false);
+      return;
+    }
 
     let isMounted = true;
     const fetchAnalyticsData = async () => {
       try {
         setLoading(true);
         const txId = Date.now().toString();
+        console.log("Fetching analytics data with txId:", txId);
         const response = await axios.get(
           `${
             import.meta.env.VITE_BASE_URL
@@ -497,6 +566,8 @@ const Profile = () => {
         }
 
         setAnalyticsData(response.data.data);
+
+        fetchTracker.analytics = { hasFetched: true, lastFetched: now };
       } catch (err) {
         if (isMounted) {
           setError(
@@ -513,8 +584,9 @@ const Profile = () => {
     return () => {
       isMounted = false;
     };
-  }, [isAuthenticated, token, timeRange]);
+  }, [isAuthenticated, token, timeRange, location.pathname]);
 
+  // Handle clicks outside dropdowns
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (isDropdownOpen && !e.target.closest(".dropdown-container")) {
@@ -534,8 +606,9 @@ const Profile = () => {
     };
   }, [isDropdownOpen, isProfileVisibleDropdownOpen]);
 
+  // Toggle profile visibility
   const toggleVisibility = async (action) => {
-    if (!profileData.id || !token) {
+    if (!profileData?.id || !token) {
       return toast.error("Missing profile ID or token.");
     }
 
@@ -555,10 +628,12 @@ const Profile = () => {
         toast.success(
           `Profile ${action === "hide" ? "hidden" : "restored"} successfully!`
         );
-        setProfileData((prev) => ({
-          ...prev,
-          deletedAt: action === "hide" ? new Date().toISOString() : null,
-        }));
+        dispatch(
+          setProfileData({
+            ...profileData,
+            deletedAt: action === "hide" ? new Date().toISOString() : null,
+          })
+        );
       }
     } catch (err) {
       toast.error(
@@ -568,6 +643,19 @@ const Profile = () => {
         navigate("/login", { replace: true });
       }
     } finally {
+      setIsProfileVisibleDropdownOpen(false);
+    }
+  };
+
+  // Handle share profile click
+  const handleShareProfile = () => {
+    if (profileData?.subscriptionStatus !== "active") {
+      setShowShareSubscriptionModal(true); // Show modal for non-subscribed users
+    } else {
+      // Navigate to profile preview for subscribed users
+      navigate(
+        `/community/profile/${profileData?.id || defaultProfileData.id}`
+      );
       setIsProfileVisibleDropdownOpen(false);
     }
   };
@@ -632,7 +720,7 @@ const Profile = () => {
               animate={{ opacity: [1, 0.8, 1] }}
               transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
             >
-              {profileData.businesImg ? (
+              {profileData?.businesImg ? (
                 <img
                   src={profileData.businesImg}
                   alt="Business"
@@ -644,9 +732,11 @@ const Profile = () => {
               )}
               <figcaption className="ml-2 text-[#6A7368] hidden sm:block">
                 <h3 className="text-[12px] font-semibold">
-                  {profileData.businessName}
+                  {profileData?.businessName || defaultProfileData.businessName}
                 </h3>
-                <p className="text-[10px] italic">{profileData.category}</p>
+                <p className="text-[10px] italic">
+                  {profileData?.category || defaultProfileData.category}
+                </p>
               </figcaption>
             </motion.figure>
           </Link>
@@ -656,18 +746,21 @@ const Profile = () => {
       <section className="welcome flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 px-2 sm:px-0">
         <div className="text-[#6A7368] text-center sm:text-left">
           <h2 className="text-[16px] sm:text-[20px]">
-            Welcome back, {profileData.businessName}
+            Welcome back,{" "}
+            {profileData?.businessName || defaultProfileData.businessName}
           </h2>
           <p className="text-[10px]">
             Subscription Status:{" "}
             <span
               className={
-                profileData.subscriptionStatus === "active"
+                (profileData?.subscriptionStatus ||
+                  defaultProfileData.subscriptionStatus) === "active"
                   ? "text-green-600"
                   : "text-red-600"
               }
             >
-              {profileData.subscriptionStatus}
+              {profileData?.subscriptionStatus ||
+                defaultProfileData.subscriptionStatus}
             </span>
           </p>
         </div>
@@ -726,13 +819,12 @@ const Profile = () => {
                     >
                       Hide Profile
                     </button>
-                    <Link
-                      to={`/community/profile/${profileData.id}`}
-                      className="block w-full text-left px-4 py-2 text-[#043D12] hover:bg-[#E8ECE8] transition-all text-[12px] sm:text-[14px]"
-                      onClick={() => setIsProfileVisibleDropdownOpen(false)}
+                    <button
+                      onClick={handleShareProfile}
+                      className="w-full text-left px-4 py-2 text-[#043D12] hover:bg-[#E8ECE8] transition-all text-[12px] sm:text-[14px]"
                     >
                       Preview Profile
-                    </Link>
+                    </button>
                   </>
                 ) : (
                   <button
@@ -757,6 +849,45 @@ const Profile = () => {
         </div>
       )}
 
+      {/* Subscription Modal for Non-Subscribed Users Sharing Profile */}
+      {showShareSubscriptionModal && (
+        <div
+          className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 animate-fade-in"
+          role="dialog"
+          aria-labelledby="subscription-modal-title"
+          aria-modal="true"
+        >
+          <div className="bg-white p-8 rounded-2xl w-[32rem] max-w-[90%] shadow-2xl transform transition-all duration-300 scale-100 hover:scale-105">
+            <h2
+              id="subscription-modal-title"
+              className="text-2xl font-semibold text-[#043D12] mb-4"
+            >
+              Heads up!
+            </h2>
+            <p className="text-[#6A7368] mb-6">
+              You cannot preview your profile until you subscribe.
+              <br />
+              Want to preview and share your profile with others? Unlock it with
+              a subscription.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-6 py-2.5 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-200 text-[#6A7368] font-medium cursor-pointer"
+                onClick={() => setShowShareSubscriptionModal(false)}
+              >
+                Close
+              </button>
+              <a
+                href="/subscribe" // Adjust if your subscription route is different
+                className="px-6 py-2.5 bg-[#043D12] text-white rounded-lg hover:bg-[#03280E] transition-colors duration-200 font-medium cursor-pointer"
+              >
+                Subscribe Now
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="content-section mt-8 sm:mt-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {METRICS.map(({ title, key, label, value }) => (
@@ -776,7 +907,7 @@ const Profile = () => {
                 {label}
               </figcaption>
               <h3 className="count text-[24px] sm:text-[32px] font-bold">
-                {value(profileData)}
+                {value(profileData || defaultProfileData)}
               </h3>
             </div>
           ))}

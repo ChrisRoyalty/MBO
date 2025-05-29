@@ -5,6 +5,7 @@ import Hand from "../components/svgs/Hand";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { IoArrowBackCircle } from "react-icons/io5";
 
 const ForgottenPassword = () => {
   const [email, setEmail] = useState(""); // Only email state
@@ -73,6 +74,12 @@ const ForgottenPassword = () => {
         </div>
         <div className="relative max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
           <div className="w-[80%] h-fit max-lg:mt-16">
+            <Link
+              to="/"
+              className="lg:text-[50px] text-[32px] font-bold text-[#363636] absolute top-4 left-4"
+            >
+              <IoArrowBackCircle className="text-[#043D12] text-[40px]" />
+            </Link>
             <Link
               to="/"
               className="lg:text-[50px] text-[32px] font-bold text-[#363636]"

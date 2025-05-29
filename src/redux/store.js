@@ -1,8 +1,10 @@
 import { configureStore } from "@reduxjs/toolkit";
+import { combineReducers } from "redux";
 import { persistStore, persistReducer } from "redux-persist";
-//import storage from "redux-persist/lib/storage"; // default storage (localStorage)
+import storage from "redux-persist/lib/storage";
 import authReducer from "./authSlice";
-import storageSession from "redux-persist/lib/storage/session";
+import profileReducer from "./profileSlice";
+import fetchTrackerReducer from "./fetchTrackerSlice";
 import {
   FLUSH,
   REHYDRATE,
@@ -14,20 +16,23 @@ import {
 
 const persistConfig = {
   key: "root",
-  storage: storageSession, // Use session storage instead of local storage
-  whitelist: ["token", "isAuthenticated"], // Persist only these fields
+  storage,
+  whitelist: ["auth", "profile"],
 };
 
-const persistedReducer = persistReducer(persistConfig, authReducer);
+const rootReducer = combineReducers({
+  auth: authReducer,
+  profile: profileReducer,
+  fetchTracker: fetchTrackerReducer,
+});
+
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const store = configureStore({
-  reducer: {
-    auth: persistedReducer,
-  },
+  reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        // Ignore redux-persist action types to prevent warnings
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
     }),

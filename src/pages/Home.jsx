@@ -6,7 +6,7 @@ import Benefits from "../components/home/Benefits";
 import Faq from "../components/home/Faq";
 import Start from "../components/home/Start";
 import Footer from "../components/Footer";
-
+// import UploadToCloudinary from "../components/UploadCloudinary";
 const Home = () => {
   const faqRef = useRef(null);
   const location = useLocation();
@@ -22,6 +22,7 @@ const Home = () => {
     <div className="w-full bg-[#FFFDF2]">
       <HeroSection />
       <Join />
+      {/* <UploadToCloudinary /> */}
       <Benefits />
       <div ref={faqRef} id="faq">
         <Faq />

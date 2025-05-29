@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { FlutterWaveButton, closePaymentModal } from "flutterwave-react-v3";
 import axios from "axios";
@@ -18,6 +18,9 @@ import {
   StarIcon,
   ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
+import { login } from "../redux/authSlice";
+import { IoArrowBackCircle } from "react-icons/io5";
+import { Link } from "react-router-dom";
 
 const formatPrice = (price) => {
   if (!price) return "N/A";
@@ -39,7 +42,7 @@ const IntroModal = ({
   onClose,
   onProceed,
   subscriptions,
-  isFirstVisit,
+  isFirstVisit = true,
   subscriptionStatus,
 }) => {
   const navigate = useNavigate();
@@ -52,6 +55,13 @@ const IntroModal = ({
     isFirstVisit,
     subscriptionStatus,
     subscriptions,
+    isFirstVisitType: typeof isFirstVisit,
+  });
+
+  console.log("IntroModal content selected:", {
+    isFirstVisit,
+    willRenderFirstContent: isFirstVisit,
+    willRenderSecondContent: !isFirstVisit && subscriptionStatus !== "active",
   });
 
   return (
@@ -137,7 +147,7 @@ const IntroModal = ({
                     </motion.div>
                   ))
                 ) : (
-                  <p className="text-[#6A7368] text-[12px] sm:text-[14px] py-4 text-center">
+                  <p className="text-[#6A7368] text-[12px] sm:text-[14px] py-PAD text-center">
                     No plans available at the moment. Please try again later.
                   </p>
                 )}
@@ -183,13 +193,14 @@ const IntroModal = ({
               Boost Your Business on MBO!
             </h2>
             <p className="text-[#043D12] text-[13px] sm:text-[15px] font-medium mb-3 sm:mb-4 italic text-center">
-              Your business is live on MBO — now let’s make it shine!
+              Your business is live on MBO — customers can now find you!
             </p>
             <p className="text-[#6A7368] text-[12px] sm:text-[14px] mb-2 leading-relaxed text-center">
-              Ready to dominate the market?
+              Want more visibility, more trust, and more sales?
             </p>
             <p className="text-[#6A7368] text-[12px] sm:text-[14px] mb-4 sm:mb-6 leading-relaxed text-center">
-              Upgrade for just <strong>{dynamicPrice}/year</strong> to unlock:
+              Upgrade your profile for just <strong>{dynamicPrice}/year</strong>{" "}
+              and enjoy:
             </p>
             <ul className="text-[#6A7368] text-[12px] sm:text-[14px] mb-4 sm:mb-6 text-left max-w-[400px] mx-auto space-y-3">
               <li className="flex items-center gap-2">
@@ -198,7 +209,7 @@ const IntroModal = ({
               </li>
               <li className="flex items-center gap-2">
                 <RocketLaunchIcon className="w-4 sm:w-5 h-4 sm:h-5 text-[#043D12] flex-shrink-0" />
-                <span>Priority listing on product pages</span>
+                <span>Priority listing on product page</span>
               </li>
               <li className="flex items-center gap-2">
                 <RocketLaunchIcon className="w-4 sm:w-5 h-4 sm:h-5 text-[#043D12] flex-shrink-0" />
@@ -206,7 +217,7 @@ const IntroModal = ({
               </li>
               <li className="flex items-center gap-2">
                 <ChatBubbleLeftRightIcon className="w-4 sm:w-5 h-4 sm:h-5 text-[#043D12] flex-shrink-0" />
-                <span>Direct WhatsApp access for buyers</span>
+                <span>Direct WhatsApp contact for buyers</span>
               </li>
             </ul>
             <p className="text-[#6A7368] text-[12px] sm:text-[14px] mb-4 sm:mb-6 leading-relaxed text-center">
@@ -218,7 +229,7 @@ const IntroModal = ({
         {(isFirstVisit || subscriptionStatus !== "active") && (
           <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-4 sm:mt-6">
             <motion.button
-              onClick={() => navigate("/user-dashboard/profile")}
+              onClick={onClose}
               className="bg-transparent border-2 border-[#043D12] text-[#043D12] rounded-[48px] px-5 sm:px-6 py-2 sm:py-2.5 font-medium text-[13px] sm:text-[14px] hover:bg-[#043D12]/10 transition-all duration-300 w-full sm:w-auto cursor-pointer"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -250,8 +261,9 @@ const IntroModal = ({
   );
 };
 
-const SuccessModal = ({ onClose, userName }) => {
+const SuccessModal = ({ onCloseAndNavigate, userName }) => {
   const navigate = useNavigate();
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 px-4">
       <motion.div
@@ -309,6 +321,7 @@ const SuccessModal = ({ onClose, userName }) => {
         <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-4 sm:mt-6">
           <motion.button
             onClick={() => {
+              console.log("Complete My Profile clicked"); // Debug log
               navigate("/business-profile", {
                 state: { subscriptionSuccess: true },
               });
@@ -321,8 +334,8 @@ const SuccessModal = ({ onClose, userName }) => {
           </motion.button>
           <motion.button
             onClick={() => {
-              onClose();
-              navigate("/user-dashboard/profile");
+              console.log("Go to Dashboard clicked"); // Debug log
+              onCloseAndNavigate();
             }}
             className="bg-transparent border-2 border-[#043D12] text-[#043D12] rounded-[12px] px-5 sm:px-6 py-2 sm:py-2.5 font-medium text-[13px] sm:text-[14px] hover:bg-[#043D12]/10 transition-all duration-300 w-full sm:w-auto cursor-pointer"
             whileHover={{ scale: 1.05 }}
@@ -332,7 +345,7 @@ const SuccessModal = ({ onClose, userName }) => {
           </motion.button>
         </div>
 
-        <p className="text-[#6A7368] text-[10px] sm:text-[12px] mt-4 sm:mt widestretchy=true sm:mt-6 italic text-center">
+        <p className="text-[#6A7368] text-[10px] sm:text-[12px] mt-4 sm:mt-6 italic text-center">
           Set up your profile in minutes and start growing!
         </p>
       </motion.div>
@@ -343,6 +356,13 @@ const SuccessModal = ({ onClose, userName }) => {
 const Subscribe = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const fromUserDashboard = params.get("fromUserDashboard") === "true";
+  const fromBusinessProfile2 =
+    params.get("fromBusinessProfile2") === "true" ||
+    location.state?.fromBusinessProfile2 ||
+    false;
+  const dispatch = useDispatch();
   const [subscriptions, setSubscriptions] = useState([]);
   const [userId, setUserId] = useState(null);
   const [txRefs, setTxRefs] = useState({});
@@ -350,16 +370,25 @@ const Subscribe = () => {
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showIntroModal, setShowIntroModal] = useState(false);
-  const [isFirstVisit, setIsFirstVisit] = useState(false);
+  const [isFirstVisit, setIsFirstVisit] = useState(true);
   const [isPaymentLoading, setIsPaymentLoading] = useState({});
   const [globalLoading, setGlobalLoading] = useState(false);
   const [initializingPayments, setInitializingPayments] = useState(false);
+  const [isFirstVisitResolved, setIsFirstVisitResolved] = useState(false);
 
   const user = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
   const subscriptionStatus = user?.subscriptionStatus || "inactive";
 
-  // Initialize user and check first visit
+  // Log location state and query params for debugging
+  console.log("Location state and query params:", {
+    state: location.state,
+    fromBusinessProfile2,
+    fromUserDashboard,
+    search: location.search,
+  });
+
+  // Initialize user and determine isFirstVisit
   useEffect(() => {
     if (!token) {
       console.log("No token found, redirecting to login");
@@ -368,64 +397,148 @@ const Subscribe = () => {
       return;
     }
 
-    try {
-      const decodedToken = jwtDecode(token);
-      setUserId(decodedToken.id);
-      setIsLoadingUser(false);
+    const initializeUser = async () => {
+      try {
+        const decodedToken = jwtDecode(token);
+        setUserId(decodedToken.id);
+        console.log("Initializing user with:", {
+          token,
+          userId: decodedToken.id,
+          subscriptionStatus,
+          fromUserDashboard,
+          fromBusinessProfile2,
+        });
 
-      // Log localStorage values for debugging
-      const hasSeenIntro = localStorage.getItem("hasSeenIntroModal");
-      const hasSeenFirstModal = localStorage.getItem(
-        "hasSeenFirstModalFromBusinessProfile"
-      );
-      console.log("LocalStorage values:", {
-        hasSeenIntro,
-        hasSeenFirstModal,
-      });
+        // Fetch user data if not in Redux store
+        if (!user) {
+          console.log("User data missing, fetching profile...");
+          const response = await axios.get(
+            `${import.meta.env.VITE_BASE_URL}/member/my-profile`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+              timeout: 10000,
+            }
+          );
 
-      // Check navigation from BusinessProfile2
-      const fromBusinessProfile2 =
-        location.state?.fromBusinessProfile2 || false;
-      console.log("Checking fromBusinessProfile2:", fromBusinessProfile2);
+          if (response.data?.success && response.data?.data?.member) {
+            const fetchedUser = response.data.data.member;
+            dispatch(
+              login({
+                token,
+                user: {
+                  firstName: fetchedUser.firstName,
+                  lastName: fetchedUser.lastName,
+                  email: fetchedUser.email,
+                  subscriptionStatus: fetchedUser.subscriptionStatus,
+                  role: fetchedUser.role,
+                },
+              })
+            );
+          } else {
+            throw new Error("Failed to fetch user data");
+          }
+        }
 
-      if (fromBusinessProfile2) {
-        console.log(
-          "Resetting hasSeenFirstModal for BusinessProfile2 navigation"
+        // Check localStorage
+        const hasCompletedIntro = localStorage.getItem(
+          "hasCompletedIntroModal"
         );
-        localStorage.removeItem("hasSeenFirstModalFromBusinessProfile");
-        setIsFirstVisit(true);
-        localStorage.setItem("hasSeenIntroModal", "true");
-        localStorage.setItem("hasSeenFirstModalFromBusinessProfile", "true");
-      } else if (!hasSeenIntro) {
-        console.log("First visit detected, setting isFirstVisit: true");
-        setIsFirstVisit(true);
-        localStorage.setItem("hasSeenIntroModal", "true");
+        const hasHandledFirstVisit = localStorage.getItem(
+          "hasHandledFirstVisit"
+        );
+
+        console.log("LocalStorage values before evaluation:", {
+          hasCompletedIntro,
+          hasHandledFirstVisit,
+          fromUserDashboard,
+          fromBusinessProfile2,
+        });
+
+        let firstVisit = true;
+        if (fromBusinessProfile2) {
+          console.log(
+            "Navigation from BusinessProfile2, forcing isFirstVisit: true and clearing localStorage"
+          );
+          localStorage.removeItem("hasCompletedIntroModal");
+          localStorage.removeItem("hasHandledFirstVisit");
+          firstVisit = true;
+          localStorage.setItem("hasHandledFirstVisit", "true");
+        } else if (fromUserDashboard && !hasHandledFirstVisit) {
+          console.log(
+            "Initial visit from UserDashboard, setting isFirstVisit: true"
+          );
+          firstVisit = true;
+          localStorage.setItem("hasHandledFirstVisit", "true");
+        } else if (!hasCompletedIntro && !hasHandledFirstVisit) {
+          console.log("First organic visit, setting isFirstVisit: true");
+          firstVisit = true;
+          localStorage.setItem("hasHandledFirstVisit", "true");
+        } else {
+          console.log("Not first visit, setting isFirstVisit: false");
+          firstVisit = false;
+        }
+
+        // Log localStorage after modifications
+        console.log("LocalStorage values after evaluation:", {
+          hasCompletedIntroModal: localStorage.getItem(
+            "hasCompletedIntroModal"
+          ),
+          hasHandledFirstVisit: localStorage.getItem("hasHandledFirstVisit"),
+        });
+
+        setIsFirstVisit(firstVisit);
+        setIsFirstVisitResolved(true);
+        setIsLoadingUser(false);
+
+        console.log("isFirstVisit finalized:", {
+          isFirstVisit: firstVisit,
+          isFirstVisitResolved: true,
+        });
+      } catch (error) {
+        console.error("Error initializing user:", error);
+        toast.error("Session expired or invalid token. Please log in again.");
+        navigate("/login");
       }
-    } catch (error) {
-      console.error("Invalid token:", error);
-      toast.error("Session expired, please log in again.");
-      navigate("/login");
-    }
-  }, [token, navigate, location.state]);
+    };
+
+    initializeUser();
+  }, [
+    token,
+    user,
+    navigate,
+    fromUserDashboard,
+    fromBusinessProfile2,
+    dispatch,
+  ]);
 
   // Determine if intro modal should be shown
   useEffect(() => {
-    if (!isLoadingUser && userId) {
+    if (!isLoadingUser && userId && isFirstVisitResolved) {
       console.log("Evaluating showIntroModal", {
-        fromBusinessProfile2: location.state?.fromBusinessProfile2,
+        isFirstVisit,
+        subscriptionStatus,
+        fromUserDashboard,
+        fromBusinessProfile2,
+        isFirstVisitResolved,
+      });
+
+      const showModal =
+        isFirstVisit || (subscriptionStatus !== "active" && !isFirstVisit);
+
+      setShowIntroModal(showModal);
+      console.log("showIntroModal set:", showModal, {
         isFirstVisit,
         subscriptionStatus,
       });
-
-      const fromBusinessProfile2 =
-        location.state?.fromBusinessProfile2 || false;
-      const showModal =
-        fromBusinessProfile2 || isFirstVisit || subscriptionStatus !== "active";
-
-      setShowIntroModal(showModal);
-      console.log("showIntroModal set:", showModal, { isFirstVisit });
     }
-  }, [isLoadingUser, userId, isFirstVisit, subscriptionStatus, location.state]);
+  }, [
+    isLoadingUser,
+    userId,
+    isFirstVisit,
+    subscriptionStatus,
+    isFirstVisitResolved,
+    fromBusinessProfile2,
+  ]);
 
   // Fetch subscriptions with retry logic
   useEffect(() => {
@@ -447,16 +560,18 @@ const Subscribe = () => {
             `${import.meta.env.VITE_BASE_URL}/admin/get-sub`,
             {
               headers: { Authorization: `Bearer ${token}` },
-              timeout: 10000, // 10-second timeout
+              timeout: 10000,
             }
           );
           console.log("Subscription fetch response:", response.data);
           if (response.data && Array.isArray(response.data.data)) {
             const fetchedSubscriptions = response.data.data;
+            console.log("Fetched subscriptions:", fetchedSubscriptions);
             if (fetchedSubscriptions.length === 0) {
               console.warn("No subscriptions returned, using fallback");
               setSubscriptions(fallbackSubscriptions);
-              initializePayments(fallbackSubscriptions);
+              setIsLoadingSubscriptions(false);
+              return;
             } else {
               setSubscriptions(fetchedSubscriptions);
               initializePayments(fetchedSubscriptions);
@@ -467,7 +582,8 @@ const Subscribe = () => {
             console.warn("Invalid subscription data:", response.data);
             toast.warn("Invalid subscription data received, using fallback.");
             setSubscriptions(fallbackSubscriptions);
-            initializePayments(fallbackSubscriptions);
+            setIsLoadingSubscriptions(false);
+            return;
           }
         } catch (error) {
           console.error(
@@ -477,7 +593,8 @@ const Subscribe = () => {
           if (attempt === retries) {
             toast.error("Failed to load subscriptions. Using default plan.");
             setSubscriptions(fallbackSubscriptions);
-            initializePayments(fallbackSubscriptions);
+            setIsLoadingSubscriptions(false);
+            return;
           }
         }
         await new Promise((resolve) => setTimeout(resolve, delay));
@@ -492,36 +609,71 @@ const Subscribe = () => {
 
   // Initialize payments
   const initializePayments = async (subs) => {
-    if (!user || !userId) return;
+    if (!user || !userId) {
+      console.warn("Cannot initialize payments: missing user or userId");
+      return;
+    }
 
     setInitializingPayments(true);
     try {
       const newTxRefs = {};
       for (const subscription of subs) {
+        if (!subscription.id) {
+          console.warn(`Skipping subscription with missing id:`, subscription);
+          continue;
+        }
         console.log(`Initializing payment for subscription ${subscription.id}`);
-        const response = await axios.post(
-          `${import.meta.env.VITE_BASE_URL}/admin/initialize-payment`,
-          { userId, planId: subscription.id },
-          { headers: { Authorization: `Bearer ${token}` }, timeout: 10000 }
-        );
-        console.log("Payment initialization response:", response.data);
-        if (response.data.success && response.data.transaction?.transactionId) {
-          newTxRefs[subscription.id] = response.data.transaction.transactionId;
-        } else {
-          console.warn(
-            `No transactionId for subscription ${subscription.id}`,
-            response.data
+        console.log("Payment initialization payload:", {
+          userId,
+          planId: subscription.id,
+        });
+        try {
+          const response = await axios.post(
+            `${import.meta.env.VITE_BASE_URL}/admin/initialize-payment`,
+            { userId, planId: subscription.id },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              timeout: 10000,
+            }
+          );
+          console.log("Payment initialization response:", response.data);
+          if (
+            response.data.success &&
+            response.data.transaction?.transactionId
+          ) {
+            newTxRefs[subscription.id] =
+              response.data.transaction.transactionId;
+          } else {
+            console.warn(
+              `No transactionId for subscription ${subscription.id}`,
+              response.data
+            );
+          }
+        } catch (error) {
+          console.error(
+            `Failed to initialize payment for subscription ${subscription.id}:`,
+            error.response?.data || error.message
           );
         }
       }
       console.log("Setting txRefs:", newTxRefs);
       setTxRefs(newTxRefs);
+      if (Object.keys(newTxRefs).length === 0) {
+        toast.warn("No valid payment transactions initialized.");
+      }
     } catch (error) {
-      console.error(
-        "Error initializing payments:",
-        error.response?.data || error.message
+      console.error("Error initializing payments:", error, {
+        response: error.response,
+        request: error.request,
+        message: error.message,
+      });
+      toast.error(
+        error.response?.data?.message ||
+          "Payment initialization failed. Please try again."
       );
-      toast.error("Payment initialization failed. Please try again.");
     } finally {
       setInitializingPayments(false);
     }
@@ -536,6 +688,15 @@ const Subscribe = () => {
       paymentResponse.status === "completed" ||
       paymentResponse.status === "successful"
     ) {
+      dispatch(
+        login({
+          token,
+          user: {
+            ...user,
+            subscriptionStatus: "active",
+          },
+        })
+      );
       setShowSuccessModal(true);
     } else {
       toast.error("Payment failed. Please try again.");
@@ -582,6 +743,35 @@ const Subscribe = () => {
     return config;
   };
 
+  // Handle IntroModal close and proceed actions
+  const handleIntroModalClose = () => {
+    console.log("Closing IntroModal, marking as completed", {
+      isFirstVisit,
+      subscriptionStatus,
+    });
+    localStorage.setItem("hasCompletedIntroModal", "true");
+    setIsFirstVisit(false);
+    setShowIntroModal(false);
+    navigate("/user-dashboard/profile");
+  };
+
+  const handleIntroModalProceed = () => {
+    console.log("Proceeding from IntroModal, marking as completed", {
+      isFirstVisit,
+      subscriptionStatus,
+    });
+    localStorage.setItem("hasCompletedIntroModal", "true");
+    setIsFirstVisit(false);
+    setShowIntroModal(false);
+  };
+
+  // Handle SuccessModal close and navigate
+  const handleSuccessModalCloseAndNavigate = () => {
+    console.log("handleSuccessModalCloseAndNavigate called");
+    setShowSuccessModal(false);
+    navigate("/user-dashboard/profile");
+  };
+
   // Debug render state
   console.log("Subscribe render:", {
     showIntroModal,
@@ -590,16 +780,26 @@ const Subscribe = () => {
     subscriptions,
     isLoadingSubscriptions,
     txRefs,
+    fromUserDashboard,
+    fromBusinessProfile2,
+    user,
+    token,
+    hasCompletedIntroModal: localStorage.getItem("hasCompletedIntroModal"),
+    hasHandledFirstVisit: localStorage.getItem("hasHandledFirstVisit"),
+    isFirstVisitResolved,
   });
 
-  if (isLoadingUser) {
+  if (isLoadingUser || !isFirstVisitResolved) {
     return (
       <div className="text-white text-center py-16">Loading user data...</div>
     );
   }
 
   if (!user || !userId) {
-    return null;
+    console.warn("User or userId missing, redirecting to login");
+    toast.error("Authentication required. Redirecting to login...");
+    navigate("/login");
+    return <div className="text-white text-center py-16">Redirecting...</div>;
   }
 
   return (
@@ -658,8 +858,8 @@ const Subscribe = () => {
 
       {showIntroModal && (
         <IntroModal
-          onClose={() => navigate("/user-dashboard/profile")}
-          onProceed={() => setShowIntroModal(false)}
+          onClose={handleIntroModalClose}
+          onProceed={handleIntroModalProceed}
           subscriptions={subscriptions}
           isFirstVisit={isFirstVisit}
           subscriptionStatus={subscriptionStatus}
@@ -713,7 +913,7 @@ const Subscribe = () => {
                           ? "min-w-[280px] md:min-w-[320px]"
                           : "w-full"
                       }
-                      px-8 py-8 bg-[#FFFDF2]/90 shadow-lg rounded-[16px] flex 
+                      px-8 py-8 bg-[#FFFDF2]/90 shadow-lg rounded-[16px] flex relative 
                       ${
                         subscriptions.length > 1
                           ? "flex-col"
@@ -725,6 +925,12 @@ const Subscribe = () => {
                     animate={{ opacity: 1, scale: 1 }}
                     whileHover={{ scale: 1.02 }}
                   >
+                    <Link
+                      to="/user-dashboard"
+                      className="lg:text-[50px] text-[32px] font-bold text-[#363636] absolute top-4 left-4"
+                    >
+                      <IoArrowBackCircle className="text-[#043D12] text-[40px]" />
+                    </Link>
                     <div
                       className={`amount w-full flex flex-col items-center ${
                         subscriptions.length > 1 ? "" : "lg:pt-8"
@@ -733,7 +939,7 @@ const Subscribe = () => {
                       <h1 className="lg:text-[48px] text-[40px] text-[#043D12] flex items-center gap-0 font-bold">
                         {formatPrice(subscription.price)}
                       </h1>
-                      <span className="lg:text-[20px] text-[16px] text-[#043D12]">
+                      <span className="lg:text-[20px] strict text-[16px] text-[#043D12]">
                         YEARLY
                       </span>
                     </div>
@@ -828,7 +1034,7 @@ const Subscribe = () => {
 
       {showSuccessModal && (
         <SuccessModal
-          onClose={() => setShowSuccessModal(false)}
+          onCloseAndNavigate={handleSuccessModalCloseAndNavigate}
           userName={`${user.firstName || "User"} ${user.lastName || ""}`}
         />
       )}

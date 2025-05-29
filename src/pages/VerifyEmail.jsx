@@ -57,11 +57,11 @@ const VerifyEmail = () => {
           dispatch(
             login({ token: response.data.token, user: response.data.user })
           );
-          setTimeout(() => navigate("/business-profile"), 600);
+          setTimeout(() => navigate("/business-profile"), 2000);
         } else {
           // If no token, require login
           toast.warn("Please log in to continue.");
-          setTimeout(() => navigate("/login"), 600);
+          setTimeout(() => navigate("/login"), 2000);
         }
       })
       .catch((error) => {
@@ -159,7 +159,7 @@ const VerifyEmail = () => {
               whileHover="hover"
               whileTap="tap"
               onClick={handleResendVerification}
-              className="w-full bg-[#043D12] text-white py-3 rounded-[48px] font-semibold hover:bg-[#032a0d] transition-all duration-300 shadow-md border-2 border-[#043D12]"
+              className="w-full bg-[#043D12] text-white py-3 rounded-[48px] font-semibold hover:bg-[#032a0d] transition-all duration-300 shadow-md border-2 border-[#043D12] cursor-pointer"
             >
               Resend Verification Email
             </motion.button>

@@ -1,10 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
-import BenefitIcon01 from "../../assets/benefit01.gif";
-import BenefitIcon02 from "../../assets/benefit02.gif";
-import BenefitIcon03 from "../../assets/benefit03.gif";
-import BenefitIcon04 from "../../assets/benefit04.gif";
-
+import { LazyLoadImage } from "react-lazy-load-image-component";
+import "react-lazy-load-image-component/src/effects/opacity.css";
 import VectorIcon1 from "../../assets/vector1.svg";
 import VectorIcon2 from "../../assets/vector2.svg";
 import VectorIcon3 from "../../assets/vector3.svg";
@@ -35,34 +32,37 @@ const Benefits = () => {
           What’s in it for You?
         </motion.h1>
 
-        {/** Sections **/}
         {[
           {
             id: "showcase",
             title: "Showcase Your Business",
             text: "Create a profile with all your essential details.",
-            image: BenefitIcon01,
+            image:
+              "https://res.cloudinary.com/drve24nad/image/upload/v1746539940/benefits/oxpgyvjpqdy2wxycjxyg.gif",
             vector: VectorIcon1,
           },
           {
             id: "expand",
             title: "Expand Your Reach",
             text: "Promote your products and services to a wider audience.",
-            image: BenefitIcon02,
+            image:
+              "https://res.cloudinary.com/drve24nad/image/upload/v1746540036/benefits/wrwzs4voq8us3wdrx9zv.gif",
             vector: VectorIcon2,
           },
           {
             id: "engage",
             title: "Engage Customers Easily",
             text: "Communicate seamlessly via WhatsApp and social media links.",
-            image: BenefitIcon03,
+            image:
+              "https://res.cloudinary.com/drve24nad/image/upload/v1746540453/benefits/j1bwoky0gmvtn3etcook.gif",
             vector: VectorIcon3,
           },
           {
             id: "track",
             title: "Track Your Progress",
             text: "Access visitor analytics for better business insights.",
-            image: BenefitIcon04,
+            image:
+              "https://res.cloudinary.com/drve24nad/image/upload/v1746540552/benefits/i3nqtotfte7yddxrd71u.gif",
           },
         ].map(({ id, title, text, image, vector }, index) => (
           <motion.div
@@ -86,11 +86,11 @@ const Benefits = () => {
           >
             <div className="w-full flex max-lg:flex-col max-lg:justify-center justify-between items-center max-sm:gap-4 text-center lg:text-left">
               <motion.div
-                className={`${index % 2 !== 0 ? "lg:order-2" : ""} `}
+                className={`${index % 2 !== 0 ? "lg:order-2" : ""}`}
                 variants={fadeInVariants}
               >
                 <motion.h1
-                  className="lg:text-[35px] text-[25px] "
+                  className="lg:text-[35px] text-[25px]"
                   variants={fadeInVariants}
                 >
                   {title}
@@ -102,19 +102,13 @@ const Benefits = () => {
                   {text}
                 </motion.p>
               </motion.div>
-              <motion.img
+              <LazyLoadImage
                 src={image}
                 alt={`${id}_img`}
+                effect="opacity"
                 className={`max-w-full h-auto object-contain ${
                   index % 2 !== 0 ? "lg:order-1" : ""
                 }`}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{
-                  duration: 0.8,
-                  delay: index * 0.3,
-                  ease: "backOut",
-                }}
               />
             </div>
             {vector && (
@@ -128,7 +122,7 @@ const Benefits = () => {
                   ease: "easeOut",
                 }}
               >
-                <motion.img
+                <img
                   src={vector}
                   alt={`${id}_vector`}
                   className="max-md:w-[80%] max-sm:w-[60%] h-fit mx-auto"

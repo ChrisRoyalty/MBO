@@ -19,10 +19,12 @@ const ProductAndServices = () => {
   const [newDescription, setNewDescription] = useState("");
   const [isNewUpload, setIsNewUpload] = useState(false);
   const [deleteConfirmProduct, setDeleteConfirmProduct] = useState(null);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(true);
 
   const { token } = useSelector((state) => state.auth);
 
-  // Fetch profile data to get categoryId
+  // Fetch profile data to get categoryId and subscription status
   useEffect(() => {
     if (!token) {
       toast.error("No authentication token found!");
@@ -39,6 +41,7 @@ const ProductAndServices = () => {
         if (response.data?.success && response.data?.data) {
           const profile = response.data.data;
           setCategoryId(profile.categories?.[0]?.id || null);
+          setIsSubscribed(profile.member.subscriptionStatus === "active");
           if (!profile.categories?.[0]?.id) {
             toast.warn("No category ID found in profile. Upload may fail.");
           }
@@ -129,15 +132,18 @@ const ProductAndServices = () => {
         if (imageUrl) {
           const newProduct = {
             id: response.data.images[0].id,
-            name: "", // Empty string instead of "New Product"
+            name: "",
             description: "",
             image: imageUrl,
           };
           setProducts((prev) => [...prev, newProduct]);
           setEditingProduct(newProduct);
-          setNewName(""); // Empty string for name
-          setNewDescription(""); // Empty string for description
+          setNewName("");
+          setNewDescription("");
           setIsNewUpload(true);
+          if (!isSubscribed) {
+            setShowSubscriptionModal(true);
+          }
         }
       } else {
         toast.error(response.data.error || "Failed to upload image.");
@@ -476,6 +482,36 @@ const ProductAndServices = () => {
                 >
                   Delete
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Subscription Modal for Non-Subscribed Users */}
+        {showSubscriptionModal && (
+          <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 animate-fade-in">
+            <div className="bg-white p-8 rounded-2xl w-[32rem] max-w-[90%] shadow-2xl transform transition-all duration-300 scale-100 hover:scale-105">
+              <h2 className="text-2xl font-semibold text-[#043D12] mb-4">
+                Heads up!{" "}
+              </h2>
+              <p className="text-[#6A7368] mb-6">
+                Products stay hidden until you subscribe.
+                <br />
+                Want buyers to find you? Unlock your profile
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  className="px-6 py-2.5 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-200 text-[#6A7368] font-medium cursor-pointer"
+                  onClick={() => setShowSubscriptionModal(false)}
+                >
+                  Close
+                </button>
+                <a
+                  href="/subscribe" // Adjust the URL to match your subscription page route
+                  className="px-6 py-2.5 bg-[#043D12] text-white rounded-lg hover:bg-[#03280E] transition-colors duration-200 font-medium cursor-pointer"
+                >
+                  Subscribe Now
+                </a>
               </div>
             </div>
           </div>

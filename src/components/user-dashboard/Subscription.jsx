@@ -85,7 +85,7 @@ const Subscription = () => {
     console.log("Navigating to /subscribe from UserDashboard");
     toast.info("Redirecting to subscription plans...");
     setTimeout(() => {
-      navigate("/subscribe", { state: { fromUserDashboard: true } });
+      navigate("/subscribe?fromUserDashboard=true");
       setSubscribeLoading(false);
     }, 500);
   };
