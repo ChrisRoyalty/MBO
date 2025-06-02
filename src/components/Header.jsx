@@ -2,12 +2,15 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import MindPowerLogo from "../assets/mbo-logo.png";
-import MenuIcon from "../assets/menu.svg";
-import ProfilePic from "../assets/user-photo.svg";
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
 import { logout, selectAuth, setLastDashboard } from "../redux/authSlice";
+import { fetchProfile, clearProfile } from "../redux/profileSlice";
+import { persistor } from "../redux/store";
+import MindPowerLogo from "../assets/mbo-logo.png";
+import MenuIcon from "../assets/menu.svg";
+import ProfilePic from "../assets/user-photo.svg";
+import DefaultBackgroundImg from "../assets/businessImg.jpeg";
 
 const navItemVariants = {
   hidden: { opacity: 0, scale: 0.5, y: -20 },
@@ -22,27 +25,86 @@ const navItemVariants = {
 const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { identifier } = useParams();
   const [isOpen, setIsOpen] = useState(false);
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [hasBusinessProfile, setHasBusinessProfile] = useState(false);
   const [isStatusLoading, setIsStatusLoading] = useState(false);
+  const [isRehydrated, setIsRehydrated] = useState(false);
 
   const auth = useSelector(selectAuth);
+  const { profile, loading, error } = useSelector((state) => state.profile);
   const dispatch = useDispatch();
   const isAuthenticated = auth.isAuthenticated;
   const userRole = auth.user?.role;
   const lastDashboard = auth.lastDashboard;
   const isAdmin = userRole === "admin";
 
+  // Wait for redux-persist to rehydrate
+  useEffect(() => {
+    const unsubscribe = persistor.subscribe(() => {
+      const { bootstrapped } = persistor.getState();
+      if (bootstrapped) {
+        setIsRehydrated(true);
+        console.log("Rehydration complete, auth state:", auth);
+        unsubscribe();
+      }
+    });
+
+    if (persistor.getState().bootstrapped) {
+      setIsRehydrated(true);
+      console.log("Rehydration already complete, auth state:", auth);
+      unsubscribe();
+    }
+
+    return () => unsubscribe();
+  }, [auth]);
+
+  // Validate token on mount, but only after rehydration
+  useEffect(() => {
+    const validateToken = async () => {
+      if (!isRehydrated) {
+        console.log("Waiting for rehydration, skipping token validation");
+        return;
+      }
+
+      if (!isAuthenticated || !auth.token) {
+        console.log("No authentication or token, skipping validation:", {
+          isAuthenticated,
+          token: auth.token,
+        });
+        return;
+      }
+
+      // Temporarily disable token validation due to 404 error
+      /*
+      try {
+        console.log("Validating token:", auth.token);
+        const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/member/validate-token`, {
+          headers: { Authorization: `Bearer ${auth.token}` },
+        });
+        console.log("Token validation successful:", response.data);
+      } catch (error) {
+        console.error("Token validation failed:", error.response?.data || error.message);
+        dispatch(logout());
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("lastDashboard");
+        toast.error("Session expired. Please log in again.");
+        navigate("/login");
+      }
+      */
+      console.log(
+        "Token validation disabled due to missing endpoint. Please implement /member/validate-token on https://mbo.bookbank.com.ng."
+      );
+    };
+    validateToken();
+  }, [isRehydrated, isAuthenticated, auth.token, dispatch, navigate]);
+
   // Fetch user's subscription and business profile status
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isRehydrated && isAuthenticated) {
       if (isAdmin) {
-        // Admins bypass all checks
         setIsSubscribed(true);
         setHasBusinessProfile(true);
         setIsStatusLoading(false);
@@ -80,45 +142,52 @@ const Header = () => {
       setHasBusinessProfile(false);
       setIsStatusLoading(false);
     }
-  }, [isAuthenticated, auth.token, isAdmin]);
+  }, [isRehydrated, isAuthenticated, auth.token, isAdmin]);
 
-  // Fetch business profile data when on a profile page
+  // Fetch business profile data for profile pages using Redux
   useEffect(() => {
-    if (location.pathname.startsWith("/community/profile/")) {
-      setLoading(true);
-      const fetchProfile = async () => {
-        try {
-          const API_URL = `${
-            import.meta.env.VITE_BASE_URL
-          }/member/get-profile/${id}`;
-          const response = await axios.get(API_URL);
-          setProfile(response.data?.profile || null);
-        } catch (error) {
-          console.error("Error fetching business profile:", error);
-          setError(error.response?.data?.message || "Failed to load profile");
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchProfile();
+    if (location.pathname.startsWith("/community/profile/") && identifier) {
+      const isUUID = identifier.match(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      );
+      dispatch(fetchProfile({ identifier, isUUID }));
     } else {
-      setProfile(null);
+      dispatch(clearProfile());
     }
-  }, [location.pathname, id]);
+  }, [location.pathname, identifier, dispatch]);
+
+  // Handle errors with toast notifications
+  useEffect(() => {
+    if (error) {
+      if (error.includes("not found")) {
+        toast.error(
+          `Profile '${identifier}' not found. The link may be invalid or not yet available. Contact support for assistance.`
+        );
+      } else {
+        toast.error(
+          "An error occurred while loading the profile. Please try again later."
+        );
+      }
+    }
+  }, [error, identifier]);
 
   // Track dashboard visits
   useEffect(() => {
-    if (location.pathname === "/admin") {
+    if (location.pathname === "/admin" && lastDashboard !== "/admin") {
       dispatch(setLastDashboard("/admin"));
-    } else if (location.pathname === "/user-dashboard") {
+    } else if (
+      location.pathname === "/user-dashboard" &&
+      lastDashboard !== "/user-dashboard"
+    ) {
       dispatch(setLastDashboard("/user-dashboard"));
     }
-  }, [location.pathname, dispatch]);
+  }, [location.pathname, lastDashboard, dispatch]);
 
   const handleLogout = () => {
     dispatch(logout());
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("lastDashboard");
     toast.success("Logged out successfully!");
     navigate("/login");
     setIsOpen(false);
@@ -129,9 +198,9 @@ const Header = () => {
 
   const navItems = [
     { name: "Home", path: "/" },
-    { name: "Community", path: "/community" },
+    { name: "Marketplace", path: "/community" },
     isAuthenticated &&
-    (isAdmin || (isSubscribed && hasBusinessProfile)) &&
+    (isAdmin || isSubscribed || hasBusinessProfile) &&
     !isStatusLoading
       ? {
           name: "Dashboard",
@@ -149,32 +218,45 @@ const Header = () => {
 
   return (
     <div
-      className={`relative bg-[#FFFDF2] py-[5vh] lg:py-[6vh] ${
+      className={`global-header relative bg-[#FFFDF2] py-[3vh] z-[70] ${
         location.pathname.startsWith("/community/profile/") ? "pb-[40px]" : ""
       }`}
     >
-      {/* Background image for profile pages */}
-      {location.pathname.startsWith("/community/profile/") &&
-        profile?.backgroundImg && (
-          <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0"
-            style={{ backgroundImage: `url(${profile.backgroundImg})` }}
-          />
-        )}
+      {profile && (
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0"
+          style={{
+            backgroundImage: `url(${
+              profile?.backgroundImg || DefaultBackgroundImg
+            })`,
+          }}
+          onError={(e) =>
+            console.error(
+              "Background image failed to load:",
+              profile?.backgroundImg || DefaultBackgroundImg
+            )
+          }
+        />
+      )}
 
-      {/* Business profile picture - centered on mobile */}
       {location.pathname.startsWith("/community/profile/") && (
         <img
           src={profile?.businesImg || ProfilePic}
           alt="Business Profile"
-          className="absolute bottom-[-60px] w-[120px] h-[120px] rounded-full border-4 border-[#FFCF00] shadow-lg lg:left-[12%] left-[calc(50%-60px)] z-20"
-          onError={(e) => (e.target.src = ProfilePic)}
+          className="absolute bottom-[-60px] w-[120px] h-[120px] rounded-full border-4 border-[#FFCF00] shadow-lg lg:left-[12%] left-[calc(50%-60px)] z-20 object-cover"
+          onError={(e) => {
+            console.warn(
+              "Business image failed to load, using fallback:",
+              profile?.businesImg
+            );
+            e.target.src = ProfilePic;
+          }}
         />
       )}
 
       <div className="container mx-auto px-[5vw]">
         <div
-          className={`bg-[#043D12] px-5 md:px-12 py-4 flex justify-between items-center rounded-[48px] shadow-lg relative z-30 ${
+          className={`bg-[#043D12] px-5 md:px-12 py-4 flex justify-between items-center rounded-[48px] shadow-lg relative z-[110] ${
             location.pathname.startsWith("/community/profile/")
               ? "mb-[50px]"
               : ""
@@ -188,7 +270,6 @@ const Header = () => {
             />
           </Link>
 
-          {/* Mobile menu */}
           <AnimatePresence>
             {isOpen && (
               <motion.div
@@ -196,7 +277,7 @@ const Header = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.3 }}
-                className="absolute top-[15vh] left-0 w-full bg-[#FFFDF2] flex flex-col items-center py-6 shadow-lg md:hidden rounded-b-[40px] z-20"
+                className="absolute top-[13vh] left-0 w-full bg-[#FFFDF2] flex flex-col items-center py-6 shadow-lg md:hidden rounded-b-[40px] z-[120]"
               >
                 <nav className="flex flex-col items-center gap-6 w-full">
                   {navItems.map((item, index) => (
@@ -228,7 +309,6 @@ const Header = () => {
             )}
           </AnimatePresence>
 
-          {/* Desktop menu */}
           <div className="hidden md:flex gap-8 items-center text-white">
             {navItems.map((item) => (
               <motion.div key={item.path} className="relative group">
@@ -243,12 +323,17 @@ const Header = () => {
                   }`}
                 >
                   {item.name}
-                  {item.path !== "/login" && item.path !== "/" && (
+                  {item.path !== "/login" && (
                     <motion.div
                       className="absolute bottom-[-3px] left-0 h-[3px] bg-[#FFCF00]"
                       initial={{ width: 0 }}
                       animate={{
-                        width: location.pathname === item.path ? "100%" : "0%",
+                        width:
+                          (item.path === "/community" &&
+                            location.pathname.startsWith("/community")) ||
+                          location.pathname === item.path
+                            ? "100%"
+                            : "0%",
                       }}
                       whileHover={{ width: "100%" }}
                       transition={{ duration: 0.3 }}
@@ -260,7 +345,7 @@ const Header = () => {
           </div>
 
           <button
-            className="md:hidden"
+            className="md:hidden cursor-pointer"
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle menu"
           >

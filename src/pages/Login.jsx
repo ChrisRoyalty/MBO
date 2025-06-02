@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { login } from "../redux/authSlice";
+import { login, logout } from "../redux/authSlice";
 import { FaRegEnvelope } from "react-icons/fa";
 import { CiLock } from "react-icons/ci";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
+import { IoArrowBackCircle } from "react-icons/io5";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -18,7 +19,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loginAttempted, setLoginAttempted] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false); // State for "Remember Me"
+  const [rememberMe, setRememberMe] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -27,23 +28,24 @@ const Login = () => {
   const routes = {
     admin: "/admin",
     user: {
-      inactiveSubscription: "/subscribe",
       incompleteProfile: "/business-profile",
+      inactiveSubscription: "/subscribe?fromUserDashboard=true",
       activeUser: "/user-dashboard",
     },
   };
 
-  // Load saved credentials from localStorage on component mount
+  // Clear previous session on mount
+  useEffect(() => {
+    dispatch(logout());
+    localStorage.removeItem("token");
+  }, [dispatch]);
+
+  // Remember me functionality
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberMeEmail");
     const savedPassword = localStorage.getItem("rememberMePassword");
-
-    if (savedEmail) {
-      setEmail(savedEmail);
-    }
-    if (savedPassword) {
-      setPassword(savedPassword);
-    }
+    if (savedEmail) setEmail(savedEmail);
+    if (savedPassword) setPassword(savedPassword);
   }, []);
 
   const handleSubmit = async (e) => {
@@ -52,12 +54,13 @@ const Login = () => {
     setLoginAttempted(true);
 
     try {
+      // Clear previous auth state
+      dispatch(logout());
+      localStorage.removeItem("token");
+
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/member/login`,
-        {
-          email,
-          password,
-        }
+        { email, password }
       );
       const { token, member } = response.data;
       const decodedToken = jwtDecode(token);
@@ -66,28 +69,29 @@ const Login = () => {
       const user = {
         id,
         role,
-        subscriptionStatus,
-        profileStatus,
+        subscriptionStatus: subscriptionStatus || "inactive",
+        profileStatus: profileStatus || false,
         firstName: member.firstname,
         lastName: member.lastname,
         email: member.email,
       };
 
+      localStorage.setItem("token", token);
       dispatch(login({ token, user }));
       toast.success(response.data.message || "Login successful!");
 
-      // Save credentials to localStorage if "Remember Me" is checked
       if (rememberMe) {
         localStorage.setItem("rememberMeEmail", email);
         localStorage.setItem("rememberMePassword", password);
       } else {
-        // Clear saved credentials if "Remember Me" is unchecked
         localStorage.removeItem("rememberMeEmail");
         localStorage.removeItem("rememberMePassword");
       }
     } catch (error) {
-      const errorResponse = error.response?.data || {};
+      dispatch(logout());
+      localStorage.removeItem("token");
 
+      const errorResponse = error.response?.data || {};
       if (errorResponse.status === 403) {
         toast.error(
           errorResponse.message || "Access denied. Please verify your email."
@@ -97,7 +101,6 @@ const Login = () => {
       } else {
         toast.error("An unexpected error occurred. Please try again.");
       }
-
       console.error("Login error:", error.response?.data || error);
       setLoginAttempted(false);
     } finally {
@@ -110,15 +113,24 @@ const Login = () => {
       const route =
         user.role === "admin"
           ? routes.admin
-          : user.subscriptionStatus !== "active"
-          ? routes.user.inactiveSubscription
           : !user.profileStatus
           ? routes.user.incompleteProfile
+          : user.subscriptionStatus !== "active"
+          ? routes.user.inactiveSubscription
           : routes.user.activeUser;
 
-      console.log("useEffect - Calculated route:", route);
-      navigate(route, { replace: true });
-      setLoginAttempted(false);
+      console.log("Navigating after login:", {
+        route,
+        userRole: user.role,
+        profileStatus: user.profileStatus,
+        subscriptionStatus: user.subscriptionStatus,
+      });
+
+      toast.info("Redirecting to your dashboard...");
+      setTimeout(() => {
+        navigate(route, { replace: true });
+        setLoginAttempted(false);
+      }, 3000); // Small delay to allow toast to be visible
     }
   }, [isAuthenticated, user, loginAttempted, navigate]);
 
@@ -132,7 +144,7 @@ const Login = () => {
       <div className="w-full h-screen flex justify-center lg:grid grid-cols-2">
         <div className="max-lg:hidden w-full h-full flex justify-center items-center bg-[url('/Group2.svg')] bg-cover bg-center bg-green-800">
           <div className="w-full h-[90%] flex flex-col items-center">
-            <div className="container mx-auto px-[5vw] text-[#FFFDF2] ">
+            <div className="container mx-auto px-[5vw] text-[#FFFDF2]">
               <Link to="/" className="lg:text-[35px] text-[32px] font-medium">
                 Welcome to <br /> MindPower Business Online
               </Link>
@@ -145,6 +157,12 @@ const Login = () => {
         </div>
         <div className="relative max-lg:w-full flex flex-col items-center lg:justify-center bg-[#FFFDF2] max-md:bg-[url('/bg-login.svg')] bg-cover bg-center">
           <div className="container mx-auto px-[5vw] h-fit max-lg:mt-16">
+            <Link
+              to="/"
+              className="lg:text-[50px] text-[32px] font-bold text-[#363636] absolute top-4 left-4"
+            >
+              <IoArrowBackCircle className="text-[#043D12] text-[40px]" />
+            </Link>
             <Link
               to="/"
               className="lg:text-[50px] text-[32px] font-bold text-[#363636]"
@@ -216,7 +234,7 @@ const Login = () => {
                 to="/create-account"
                 className="text-[#6A7368] text-[16px] text-center"
               >
-                Don’t have an account?{" "}
+                Don't have an account?{" "}
                 <strong className="hover:text-[17px]">Register</strong>
               </Link>
             </form>

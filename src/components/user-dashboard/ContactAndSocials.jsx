@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { IoLogoFacebook } from "react-icons/io5";
+import { IoLogoFacebook, IoLogoYoutube } from "react-icons/io5";
 import { FiEdit3 } from "react-icons/fi";
 import {
   FaInstagram,
@@ -56,9 +56,11 @@ const ContactAndSocials = () => {
       whatsapp: /^https:\/\/wa\.me\/[0-9]{10,13}$/,
       facebook: /^(https?:\/\/)?(www\.)?(facebook|fb)\.com\/.+/i,
       instagram: /^(https?:\/\/)?(www\.)?instagram\.com\/.+/i,
-      twitter: /^(https?:\/\/)?(www\.)?twitter\.com\/.+/i,
+      twitter:
+        /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/[A-Za-z0-9_]{1,15}$/i,
       tiktok: /^(https?:\/\/)?(www\.)?tiktok\.com\/.+/i,
       linkedin: /^(https?:\/\/)?(www\.)?linkedin\.com\/.+/i,
+      youtube: /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/i,
     };
 
     return patterns[platform] ? patterns[platform].test(link) : true;
@@ -306,6 +308,11 @@ const ContactAndSocials = () => {
                   icon: <FaLinkedin className="text-[25px]" />,
                   platform: "linkedin",
                   label: "LinkedIn",
+                },
+                {
+                  icon: <IoLogoYoutube className="text-[25px]" />,
+                  platform: "youtube",
+                  label: "YouTube",
                   last: true,
                 },
               ].map(({ icon, platform, label, last }) => (

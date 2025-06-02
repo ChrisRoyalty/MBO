@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { LuLayoutGrid } from "react-icons/lu";
-
 import { CgMenuLeftAlt } from "react-icons/cg";
-
 import { motion } from "framer-motion";
 import ManageIcon from "../../assets/manage.svg";
 import LogoutIcon from "../../assets/logout.svg";
@@ -26,11 +24,6 @@ const navItems = [
       { to: "/admin/manage-subscriptions", label: "Subscription" },
     ],
   },
-  // {
-  //   to: "/admin/analytics",
-  //   icon: <img src={AnalyticsIcon} alt="Analytics" className="w-6 h-6" />,
-  //   label: "Analytics",
-  // },
   {
     to: "/admin/manage-notifications",
     icon: <img src={NotificationIcon} alt="Notification" className="w-6 h-6" />,
@@ -89,6 +82,13 @@ const AdminDashboard = () => {
     setIsManageDropdownOpen((prev) => !prev);
   };
 
+  // Function to close sidebar on mobile when a nav item is clicked
+  const handleNavClick = () => {
+    if (window.innerWidth < 1024) {
+      setIsSidebarOpen(false);
+    }
+  };
+
   return (
     <div className="w-full flex flex-col md:flex-row h-screen overflow-hidden relative">
       {/* Sidebar */}
@@ -120,7 +120,7 @@ const AdminDashboard = () => {
           </motion.strong>
 
           <div className="flex flex-col justify-between items-stretch h-full">
-            {/* First Container: Home, Manage, Analytics, Notification */}
+            {/* First Container: Home, Manage, Notification */}
             <nav className="flex flex-col gap-4">
               {navItems.map((item, index) => (
                 <motion.div
@@ -152,6 +152,7 @@ const AdminDashboard = () => {
                             <Link
                               key={subIndex}
                               to={subItem.to}
+                              onClick={handleNavClick} // Added handler here
                               className={`text-[14px] flex items-center gap-2 px-4 py-1 rounded-[8px] transition-all duration-300 ${
                                 location.pathname === subItem.to
                                   ? "bg-[#043D121A] text-[#043D12]"
@@ -167,6 +168,7 @@ const AdminDashboard = () => {
                   ) : (
                     <Link
                       to={item.to}
+                      onClick={handleNavClick} // Added handler here
                       className={`text-[15px] flex items-center gap-4 px-6 py-2 rounded-[11px] transition-all duration-300 relative overflow-hidden ${
                         location.pathname === item.to
                           ? "bg-[#043D121A] text-[#043D12] shadow-lg"
@@ -204,9 +206,15 @@ const AdminDashboard = () => {
                 >
                   <Link
                     to={item.to}
-                    onClick={item.label === "Logout" ? handleLogout : null}
+                    onClick={(e) => {
+                      if (item.label === "Logout") {
+                        handleLogout();
+                      } else {
+                        handleNavClick(); // Added handler for non-logout items
+                      }
+                    }}
                     className={`text-[14px] flex items-center gap-4 px-6 py-2 rounded-[11px] transition-all duration-300 relative overflow-hidden ${
-                      location.pathname.startsWith(item.to) // Use startsWith instead of ===
+                      location.pathname.startsWith(item.to)
                         ? "bg-[#C8E6C9] text-[#043D12] shadow-lg"
                         : "text-[#6A7368] hover:bg-gray-200"
                     }`}

@@ -13,7 +13,7 @@ const defaultFaqItems = [
     id: "default-1",
     question: "What is MindPower Business Online (MBO)?",
     answer:
-      "MBO is a platform designed for businesses within the MindPower Network to create online profiles, showcase their products and services, and connect with potential customers and other businesses.",
+      "MBO is a platform designed for businesses to create online profiles, showcase their products and services, and connect with potential customers and other businesses.",
   },
   {
     id: "default-2",
@@ -269,7 +269,7 @@ const Faq = () => {
                   href="https://api.whatsapp.com/send?phone=2349078987890&text=Hello%20MindPower%20Support,%20I%20have%20a%20question:%20[Please%20describe%20your%20question%20or%20issue%20here]%0A%0AName:%20[Your%20Name]%0AProfile/Business:%20[Your%20Business%20Name%20or%20Profile%20ID]%0AThanks!"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-[#25D366] text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-[#20b858] transition-colors"
+                  className="inline-flex items-center gap-2 bg-[#043D12] text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-[#043D12]/90 transition-colors"
                 >
                   <FaWhatsapp className="text-[18px]" />
                   Message

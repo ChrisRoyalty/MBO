@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import axios from "axios";
 import {
   LineChart,
@@ -11,9 +11,9 @@ import {
   CartesianGrid,
 } from "recharts";
 import { IoIosNotificationsOutline } from "react-icons/io";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { login } from "../../redux/authSlice";
+import { login, setProfileData } from "../../redux/authSlice";
 import { motion } from "framer-motion";
 import { CiUser } from "react-icons/ci";
 import BusinessImg from "../../assets/user-photo.svg";
@@ -22,6 +22,14 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
+// Global fetch tracker (survives component unmounts)
+const fetchTracker = {
+  profile: { hasFetched: false, lastFetched: 0 },
+  analytics: { hasFetched: false, lastFetched: 0 },
+};
+
+const FETCH_COOLDOWN = 300000; // 5 minutes cooldown (in milliseconds)
+
 const Profile = () => {
   const [timeRange, setTimeRange] = useState("daily");
   const [metric, setMetric] = useState("ProfileViews");
@@ -29,7 +37,23 @@ const Profile = () => {
   const [isProfileVisibleDropdownOpen, setIsProfileVisibleDropdownOpen] =
     useState(false);
   const [isVisible, setIsVisible] = useState(true);
-  const [profileData, setProfileData] = useState({
+  const [analyticsData, setAnalyticsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [profileProgress, setProfileProgress] = useState(0);
+  const [isProfileComplete, setIsProfileComplete] = useState(false);
+  const [showShareSubscriptionModal, setShowShareSubscriptionModal] =
+    useState(false); // New state for share modal
+
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const location = useLocation();
+  const { isAuthenticated, user, token, profileData } = useSelector(
+    (state) => state.auth
+  );
+  const hasFetchedRef = useRef(false); // Reset on mount
+
+  const defaultProfileData = {
     businessName: "User Name",
     category: "Category",
     businesImg: "",
@@ -43,16 +67,7 @@ const Profile = () => {
     location: "",
     keyword: [],
     socialLinks: {},
-  });
-  const [analyticsData, setAnalyticsData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [profileProgress, setProfileProgress] = useState(0);
-  const [isProfileComplete, setIsProfileComplete] = useState(false);
-
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { isAuthenticated, user, token } = useSelector((state) => state.auth);
+  };
 
   const METRICS = [
     {
@@ -64,13 +79,13 @@ const Profile = () => {
     {
       title: "Shared Links",
       key: "sharedLinks",
-      label: "Number of links shared",
+      label: "Number of people that visited your profile from the shared link",
       value: (data) => data.sharedClicks,
     },
     {
       title: "Social Clicks",
       key: "socialClicks",
-      label: "Clicks on social media links (e.g., WhatsApp)",
+      label: "WhatsApp Clicks from Profile Page",
       value: (data) => data.whatsappClicks,
     },
   ];
@@ -82,75 +97,90 @@ const Profile = () => {
     yearly: { label: "Yearly", limit: 5 },
   };
 
+  const getWeekNumber = (date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+    const week1 = new Date(d.getFullYear(), 0, 4);
+    return (
+      1 +
+      Math.round(((d - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7)
+    );
+  };
+
   const formatDateForRange = (dateStr, range) => {
-    if (!dateStr) {
-      const now = new Date();
+    try {
+      let date;
+      if (typeof dateStr === "string") {
+        if (range === "monthly" && dateStr.includes("-")) {
+          const [year, month] = dateStr.split("-");
+          date = new Date(year, month - 1);
+        } else if (range === "weekly" && dateStr.includes("-")) {
+          const [year, week] = dateStr.split("-");
+          date = new Date(year, 0, 1 + (week - 1) * 7);
+        } else if (dateStr.includes("-") || dateStr.includes("/")) {
+          date = new Date(dateStr);
+        } else {
+          date = new Date();
+        }
+      } else {
+        date = new Date(dateStr);
+      }
+
+      if (isNaN(date.getTime())) {
+        date = new Date();
+      }
+
       switch (range) {
         case "daily":
-          return now.toLocaleDateString("en-US", { weekday: "short" });
+          return date.toLocaleDateString("en-US", { weekday: "short" });
         case "weekly":
-          return `Week ${getWeekNumber(now)} ${now.getFullYear()}`;
+          return `Week ${getWeekNumber(date)}`;
         case "monthly":
-          return now.toLocaleString("default", {
+          return date.toLocaleString("default", {
             month: "short",
-            year: "numeric",
+            year: "2-digit",
           });
         case "yearly":
-          return now.getFullYear().toString();
+          return date.getFullYear().toString();
         default:
-          return now.toISOString().split("T")[0];
+          return date.toISOString().split("T")[0];
       }
-    }
-
-    // Handle API-provided formatted strings
-    if (typeof dateStr === "string" && dateStr.includes("-")) {
-      if (range === "daily") {
-        const date = new Date(dateStr); // e.g., "2025-03-30"
-        return isNaN(date.getTime())
-          ? dateStr
-          : date.toLocaleDateString("en-US", { weekday: "short" });
-      } else if (range === "weekly") {
-        const [year, week] = dateStr.split("-"); // e.g., "2025-13"
-        return `Week ${week} ${year}`;
-      } else if (range === "monthly") {
-        const [year, month] = dateStr.split("-"); // e.g., "2025-03"
-        const date = new Date(year, month - 1);
-        return isNaN(date.getTime())
-          ? dateStr
-          : date.toLocaleString("default", { month: "short", year: "numeric" });
-      } else if (range === "yearly") {
-        return dateStr; // e.g., "2025"
-      }
-    }
-
-    // Handle Date object or unexpected string from filler logic
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return dateStr; // Fallback to raw string if invalid
-    switch (range) {
-      case "daily":
-        return date.toLocaleDateString("en-US", { weekday: "short" });
-      case "weekly":
-        return `Week ${getWeekNumber(date)} ${date.getFullYear()}`;
-      case "monthly":
-        return date.toLocaleString("default", {
-          month: "short",
-          year: "numeric",
-        });
-      case "yearly":
-        return date.getFullYear().toString();
-      default:
-        return date.toISOString().split("T")[0];
+    } catch (e) {
+      console.error("Error formatting date:", e);
+      return "N/A";
     }
   };
 
-  const getWeekNumber = (date) => {
-    const startOfYear = new Date(date.getFullYear(), 0, 1);
-    const diff =
-      date -
-      startOfYear +
-      (startOfYear.getTimezoneOffset() - date.getTimezoneOffset()) * 60 * 1000;
-    const oneWeek = 1000 * 60 * 60 * 24 * 7;
-    return Math.floor(diff / oneWeek) + 1; // Fixed: Removed "dije"
+  const createSortKey = (dateStr, range) => {
+    try {
+      if (range === "weekly" && dateStr.includes("-")) {
+        return dateStr;
+      }
+
+      if (range === "monthly") {
+        if (dateStr.includes("-")) {
+          return dateStr;
+        }
+        const date = new Date(dateStr);
+        return `${date.getFullYear()}-${(date.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}`;
+      }
+
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+
+      if (range === "weekly") {
+        return `${date.getFullYear()}-${getWeekNumber(date)
+          .toString()
+          .padStart(2, "0")}`;
+      }
+      return date.toISOString();
+    } catch (e) {
+      console.error("Error creating sort key:", e);
+      return dateStr;
+    }
   };
 
   const calculateProfileProgress = (data) => {
@@ -186,95 +216,246 @@ const Profile = () => {
     }[metric];
     const { limit } = TIME_RANGES[timeRange];
 
+    if (timeRange === "monthly") {
+      if (!analyticsData.length) {
+        return Array.from({ length: limit }, (_, i) => {
+          const date = new Date();
+          date.setMonth(date.getMonth() - (limit - 1 - i));
+          return {
+            date: date.toLocaleString("default", {
+              month: "short",
+              year: "2-digit",
+            }),
+            value: 0,
+            sortKey: `${date.getFullYear()}-${(date.getMonth() + 1)
+              .toString()
+              .padStart(2, "0")}`,
+          };
+        }).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+      }
+
+      const monthlyData = analyticsData.reduce((acc, item) => {
+        if (!item.formattedMonth) return acc;
+
+        const monthKey = item.formattedMonth;
+        const [year, month] = monthKey.split("-");
+        const date = new Date(year, month - 1);
+
+        if (!acc[monthKey]) {
+          acc[monthKey] = {
+            date: date.toLocaleString("default", {
+              month: "short",
+              year: "2-digit",
+            }),
+            value: 0,
+            sortKey: monthKey,
+          };
+        }
+        acc[monthKey].value += Number(item[metricKey]) || 0;
+        return acc;
+      }, {});
+
+      const processedData = Object.values(monthlyData)
+        .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+        .slice(-limit);
+
+      if (processedData.length < limit) {
+        const oldestDate = processedData.length
+          ? new Date(
+              processedData[0].sortKey.split("-")[0],
+              processedData[0].sortKey.split("-")[1] - 1
+            )
+          : new Date();
+        const existingMonths = new Set(processedData.map((d) => d.sortKey));
+
+        const fillerData = Array.from(
+          { length: limit - processedData.length },
+          (_, i) => {
+            const date = new Date(oldestDate);
+            date.setMonth(oldestDate.getMonth() - (i + 1));
+            const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1)
+              .toString()
+              .padStart(2, "0")}`;
+
+            if (existingMonths.has(monthKey)) {
+              return null;
+            }
+
+            return {
+              date: date.toLocaleString("default", {
+                month: "short",
+                year: "2-digit",
+              }),
+              value: 0,
+              sortKey: monthKey,
+            };
+          }
+        ).filter(Boolean);
+
+        return [...fillerData, ...processedData]
+          .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+          .slice(-limit);
+      }
+
+      return processedData;
+    }
+
     const dateField = {
       daily: "formattedDate",
       weekly: "formattedWeek",
-      monthly: "formattedMonth",
       yearly: "formattedYear",
     }[timeRange];
 
     if (!analyticsData.length) {
-      const fallbackData = Array.from({ length: limit }, (_, i) => {
+      return Array.from({ length: limit }, (_, i) => {
         const date = new Date();
-        date.setDate(
-          date.getDate() -
-            i *
-              (timeRange === "daily"
-                ? 1
-                : timeRange === "weekly"
-                ? 7
-                : timeRange === "monthly"
-                ? 30
-                : 365)
-        );
+        let offset;
+        switch (timeRange) {
+          case "daily":
+            offset = limit - 1 - i;
+            date.setDate(date.getDate() - offset);
+            break;
+          case "weekly":
+            offset = (limit - 1 - i) * 7;
+            date.setDate(date.getDate() - offset);
+            break;
+          case "yearly":
+            offset = limit - 1 - i;
+            date.setFullYear(date.getFullYear() - offset);
+            break;
+          default:
+            offset = limit - 1 - i;
+            date.setDate(date.getDate() - offset);
+        }
+
         return {
           date: formatDateForRange(date, timeRange),
-          value: profileData[metricKey] || 0,
+          value: 0,
+          sortKey:
+            timeRange === "yearly"
+              ? date.getFullYear().toString()
+              : createSortKey(date.toISOString(), timeRange),
         };
-      }).reverse();
-      return fallbackData;
+      }).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
     }
 
-    const graphData = analyticsData
+    const processedData = analyticsData
       .map((item) => {
         if (!item || !item[dateField]) return null;
+
         return {
           date: formatDateForRange(item[dateField], timeRange),
           value: Number(item[metricKey]) || 0,
+          sortKey:
+            timeRange === "yearly"
+              ? item[dateField]
+              : createSortKey(item[dateField], timeRange),
         };
       })
-      .filter(Boolean)
-      .sort((a, b) => new Date(a.date) - new Date(b.date))
-      .slice(-limit);
+      .filter(Boolean);
 
-    if (graphData.length < limit) {
-      let lastDate = new Date(
-        graphData[graphData.length - 1]?.date || Date.now()
-      );
-      if (isNaN(lastDate.getTime())) lastDate = new Date();
-      const filler = Array.from(
-        { length: limit - graphData.length },
+    if (processedData.length < limit) {
+      const oldestDate = processedData.length
+        ? new Date(
+            timeRange === "yearly"
+              ? `${processedData[0].sortKey}-01-01`
+              : processedData[0].sortKey
+          )
+        : new Date();
+      const existingKeys = new Set(processedData.map((d) => d.sortKey));
+
+      const fillerData = Array.from(
+        { length: limit - processedData.length },
         (_, i) => {
-          const newDate = new Date(lastDate);
-          newDate.setDate(
-            newDate.getDate() -
-              (i + 1) *
-                (timeRange === "daily"
-                  ? 1
-                  : timeRange === "weekly"
-                  ? 7
-                  : timeRange === "monthly"
-                  ? 30
-                  : 365)
-          );
+          let date = new Date(oldestDate);
+          let sortKey;
+
+          switch (timeRange) {
+            case "daily":
+              date.setDate(oldestDate.getDate() - (i + 1));
+              sortKey = createSortKey(date.toISOString(), timeRange);
+              break;
+            case "weekly":
+              date.setDate(oldestDate.getDate() - (i + 1) * 7);
+              sortKey = createSortKey(date.toISOString(), timeRange);
+              break;
+            case "yearly":
+              date.setFullYear(oldestDate.getFullYear() - (i + 1));
+              sortKey = date.getFullYear().toString();
+              break;
+            default:
+              date.setDate(oldestDate.getDate() - (i + 1));
+              sortKey = createSortKey(date.toISOString(), timeRange);
+          }
+
+          if (existingKeys.has(sortKey)) return null;
+
           return {
-            date: formatDateForRange(newDate, timeRange),
+            date: formatDateForRange(date, timeRange),
             value: 0,
+            sortKey: sortKey,
           };
         }
-      ).reverse();
-      return [...filler, ...graphData];
+      ).filter(Boolean);
+
+      return [...fillerData, ...processedData]
+        .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+        .slice(-limit);
     }
 
-    return graphData;
-  }, [analyticsData, metric, timeRange, profileData]);
+    return processedData
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+      .slice(-limit);
+  }, [analyticsData, metric, timeRange]);
 
+  // Log component mount and unmount
+  useEffect(() => {
+    console.log("Profile component mounted at:", Date.now());
+    hasFetchedRef.current = false; // Reset on mount
+    return () => {
+      console.log("Profile component unmounted at:", Date.now());
+    };
+  }, []);
+
+  // Fetch profile data
   useEffect(() => {
     if (!isAuthenticated || !token) {
-      setError("Please log in to view your profile.");
       setLoading(false);
       navigate("/login", { replace: true });
       return;
     }
 
+    const now = Date.now();
+    // Only skip fetch if data is recent and profileData exists
+    if (
+      fetchTracker.profile.hasFetched &&
+      now - fetchTracker.profile.lastFetched < FETCH_COOLDOWN &&
+      profileData &&
+      Object.keys(profileData).length > 0
+    ) {
+      console.log("Using cached profile data");
+      setIsVisible(!profileData.deletedAt);
+      const { progress, isComplete } = calculateProfileProgress(profileData);
+      setProfileProgress(progress);
+      setIsProfileComplete(isComplete);
+      setLoading(false);
+      return;
+    }
+
+    let isMounted = true;
     const fetchProfileData = async () => {
       try {
+        setLoading(true);
+        console.log("Fetching profile data from Profile component");
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/member/my-profile`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
+
+        if (!isMounted) return;
+
         const { data } = response.data;
         if (!data) throw new Error("No profile data found.");
 
@@ -284,8 +465,12 @@ const Profile = () => {
           ...memberData,
           subscriptionStatus: memberData.subscriptionStatus || "Unknown",
         };
-        if (JSON.stringify(user) !== JSON.stringify(newUserData))
+
+        const hasUserChanged =
+          JSON.stringify(user) !== JSON.stringify(newUserData);
+        if (hasUserChanged) {
           dispatch(login({ token, user: newUserData }));
+        }
 
         const updatedProfileData = {
           businessName: data.businessName || "User Name",
@@ -301,100 +486,184 @@ const Profile = () => {
           location: data.location || "",
           keyword: data.keyword || [],
           socialLinks: data.socialLinks || {},
+          deletedAt: data.deletedAt || null,
         };
 
-        setProfileData(updatedProfileData);
-        setIsVisible(!data.deletedAt);
+        console.log(
+          "Profile views fetched in Profile:",
+          updatedProfileData.views
+        );
+        console.log(
+          "Shared clicks fetched in Profile:",
+          updatedProfileData.sharedClicks
+        );
+
+        dispatch(setProfileData(updatedProfileData));
+        setIsVisible(!updatedProfileData.deletedAt);
+
         const { progress, isComplete } =
           calculateProfileProgress(updatedProfileData);
         setProfileProgress(progress);
         setIsProfileComplete(isComplete);
+
+        fetchTracker.profile = { hasFetched: true, lastFetched: now };
+        hasFetchedRef.current = true;
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to load profile data.");
-        if (err.response?.status === 404)
-          navigate("/business-profile", { replace: true });
+        if (isMounted) {
+          setError(
+            err.response?.data?.message || "Failed to load profile data."
+          );
+          if (err.response?.status === 404) {
+            navigate("/business-profile", { replace: true });
+          }
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchProfileData();
-  }, [isAuthenticated, token, dispatch, navigate, user]);
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, token, navigate, dispatch, user, location.pathname]);
 
+  // Fetch analytics data
   useEffect(() => {
     if (!isAuthenticated || !token) return;
 
+    const now = Date.now();
+    // Only skip fetch if data is recent and analyticsData exists
+    if (
+      fetchTracker.analytics.hasFetched &&
+      now - fetchTracker.analytics.lastFetched < FETCH_COOLDOWN &&
+      analyticsData.length > 0
+    ) {
+      console.log("Using cached analytics data");
+      setLoading(false);
+      return;
+    }
+
+    let isMounted = true;
     const fetchAnalyticsData = async () => {
       try {
+        setLoading(true);
+        const txId = Date.now().toString();
+        console.log("Fetching analytics data with txId:", txId);
         const response = await axios.get(
           `${
             import.meta.env.VITE_BASE_URL
-          }/member/get-analytics?range=${timeRange}`,
+          }/member/get-analytics?range=${timeRange}&txId=${txId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        if (!response.data.success || !Array.isArray(response.data.data))
+
+        if (!isMounted) return;
+
+        if (!response.data.success || !Array.isArray(response.data.data)) {
           throw new Error("Invalid analytics data received.");
+        }
+
         setAnalyticsData(response.data.data);
+
+        fetchTracker.analytics = { hasFetched: true, lastFetched: now };
       } catch (err) {
-        setError(
-          err.response?.data?.message || "Failed to load analytics data."
-        );
-        setAnalyticsData([]);
+        if (isMounted) {
+          setError(
+            err.response?.data?.message || "Failed to load analytics data."
+          );
+          setAnalyticsData([]);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchAnalyticsData();
-  }, [isAuthenticated, token, timeRange]);
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, token, timeRange, location.pathname]);
 
+  // Handle clicks outside dropdowns
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (isDropdownOpen && !e.target.closest(".dropdown-container"))
+      if (isDropdownOpen && !e.target.closest(".dropdown-container")) {
         setIsDropdownOpen(false);
+      }
       if (
         isProfileVisibleDropdownOpen &&
         !e.target.closest(".profile-visible-dropdown")
-      )
+      ) {
         setIsProfileVisibleDropdownOpen(false);
+      }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [isDropdownOpen, isProfileVisibleDropdownOpen]);
 
+  // Toggle profile visibility
   const toggleVisibility = async (action) => {
-    if (!profileData.id || !token)
+    if (!profileData?.id || !token) {
       return toast.error("Missing profile ID or token.");
+    }
+
     try {
       const url = `${import.meta.env.VITE_BASE_URL}/member/${
         action === "hide" ? "hide" : "unhide"
       }-profile`;
+      const txId = Date.now().toString();
       const response = await axios.patch(
-        url,
+        `${url}?txId=${txId}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       if (response.data.success) {
-        setIsVisible(action === "restore");
+        setIsVisible(action !== "hide");
         toast.success(
           `Profile ${action === "hide" ? "hidden" : "restored"} successfully!`
         );
-        setProfileData((prev) => ({
-          ...prev,
-          deletedAt: action === "hide" ? new Date().toISOString() : null,
-        }));
+        dispatch(
+          setProfileData({
+            ...profileData,
+            deletedAt: action === "hide" ? new Date().toISOString() : null,
+          })
+        );
       }
     } catch (err) {
       toast.error(
         err.response?.data?.message || "Failed to update visibility."
       );
-      if (err.response?.status === 401) navigate("/login", { replace: true });
+      if (err.response?.status === 401) {
+        navigate("/login", { replace: true });
+      }
     } finally {
       setIsProfileVisibleDropdownOpen(false);
     }
   };
 
-  const handleMetricChange = (selectedMetric) => setMetric(selectedMetric);
+  // Handle share profile click
+  const handleShareProfile = () => {
+    if (profileData?.subscriptionStatus !== "active") {
+      setShowShareSubscriptionModal(true); // Show modal for non-subscribed users
+    } else {
+      // Navigate to profile preview for subscribed users
+      navigate(
+        `/community/profile/${profileData?.id || defaultProfileData.id}`
+      );
+      setIsProfileVisibleDropdownOpen(false);
+    }
+  };
+
+  const handleMetricChange = (selectedMetric) => {
+    setMetric(selectedMetric);
+  };
+
   const handleTimeRangeChange = (range) => {
     setTimeRange(range);
     setIsDropdownOpen(false);
@@ -437,11 +706,12 @@ const Profile = () => {
         closeOnClick
         pauseOnHover
       />
-      <header className="h-[12vh] p-4 sm:p-8 text-[#6A7368] flex justify-between items-center gap-2">
+
+      <header className="h-[12vh] max-sm:h-[8vh] p-4 sm:p-8 text-[#6A7368] flex justify-between items-center gap-2">
         <strong className="text-[16px]">Dashboard</strong>
-        <div className="flex items-center gap-2 sm:gap-4 px-2 sm:px-4">
-          <Link to="/">
-            <IoIosNotificationsOutline className="text-[24px] sm:text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
+        <div className="flex items-center gap-2 sm:gap-4 px-2 sm:px-4 mr-8">
+          <Link to="/user-dashboard/notification">
+            <IoIosNotificationsOutline className="hidden text-[24px] sm:text-[30px] text-[#6A7368] hover:text-[#043D12] transition-colors" />
           </Link>
           <Link to="/user-dashboard/profile">
             <motion.figure
@@ -450,7 +720,7 @@ const Profile = () => {
               animate={{ opacity: [1, 0.8, 1] }}
               transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
             >
-              {profileData.businesImg ? (
+              {profileData?.businesImg ? (
                 <img
                   src={profileData.businesImg}
                   alt="Business"
@@ -462,9 +732,11 @@ const Profile = () => {
               )}
               <figcaption className="ml-2 text-[#6A7368] hidden sm:block">
                 <h3 className="text-[12px] font-semibold">
-                  {profileData.businessName}
+                  {profileData?.businessName || defaultProfileData.businessName}
                 </h3>
-                <p className="text-[10px] italic">{profileData.category}</p>
+                <p className="text-[10px] italic">
+                  {profileData?.category || defaultProfileData.category}
+                </p>
               </figcaption>
             </motion.figure>
           </Link>
@@ -474,18 +746,21 @@ const Profile = () => {
       <section className="welcome flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 px-2 sm:px-0">
         <div className="text-[#6A7368] text-center sm:text-left">
           <h2 className="text-[16px] sm:text-[20px]">
-            Welcome back, {profileData.businessName}
+            Welcome back,{" "}
+            {profileData?.businessName || defaultProfileData.businessName}
           </h2>
           <p className="text-[10px]">
             Subscription Status:{" "}
             <span
               className={
-                profileData.subscriptionStatus === "active"
+                (profileData?.subscriptionStatus ||
+                  defaultProfileData.subscriptionStatus) === "active"
                   ? "text-green-600"
                   : "text-red-600"
               }
             >
-              {profileData.subscriptionStatus}
+              {profileData?.subscriptionStatus ||
+                defaultProfileData.subscriptionStatus}
             </span>
           </p>
         </div>
@@ -544,13 +819,12 @@ const Profile = () => {
                     >
                       Hide Profile
                     </button>
-                    <Link
-                      to={`/community/profile/${profileData.id}`}
-                      className="block w-full text-left px-4 py-2 text-[#043D12] hover:bg-[#E8ECE8] transition-all text-[12px] sm:text-[14px]"
-                      onClick={() => setIsProfileVisibleDropdownOpen(false)}
+                    <button
+                      onClick={handleShareProfile}
+                      className="w-full text-left px-4 py-2 text-[#043D12] hover:bg-[#E8ECE8] transition-all text-[12px] sm:text-[14px]"
                     >
                       Preview Profile
-                    </Link>
+                    </button>
                   </>
                 ) : (
                   <button
@@ -575,6 +849,45 @@ const Profile = () => {
         </div>
       )}
 
+      {/* Subscription Modal for Non-Subscribed Users Sharing Profile */}
+      {showShareSubscriptionModal && (
+        <div
+          className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 animate-fade-in"
+          role="dialog"
+          aria-labelledby="subscription-modal-title"
+          aria-modal="true"
+        >
+          <div className="bg-white p-8 rounded-2xl w-[32rem] max-w-[90%] shadow-2xl transform transition-all duration-300 scale-100 hover:scale-105">
+            <h2
+              id="subscription-modal-title"
+              className="text-2xl font-semibold text-[#043D12] mb-4"
+            >
+              Heads up!
+            </h2>
+            <p className="text-[#6A7368] mb-6">
+              You cannot preview your profile until you subscribe.
+              <br />
+              Want to preview and share your profile with others? Unlock it with
+              a subscription.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-6 py-2.5 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-200 text-[#6A7368] font-medium cursor-pointer"
+                onClick={() => setShowShareSubscriptionModal(false)}
+              >
+                Close
+              </button>
+              <a
+                href="/subscribe" // Adjust if your subscription route is different
+                className="px-6 py-2.5 bg-[#043D12] text-white rounded-lg hover:bg-[#03280E] transition-colors duration-200 font-medium cursor-pointer"
+              >
+                Subscribe Now
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="content-section mt-8 sm:mt-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {METRICS.map(({ title, key, label, value }) => (
@@ -587,14 +900,14 @@ const Profile = () => {
                   : "bg-[#F5F7F5] hover:bg-[#043D12] hover:text-[#FFFDF2]"
               } ${!isVisible ? "opacity-50" : ""}`}
             >
-              <h5 className="text-start text-[12px] sm:text-[14px] font-semibold">
+              <h5 className="text-center text-[12px] sm:text-[14px] font-semibold">
                 {title}
               </h5>
               <figcaption className="text-[10px] sm:text-[12px]">
                 {label}
               </figcaption>
               <h3 className="count text-[24px] sm:text-[32px] font-bold">
-                {value(profileData)}
+                {value(profileData || defaultProfileData)}
               </h3>
             </div>
           ))}
@@ -647,8 +960,13 @@ const Profile = () => {
                   content={({ payload }) =>
                     payload?.length ? (
                       <div className="bg-white p-2 border border-gray-300 rounded shadow">
-                        <p>{payload[0].payload.date}</p>
-                        <p>{payload[0].value}</p>
+                        <p className="font-semibold">
+                          {payload[0].payload.date}
+                        </p>
+                        <p>
+                          {METRICS.find((m) => m.key === metric)?.title}:{" "}
+                          {payload[0].value}
+                        </p>
                       </div>
                     ) : null
                   }
@@ -657,9 +975,10 @@ const Profile = () => {
                   type="monotone"
                   dataKey="value"
                   stroke="#82ca9d"
+                  strokeWidth={2}
                   activeDot={{ r: 8 }}
+                  dot={{ r: 4 }}
                 />
-                <Legend verticalAlign="top" align="right" />
               </LineChart>
             </ResponsiveContainer>
           </div>

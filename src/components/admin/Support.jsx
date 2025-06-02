@@ -285,7 +285,6 @@ const NoDataDisplay = () => (
 
 const AllTickets = ({ tickets, setTickets }) => {
   const { token } = useSelector((state) => state.auth);
-  const navigate = useNavigate();
   const [filteredTickets, setFilteredTickets] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState("All Time");
@@ -304,7 +303,6 @@ const AllTickets = ({ tickets, setTickets }) => {
       ...tickets["In Progress"],
       ...tickets.Resolved,
     ];
-
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       data = data.filter(
@@ -317,16 +315,11 @@ const AllTickets = ({ tickets, setTickets }) => {
           new Date(ticket.createdAt).toLocaleDateString("en-GB").includes(query)
       );
     }
-
     if (dateFilter === "Last Month") {
       const now = new Date();
       const lastMonth = new Date(now.setMonth(now.getMonth() - 1));
-      data = data.filter((ticket) => {
-        const submittedDate = new Date(ticket.createdAt);
-        return submittedDate >= lastMonth;
-      });
+      data = data.filter((ticket) => new Date(ticket.createdAt) >= lastMonth);
     }
-
     setFilteredTickets(data);
     setCurrentPage(1);
   }, [tickets, searchQuery, dateFilter]);
@@ -351,7 +344,6 @@ const AllTickets = ({ tickets, setTickets }) => {
         setSelectedTicket(null);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -454,92 +446,110 @@ const AllTickets = ({ tickets, setTickets }) => {
         <NoDataDisplay />
       ) : (
         <>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse bg-white shadow-md rounded-lg text-xs sm:text-sm">
-              <thead>
-                <tr className="bg-gray-100 text-left">
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b">
-                    Ticket ID
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b">
-                    User Name
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden md:table-cell">
-                    Business Name
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden lg:table-cell">
-                    Issue Type
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden sm:table-cell">
-                    Status
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden md:table-cell">
-                    Date Submitted
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentTickets.map((ticket) => (
-                  <tr key={ticket.id} className="border-b hover:bg-gray-50">
-                    <td className="p-2 sm:p-3 text-gray-700">{ticket.id}</td>
-                    <td className="p-2 sm:p-3 text-gray-700">{ticket.name}</td>
-                    <td className="p-2 sm:p-3 text-gray-700 hidden md:table-cell">
-                      {ticket.business}
-                    </td>
-                    <td className="p-2 sm:p-3 text-gray-700 hidden lg:table-cell">
-                      {ticket.issueType}
-                    </td>
-                    <td className="p-2 sm:p-3 hidden sm:table-cell">
-                      <span
-                        className={`text-[10px] sm:text-xs font-medium ${
-                          ticket.status === "Resolved"
-                            ? "text-green-500"
-                            : ticket.status === "In Progress"
-                            ? "text-yellow-500"
-                            : "text-red-500"
-                        }`}
+          <div className="w-full bg-white shadow-md rounded-lg">
+            <div className="hidden sm:grid sm:grid-cols-7 bg-gray-100 text-left text-xs font-medium text-gray-600 border-b p-2">
+              <div className="p-2">Ticket ID</div>
+              <div className="p-2">User Name</div>
+              <div className="p-2">Business Name</div>
+              <div className="p-2">Issue Type</div>
+              <div className="p-2">Status</div>
+              <div className="p-2">Date Submitted</div>
+              <div className="p-2 text-center">Actions</div>
+            </div>
+            <div className="divide-y divide-gray-200">
+              {currentTickets.map((ticket) => (
+                <div
+                  key={ticket.id}
+                  className="flex flex-col sm:grid sm:grid-cols-7 items-start sm:items-center p-2 hover:bg-gray-50 gap-2 sm:gap-0"
+                >
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">Ticket ID: </span>
+                    {ticket.id}
+                  </div>
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">User Name: </span>
+                    {ticket.name}
+                  </div>
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">Business: </span>
+                    {ticket.business}
+                  </div>
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">Issue Type: </span>
+                    {ticket.issueType}
+                  </div>
+                  <div className="w-full p-2 text-sm">
+                    <span className="font-medium sm:hidden">Status: </span>
+                    <span
+                      className={`${
+                        ticket.status === "Resolved"
+                          ? "text-green-500"
+                          : ticket.status === "In Progress"
+                          ? "text-yellow-500"
+                          : "text-red-500"
+                      }`}
+                    >
+                      {ticket.status}
+                    </span>
+                  </div>
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">Date: </span>
+                    {new Date(ticket.createdAt).toLocaleDateString("en-GB")}
+                  </div>
+                  <div className="w-full p-2 flex justify-center relative">
+                    {/* Mobile: Inline Buttons */}
+                    <div className="sm:hidden flex flex-wrap gap-2 justify-center">
+                      <button
+                        className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+                        onClick={() => handleViewDetails(ticket)}
                       >
-                        {ticket.status}
-                      </span>
-                    </td>
-                    <td className="p-2 sm:p-3 text-gray-700 hidden md:table-cell">
-                      {new Date(ticket.createdAt).toLocaleDateString("en-GB")}
-                    </td>
-                    <td className="p-2 sm:p-3 relative">
-                      <div
-                        className="relative"
-                        onClick={() => setSelectedTicket(ticket)}
-                        ref={dropdownRef}
-                      >
-                        <FaEllipsisV className="cursor-pointer text-gray-600 hover:text-gray-800" />
-                        {selectedTicket?.id === ticket.id && (
-                          <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-md shadow-lg z-10 dropdown-menu">
+                        View
+                      </button>
+                      {(ticket.status === "Pending" ||
+                        ticket.status === "In Progress") && (
+                        <button
+                          className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+                          onClick={() => handleMarkAsResolved(ticket.id)}
+                        >
+                          Resolve
+                        </button>
+                      )}
+                    </div>
+                    {/* Desktop: Dropdown */}
+                    <div className="hidden sm:block relative" ref={dropdownRef}>
+                      <FaEllipsisV
+                        className="cursor-pointer text-gray-600 hover:text-gray-800"
+                        onClick={() =>
+                          setSelectedTicket(
+                            selectedTicket?.id === ticket.id ? null : ticket
+                          )
+                        }
+                      />
+                      {selectedTicket?.id === ticket.id && (
+                        <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-md shadow-lg z-10 dropdown-menu">
+                          <button
+                            className="block w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => handleViewDetails(ticket)}
+                          >
+                            View Details
+                          </button>
+                          {(ticket.status === "Pending" ||
+                            ticket.status === "In Progress") && (
                             <button
                               className="block w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100"
-                              onClick={() => handleViewDetails(ticket)}
+                              onClick={() => handleMarkAsResolved(ticket.id)}
                             >
-                              View Details
+                              Mark as Resolved
                             </button>
-                            {(ticket.status === "Pending" ||
-                              ticket.status === "In Progress") && (
-                              <button
-                                className="block w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100"
-                                onClick={() => handleMarkAsResolved(ticket.id)}
-                              >
-                                Mark as Resolved
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-
           <div className="flex justify-center mt-4 gap-2">
             <button
               onClick={() => paginate(currentPage - 1)}
@@ -613,7 +623,6 @@ const AllTickets = ({ tickets, setTickets }) => {
 
 const PendingTickets = ({ tickets, setTickets }) => {
   const { token } = useSelector((state) => state.auth);
-  const navigate = useNavigate();
   const [filteredTickets, setFilteredTickets] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState("All Time");
@@ -628,7 +637,6 @@ const PendingTickets = ({ tickets, setTickets }) => {
 
   useEffect(() => {
     let data = [...tickets.Pending, ...tickets["In Progress"]];
-
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       data = data.filter(
@@ -641,16 +649,11 @@ const PendingTickets = ({ tickets, setTickets }) => {
           new Date(ticket.createdAt).toLocaleDateString("en-GB").includes(query)
       );
     }
-
     if (dateFilter === "Last Month") {
       const now = new Date();
       const lastMonth = new Date(now.setMonth(now.getMonth() - 1));
-      data = data.filter((ticket) => {
-        const submittedDate = new Date(ticket.createdAt);
-        return submittedDate >= lastMonth;
-      });
+      data = data.filter((ticket) => new Date(ticket.createdAt) >= lastMonth);
     }
-
     setFilteredTickets(data);
     setCurrentPage(1);
   }, [tickets, searchQuery, dateFilter]);
@@ -675,7 +678,6 @@ const PendingTickets = ({ tickets, setTickets }) => {
         setSelectedTicket(null);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -697,7 +699,7 @@ const PendingTickets = ({ tickets, setTickets }) => {
       setTickets((prev) => {
         const updatedTickets = { ...prev };
         updatedTickets.Pending = prev.Pending.filter((t) => t.id !== ticketId);
-        updatedTickets["InProgress"] = [
+        updatedTickets["In Progress"] = [
           ...prev["In Progress"],
           {
             ...prev.Pending.find((t) => t.id === ticketId),
@@ -774,91 +776,106 @@ const PendingTickets = ({ tickets, setTickets }) => {
         <NoDataDisplay />
       ) : (
         <>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse bg-white shadow-md rounded-lg text-xs sm:text-sm">
-              <thead>
-                <tr className="bg-gray-100 text-left">
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b">
-                    Ticket ID
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b">
-                    User Name
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden md:table-cell">
-                    Business Name
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden lg:table-cell">
-                    Issue Type
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden sm:table-cell">
-                    Status
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden md:table-cell">
-                    Date Submitted
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentTickets.map((ticket) => (
-                  <tr key={ticket.id} className="border-b hover:bg-gray-50">
-                    <td className="p-2 sm:p-3 text-gray-700">{ticket.id}</td>
-                    <td className="p-2 sm:p-3 text-gray-700">{ticket.name}</td>
-                    <td className="p-2 sm:p-3 text-gray-700 hidden md:table-cell">
-                      {ticket.business}
-                    </td>
-                    <td className="p-2 sm:p-3 text-gray-700 hidden lg:table-cell">
-                      {ticket.issueType}
-                    </td>
-                    <td className="p-2 sm:p-3 hidden sm:table-cell">
-                      <span
-                        className={`text-[10px] sm:text-xs font-medium ${
-                          ticket.status === "Resolved"
-                            ? "text-green-500"
-                            : ticket.status === "In Progress"
-                            ? "text-yellow-500"
-                            : "text-red-500"
-                        }`}
+          <div className="w-full bg-white shadow-md rounded-lg">
+            <div className="hidden sm:grid sm:grid-cols-7 bg-gray-100 text-left text-xs font-medium text-gray-600 border-b p-2">
+              <div className="p-2">Ticket ID</div>
+              <div className="p-2">User Name</div>
+              <div className="p-2">Business Name</div>
+              <div className="p-2">Issue Type</div>
+              <div className="p-2">Status</div>
+              <div className="p-2">Date Submitted</div>
+              <div className="p-2 text-center">Actions</div>
+            </div>
+            <div className="divide-y divide-gray-200">
+              {currentTickets.map((ticket) => (
+                <div
+                  key={ticket.id}
+                  className="flex flex-col sm:grid sm:grid-cols-7 items-start sm:items-center p-2 hover:bg-gray-50 gap-2 sm:gap-0"
+                >
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">Ticket ID: </span>
+                    {ticket.id}
+                  </div>
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">User Name: </span>
+                    {ticket.name}
+                  </div>
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">Business: </span>
+                    {ticket.business}
+                  </div>
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">Issue Type: </span>
+                    {ticket.issueType}
+                  </div>
+                  <div className="w-full p-2 text-sm">
+                    <span className="font-medium sm:hidden">Status: </span>
+                    <span
+                      className={`${
+                        ticket.status === "In Progress"
+                          ? "text-yellow-500"
+                          : "text-red-500"
+                      }`}
+                    >
+                      {ticket.status}
+                    </span>
+                  </div>
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">Date: </span>
+                    {new Date(ticket.createdAt).toLocaleDateString("en-GB")}
+                  </div>
+                  <div className="w-full p-2 flex justify-center relative">
+                    {/* Mobile: Inline Buttons */}
+                    <div className="sm:hidden flex flex-wrap gap-2 justify-center">
+                      <button
+                        className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+                        onClick={() => handleViewDetails(ticket)}
                       >
-                        {ticket.status}
-                      </span>
-                    </td>
-                    <td className="p-2 sm:p-3 text-gray-700 hidden md:table-cell">
-                      {new Date(ticket.createdAt).toLocaleDateString("en-GB")}
-                    </td>
-                    <td className="p-2 sm:p-3 relative">
-                      <div
-                        className="relative"
-                        onClick={() => setSelectedTicket(ticket)}
-                        ref={dropdownRef}
-                      >
-                        <FaEllipsisV className="cursor-pointer text-gray-600 hover:text-gray-800" />
-                        {selectedTicket?.id === ticket.id && (
-                          <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-md shadow-lg z-10 dropdown-menu">
+                        View
+                      </button>
+                      {ticket.status === "Pending" && (
+                        <button
+                          className="bg-yellow-500 text-white px-2 py-1 rounded text-xs hover:bg-yellow-600"
+                          onClick={() => handleAssignToAgent(ticket.id)}
+                        >
+                          Assign
+                        </button>
+                      )}
+                    </div>
+                    {/* Desktop: Dropdown */}
+                    <div className="hidden sm:block relative" ref={dropdownRef}>
+                      <FaEllipsisV
+                        className="cursor-pointer text-gray-600 hover:text-gray-800"
+                        onClick={() =>
+                          setSelectedTicket(
+                            selectedTicket?.id === ticket.id ? null : ticket
+                          )
+                        }
+                      />
+                      {selectedTicket?.id === ticket.id && (
+                        <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-md shadow-lg z-10 dropdown-menu">
+                          <button
+                            className="block w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => handleViewDetails(ticket)}
+                          >
+                            View Details
+                          </button>
+                          {ticket.status === "Pending" && (
                             <button
                               className="block w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100"
-                              onClick={() => handleViewDetails(ticket)}
+                              onClick={() => handleAssignToAgent(ticket.id)}
                             >
-                              View Details
+                              Assign to Agent
                             </button>
-                            {ticket.status === "Pending" && (
-                              <button
-                                className="block w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100"
-                                onClick={() => handleAssignToAgent(ticket.id)}
-                              >
-                                Assign to Agent
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-
           <div className="flex justify-center mt-4 gap-2">
             <button
               onClick={() => paginate(currentPage - 1)}
@@ -930,9 +947,7 @@ const PendingTickets = ({ tickets, setTickets }) => {
   );
 };
 
-const ResolvedTickets = ({ tickets, setTickets }) => {
-  const { token } = useSelector((state) => state.auth);
-  const navigate = useNavigate();
+const ResolvedTickets = ({ tickets }) => {
   const [filteredTickets, setFilteredTickets] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState("All Time");
@@ -947,7 +962,6 @@ const ResolvedTickets = ({ tickets, setTickets }) => {
 
   useEffect(() => {
     let data = [...tickets.Resolved];
-
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       data = data.filter(
@@ -957,22 +971,14 @@ const ResolvedTickets = ({ tickets, setTickets }) => {
           ticket.business?.toLowerCase().includes(query) ||
           ticket.issueType?.toLowerCase().includes(query) ||
           ticket.status?.toLowerCase().includes(query) ||
-          new Date(ticket.createdAt)
-            .toLocaleDateString("en-GB")
-            .includes(query) ||
-          ticket.assignedTo?.toLowerCase().includes(query)
+          new Date(ticket.createdAt).toLocaleDateString("en-GB").includes(query)
       );
     }
-
     if (dateFilter === "Last Month") {
       const now = new Date();
       const lastMonth = new Date(now.setMonth(now.getMonth() - 1));
-      data = data.filter((ticket) => {
-        const submittedDate = new Date(ticket.createdAt);
-        return submittedDate >= lastMonth;
-      });
+      data = data.filter((ticket) => new Date(ticket.createdAt) >= lastMonth);
     }
-
     setFilteredTickets(data);
     setCurrentPage(1);
   }, [tickets, searchQuery, dateFilter]);
@@ -997,7 +1003,6 @@ const ResolvedTickets = ({ tickets, setTickets }) => {
         setSelectedTicket(null);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -1005,37 +1010,6 @@ const ResolvedTickets = ({ tickets, setTickets }) => {
   const handleViewDetails = (ticket) => {
     setSelectedTicket(ticket);
     setIsModalOpen(true);
-  };
-
-  const handleReopenTicket = async (ticketId) => {
-    try {
-      const BASE_URL = import.meta.env.VITE_BASE_URL;
-      const response = await axios.patch(
-        `${BASE_URL}/admin/edit-issue/${ticketId}`,
-        { status: "Pending" },
-        { headers: { Authorization: `Bearer ${token}` }, timeout: 30000 }
-      );
-      toast.success(response.data.message || "Ticket reopened successfully.");
-      setTickets((prev) => {
-        const updatedTickets = { ...prev };
-        updatedTickets.Resolved = prev.Resolved.filter(
-          (t) => t.id !== ticketId
-        );
-        updatedTickets.Pending = [
-          ...prev.Pending,
-          {
-            ...prev.Resolved.find((t) => t.id === ticketId),
-            status: "Pending",
-            assignedTo: null,
-          },
-        ];
-        return updatedTickets;
-      });
-      setSelectedTicket(null);
-    } catch (error) {
-      console.error("❌ Error Reopening Ticket:", error);
-      toast.error(error.response?.data?.message || "Failed to reopen ticket.");
-    }
   };
 
   const handleDateFilterChange = (filter) => {
@@ -1063,7 +1037,7 @@ const ResolvedTickets = ({ tickets, setTickets }) => {
           <div className="relative w-full sm:w-64">
             <input
               type="text"
-              placeholder="Search by ID, name, business, type, status, date, assigned..."
+              placeholder="Search by ID, name, business, type, status, date..."
               className="p-2 border border-gray-300 rounded-md w-full text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -1098,89 +1072,82 @@ const ResolvedTickets = ({ tickets, setTickets }) => {
         <NoDataDisplay />
       ) : (
         <>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse bg-white shadow-md rounded-lg text-xs sm:text-sm">
-              <thead>
-                <tr className="bg-gray-100 text-left">
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b">
-                    Ticket ID
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b">
-                    User Name
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden md:table-cell">
-                    Business Name
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden lg:table-cell">
-                    Issue Type
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden md:table-cell">
-                    Date Submitted
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden lg:table-cell">
-                    Date Resolved
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden sm:table-cell">
-                    Assigned To
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentTickets.map((ticket) => (
-                  <tr key={ticket.id} className="border-b hover:bg-gray-50">
-                    <td className="p-2 sm:p-3 text-gray-700">{ticket.id}</td>
-                    <td className="p-2 sm:p-3 text-gray-700">{ticket.name}</td>
-                    <td className="p-2 sm:p-3 text-gray-700 hidden md:table-cell">
-                      {ticket.business}
-                    </td>
-                    <td className="p-2 sm:p-3 text-gray-700 hidden lg:table-cell">
-                      {ticket.issueType}
-                    </td>
-                    <td className="p-2 sm:p-3 text-gray-700 hidden md:table-cell">
-                      {new Date(ticket.createdAt).toLocaleDateString("en-GB")}
-                    </td>
-                    <td className="p-2 sm:p-3 text-gray-700 hidden lg:table-cell">
-                      {ticket.resolvedAt
-                        ? new Date(ticket.resolvedAt).toLocaleDateString(
-                            "en-GB"
-                          )
-                        : "N/A"}
-                    </td>
-                    <td className="p-2 sm:p-3 text-gray-700 hidden sm:table-cell">
-                      {ticket.assignedTo || "N/A"}
-                    </td>
-                    <td className="p-2 sm:p-3 relative">
-                      <div
-                        className="relative"
-                        onClick={() => setSelectedTicket(ticket)}
-                        ref={dropdownRef}
+          <div className="w-full bg-white shadow-md rounded-lg">
+            <div className="hidden sm:grid sm:grid-cols-7 bg-gray-100 text-left text-xs font-medium text-gray-600 border-b p-2">
+              <div className="p-2">Ticket ID</div>
+              <div className="p-2">User Name</div>
+              <div className="p-2">Business Name</div>
+              <div className="p-2">Issue Type</div>
+              <div className="p-2">Status</div>
+              <div className="p-2">Date Submitted</div>
+              <div className="p-2 text-center">Actions</div>
+            </div>
+            <div className="divide-y divide-gray-200">
+              {currentTickets.map((ticket) => (
+                <div
+                  key={ticket.id}
+                  className="flex flex-col sm:grid sm:grid-cols-7 items-start sm:items-center p-2 hover:bg-gray-50 gap-2 sm:gap-0"
+                >
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">Ticket ID: </span>
+                    {ticket.id}
+                  </div>
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">User Name: </span>
+                    {ticket.name}
+                  </div>
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">Business: </span>
+                    {ticket.business}
+                  </div>
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">Issue Type: </span>
+                    {ticket.issueType}
+                  </div>
+                  <div className="w-full p-2 text-sm">
+                    <span className="font-medium sm:hidden">Status: </span>
+                    <span className="text-green-500">{ticket.status}</span>
+                  </div>
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">Date: </span>
+                    {new Date(ticket.createdAt).toLocaleDateString("en-GB")}
+                  </div>
+                  <div className="w-full p-2 flex justify-center relative">
+                    {/* Mobile: Inline Buttons */}
+                    <div className="sm:hidden flex flex-wrap gap-2 justify-center">
+                      <button
+                        className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+                        onClick={() => handleViewDetails(ticket)}
                       >
-                        <FaEllipsisV className="cursor-pointer text-gray-600 hover:text-gray-800" />
-                        {selectedTicket?.id === ticket.id && (
-                          <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-md shadow-lg z-10 dropdown-menu">
-                            <button
-                              className="block w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100"
-                              onClick={() => handleViewDetails(ticket)}
-                            >
-                              View Details
-                            </button>
-                            <button
-                              className="block w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100"
-                              onClick={() => handleReopenTicket(ticket.id)}
-                            >
-                              Re-open Ticket
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        View
+                      </button>
+                    </div>
+                    {/* Desktop: Dropdown */}
+                    <div className="hidden sm:block relative" ref={dropdownRef}>
+                      <FaEllipsisV
+                        className="cursor-pointer text-gray-600 hover:text-gray-800"
+                        onClick={() =>
+                          setSelectedTicket(
+                            selectedTicket?.id === ticket.id ? null : ticket
+                          )
+                        }
+                      />
+                      {selectedTicket?.id === ticket.id && (
+                        <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-md shadow-lg z-10 dropdown-menu">
+                          <button
+                            className="block w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => handleViewDetails(ticket)}
+                          >
+                            View Details
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-
           <div className="flex justify-center mt-4 gap-2">
             <button
               onClick={() => paginate(currentPage - 1)}
@@ -1254,7 +1221,6 @@ const ResolvedTickets = ({ tickets, setTickets }) => {
 
 const AssignedTickets = ({ tickets, setTickets }) => {
   const { token } = useSelector((state) => state.auth);
-  const navigate = useNavigate();
   const [filteredTickets, setFilteredTickets] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState("All Time");
@@ -1268,10 +1234,7 @@ const AssignedTickets = ({ tickets, setTickets }) => {
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    let data = [...tickets["In Progress"]].filter(
-      (ticket) => ticket.assignedTo
-    );
-
+    let data = [...tickets["In Progress"]];
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       data = data.filter(
@@ -1281,22 +1244,17 @@ const AssignedTickets = ({ tickets, setTickets }) => {
           ticket.business?.toLowerCase().includes(query) ||
           ticket.issueType?.toLowerCase().includes(query) ||
           ticket.status?.toLowerCase().includes(query) ||
-          new Date(ticket.createdAt)
-            .toLocaleDateString("en-GB")
+          `${ticket.admin?.firstname} ${ticket.admin?.lastname}`
+            ?.toLowerCase()
             .includes(query) ||
-          ticket.assignedTo?.toLowerCase().includes(query)
+          new Date(ticket.createdAt).toLocaleDateString("en-GB").includes(query)
       );
     }
-
     if (dateFilter === "Last Month") {
       const now = new Date();
       const lastMonth = new Date(now.setMonth(now.getMonth() - 1));
-      data = data.filter((ticket) => {
-        const submittedDate = new Date(ticket.createdAt);
-        return submittedDate >= lastMonth;
-      });
+      data = data.filter((ticket) => new Date(ticket.createdAt) >= lastMonth);
     }
-
     setFilteredTickets(data);
     setCurrentPage(1);
   }, [tickets, searchQuery, dateFilter]);
@@ -1321,7 +1279,6 @@ const AssignedTickets = ({ tickets, setTickets }) => {
         setSelectedTicket(null);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -1386,7 +1343,7 @@ const AssignedTickets = ({ tickets, setTickets }) => {
           <div className="relative w-full sm:w-64">
             <input
               type="text"
-              placeholder="Search by ID, name, business, type, status, date, assigned..."
+              placeholder="Search by ID, name, business, type, status, admin, date..."
               className="p-2 border border-gray-300 rounded-md w-full text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -1421,95 +1378,99 @@ const AssignedTickets = ({ tickets, setTickets }) => {
         <NoDataDisplay />
       ) : (
         <>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse bg-white shadow-md rounded-lg text-xs sm:text-sm">
-              <thead>
-                <tr className="bg-gray-100 text-left">
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b">
-                    Ticket ID
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b">
-                    User Name
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden md:table-cell">
-                    Business Name
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden lg:table-cell">
-                    Issue Type
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden sm:table-cell">
-                    Status
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden md:table-cell">
-                    Date Submitted
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b hidden sm:table-cell">
-                    Assigned To
-                  </th>
-                  <th className="p-2 sm:p-3 font-medium text-gray-600 border-b"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentTickets.map((ticket) => (
-                  <tr key={ticket.id} className="border-b hover:bg-gray-50">
-                    <td className="p-2 sm:p-3 text-gray-700">{ticket.id}</td>
-                    <td className="p-2 sm:p-3 text-gray-700">{ticket.name}</td>
-                    <td className="p-2 sm:p-3 text-gray-700 hidden md:table-cell">
-                      {ticket.business}
-                    </td>
-                    <td className="p-2 sm:p-3 text-gray-700 hidden lg:table-cell">
-                      {ticket.issueType}
-                    </td>
-                    <td className="p-2 sm:p-3 hidden sm:table-cell">
-                      <span
-                        className={`text-[10px] sm:text-xs font-medium ${
-                          ticket.status === "Resolved"
-                            ? "text-green-500"
-                            : ticket.status === "In Progress"
-                            ? "text-yellow-500"
-                            : "text-red-500"
-                        }`}
+          <div className="w-full bg-white shadow-md rounded-lg">
+            <div className="hidden sm:grid sm:grid-cols-8 bg-gray-100 text-left text-xs font-medium text-gray-600 border-b p-2">
+              <div className="p-2">Ticket ID</div>
+              <div className="p-2">User Name</div>
+              <div className="p-2">Business Name</div>
+              <div className="p-2">Issue Type</div>
+              <div className="p-2">Status</div>
+              <div className="p-2">Assigned To</div>
+              <div className="p-2">Date Submitted</div>
+              <div className="p-2 text-center">Actions</div>
+            </div>
+            <div className="divide-y divide-gray-200">
+              {currentTickets.map((ticket) => (
+                <div
+                  key={ticket.id}
+                  className="flex flex-col sm:grid sm:grid-cols-8 items-start sm:items-center p-2 hover:bg-gray-50 gap-2 sm:gap-0"
+                >
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">Ticket ID: </span>
+                    {ticket.id}
+                  </div>
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">User Name: </span>
+                    {ticket.name}
+                  </div>
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">Business: </span>
+                    {ticket.business}
+                  </div>
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">Issue Type: </span>
+                    {ticket.issueType}
+                  </div>
+                  <div className="w-full p-2 text-sm">
+                    <span className="font-medium sm:hidden">Status: </span>
+                    <span className="text-yellow-500">{ticket.status}</span>
+                  </div>
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">Assigned To: </span>
+                    {ticket.admin?.firstname} {ticket.admin?.lastname}
+                  </div>
+                  <div className="w-full p-2 text-gray-700 text-sm">
+                    <span className="font-medium sm:hidden">Date: </span>
+                    {new Date(ticket.createdAt).toLocaleDateString("en-GB")}
+                  </div>
+                  <div className="w-full p-2 flex justify-center relative">
+                    {/* Mobile: Inline Buttons */}
+                    <div className="sm:hidden flex flex-wrap gap-2 justify-center">
+                      <button
+                        className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+                        onClick={() => handleViewDetails(ticket)}
                       >
-                        {ticket.status}
-                      </span>
-                    </td>
-                    <td className="p-2 sm:p-3 text-gray-700 hidden md:table-cell">
-                      {new Date(ticket.createdAt).toLocaleDateString("en-GB")}
-                    </td>
-                    <td className="p-2 sm:p-3 text-gray-700 hidden sm:table-cell">
-                      {ticket.assignedTo || "N/A"}
-                    </td>
-                    <td className="p-2 sm:p-3 relative">
-                      <div
-                        className="relative"
-                        onClick={() => setSelectedTicket(ticket)}
-                        ref={dropdownRef}
+                        View
+                      </button>
+                      <button
+                        className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+                        onClick={() => handleMarkAsResolved(ticket.id)}
                       >
-                        <FaEllipsisV className="cursor-pointer text-gray-600 hover:text-gray-800" />
-                        {selectedTicket?.id === ticket.id && (
-                          <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-md shadow-lg z-10 dropdown-menu">
-                            <button
-                              className="block w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100"
-                              onClick={() => handleViewDetails(ticket)}
-                            >
-                              View Details
-                            </button>
-                            <button
-                              className="block w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100"
-                              onClick={() => handleMarkAsResolved(ticket.id)}
-                            >
-                              Mark as Resolved
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        Resolve
+                      </button>
+                    </div>
+                    {/* Desktop: Dropdown */}
+                    <div className="hidden sm:block relative" ref={dropdownRef}>
+                      <FaEllipsisV
+                        className="cursor-pointer text-gray-600 hover:text-gray-800"
+                        onClick={() =>
+                          setSelectedTicket(
+                            selectedTicket?.id === ticket.id ? null : ticket
+                          )
+                        }
+                      />
+                      {selectedTicket?.id === ticket.id && (
+                        <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-md shadow-lg z-10 dropdown-menu">
+                          <button
+                            className="block w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => handleViewDetails(ticket)}
+                          >
+                            View Details
+                          </button>
+                          <button
+                            className="block w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => handleMarkAsResolved(ticket.id)}
+                          >
+                            Mark as Resolved
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-
           <div className="flex justify-center mt-4 gap-2">
             <button
               onClick={() => paginate(currentPage - 1)}
@@ -1562,6 +1523,10 @@ const AssignedTickets = ({ tickets, setTickets }) => {
               </p>
               <p>
                 <strong>Issue Type:</strong> {selectedTicket.issueType}
+              </p>
+              <p>
+                <strong>Assigned To:</strong> {selectedTicket.admin?.firstname}{" "}
+                {selectedTicket.admin?.lastname}
               </p>
               <p>{selectedTicket.issue}</p>
             </div>
@@ -1731,7 +1696,7 @@ const FAQs = () => {
   };
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full">
       <div className="flex flex-col gap-4 mb-6">
         <h2 className="text-lg sm:text-xl font-semibold text-gray-600">
           FAQs & Knowledge Base
@@ -1747,49 +1712,49 @@ const FAQs = () => {
       {faqs.length === 0 ? (
         <NoDataDisplay />
       ) : (
-        <div className="w-full overflow-x-auto">
-          <table className="w-full overflow-x-auto border-collapse bg-white shadow-md rounded-lg text-xs sm:text-sm">
-            <thead>
-              <tr className="bg-gray-100 text-left text-xs">
-                <th className="p-2 sm:p-3 font-medium text-gray-600 border-b min-w-[150px]">
-                  Question
-                </th>
-                <th className="p-2 sm:p-3 font-medium text-gray-600 border-b min-w-[200px] hidden sm:table-cell">
-                  Answer
-                </th>
-                <th className="p-2 sm:p-3 font-medium text-gray-600 border-b w-[80px]">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {faqs.map((faq) => (
-                <tr key={faq.id} className="border-b hover:bg-gray-50">
-                  <td className="p-2 sm:p-3 text-gray-700 break-words">
-                    {faq.question}
-                  </td>
-                  <td className="p-2 sm:p-3 text-gray-700 break-words hidden sm:table-cell">
+        <div className="w-full bg-white shadow-md rounded-lg">
+          {/* Header */}
+          <div className="hidden sm:flex bg-gray-100 text-left text-xs font-medium text-gray-600 border-b p-2">
+            <div className="flex-1 p-2">Question</div>
+            <div className="flex-1 p-2">Answer</div>
+            <div className="w-20 p-2 text-center">Actions</div>
+          </div>
+
+          {/* FAQ Items */}
+          <div className="divide-y divide-gray-200">
+            {faqs.map((faq) => (
+              <div
+                key={faq.id}
+                className="flex flex-col sm:flex-row items-start sm:items-center p-2 hover:bg-gray-50"
+              >
+                {/* Mobile View: Stacked */}
+                <div className="w-full sm:flex-1 p-2 text-gray-700 text-sm break-words">
+                  <span className="font-medium sm:hidden">Question: </span>
+                  {faq.question}
+                </div>
+                <div className="w-full sm:flex-1 p-2 text-gray-700 text-sm break-words">
+                  <span className="font-medium sm:hidden">Answer: </span>
+                  <span className="line-clamp-2 sm:line-clamp-none">
                     {faq.answer}
-                  </td>
-                  <td className="p-2 sm:p-3">
-                    <div className="flex space-x-2 justify-center">
-                      <FaEdit
-                        className="cursor-pointer text-blue-600 hover:text-blue-800 text-sm"
-                        onClick={() => handleViewOrEdit(faq)}
-                      />
-                      <FaTrash
-                        className="cursor-pointer text-red-600 hover:text-red-800 text-sm"
-                        onClick={() => handleDeleteConfirm(faq)}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </span>
+                </div>
+                <div className="w-full sm:w-20 p-2 flex justify-center space-x-2 sm:space-x-0">
+                  <FaEdit
+                    className="cursor-pointer text-blue-600 hover:text-blue-800 text-sm"
+                    onClick={() => handleViewOrEdit(faq)}
+                  />
+                  <FaTrash
+                    className="cursor-pointer text-red-600 hover:text-red-800 text-sm"
+                    onClick={() => handleDeleteConfirm(faq)}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
+      {/* Add Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div
@@ -1848,6 +1813,7 @@ const FAQs = () => {
         </div>
       )}
 
+      {/* Edit Modal */}
       {isEditModalOpen && selectedFaq && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div
@@ -1904,6 +1870,7 @@ const FAQs = () => {
         </div>
       )}
 
+      {/* Delete Modal */}
       {isDeleteModalOpen && selectedFaq && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div

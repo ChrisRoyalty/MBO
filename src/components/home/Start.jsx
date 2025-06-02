@@ -1,6 +1,8 @@
 import React from "react";
-import { Link } from "react-router-dom"; // Fixed import
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useSelector } from "react-redux";
+import { selectAuth } from "../../redux/authSlice"; // Import the auth selector
 
 const animations = {
   fadeIn: {
@@ -19,7 +21,6 @@ const animations = {
       transition: { type: "spring", stiffness: 50 },
     },
   },
-
   slideBottom: {
     hidden: { y: 100, opacity: 0 },
     visible: {
@@ -28,7 +29,6 @@ const animations = {
       transition: { type: "spring", stiffness: 50 },
     },
   },
-
   slideLeft: {
     hidden: { x: -100, opacity: 0 },
     visible: {
@@ -60,6 +60,18 @@ const animations = {
 };
 
 const Start = () => {
+  // Access authentication state from Redux
+  const auth = useSelector(selectAuth);
+  const isAuthenticated = auth.isAuthenticated;
+  const userRole = auth.user?.role;
+  const lastDashboard = auth.lastDashboard;
+  const isAdmin = userRole === "admin";
+
+  // Determine the redirect path based on authentication and role
+  const redirectPath = isAuthenticated
+    ? lastDashboard || (isAdmin ? "/admin" : "/user-dashboard")
+    : "/create-account";
+
   return (
     <motion.div
       initial="hidden"
@@ -82,7 +94,7 @@ const Start = () => {
           variants={animations.fadeIn}
           className="lg:text-[35px] text-[25px]"
         >
-          Don’t Hesitate, Get Started Now!
+          Your next customer is looking for you.
         </motion.h1>
         <motion.p
           initial="hidden"
@@ -91,25 +103,18 @@ const Start = () => {
           variants={animations.fadeIn}
           className="lg:text-[20px] text-[18px]"
         >
-          Create your profile and let the world discover you!
+          Let them discover your business.
         </motion.p>
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: false }}
-          variants={animations.rotate}
-          className="w-fit h-fit mx-auto"
-        >
-          <motion.a
+        <div className="w-fit h-fit mx-auto">
+          <motion.div // Changed from motion.a to motion.div to wrap Link
             variants={animations.buttonHover}
             whileHover="hover"
             whileTap="tap"
-            href="/create-account"
             className="bg-[#FFFDF2] text-[#043D12] rounded-[48px] shadow-lg lg:text-[18px] text-[14px] md:px-8 px-4 py-3 md:py-4 w-fit mx-auto font-medium"
           >
-            Create my Profile
-          </motion.a>
-        </motion.div>
+            <Link to={redirectPath}>Set Up My Business</Link>
+          </motion.div>
+        </div>
       </motion.div>
     </motion.div>
   );

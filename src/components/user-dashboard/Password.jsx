@@ -6,6 +6,48 @@ import "react-toastify/dist/ReactToastify.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import EditHeader from "./EditHeader";
 
+// Custom Success Toast Component
+const SuccessToast = ({ message }) => (
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
+      background: "#fff",
+      color: "#333",
+      borderLeft: "4px solid #07bc0c",
+      padding: "10px",
+      borderRadius: "4px",
+      boxShadow: "0 1px 10px 0 rgba(0, 0, 0, 0.1)",
+      width: "100%",
+    }}
+  >
+    <span style={{ color: "#07bc0c", fontSize: "16px" }}>✓</span>
+    <span>{message}</span>
+  </div>
+);
+
+// Custom Error Toast Component
+const ErrorToast = ({ message }) => (
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
+      background: "#fff",
+      color: "#333",
+      borderLeft: "4px solid #ff3333",
+      padding: "10px",
+      borderRadius: "4px",
+      boxShadow: "0 1px 10px 0 rgba(0, 0, 0, 0.1)",
+      width: "100%",
+    }}
+  >
+    <span style={{ color: "#ff3333", fontSize: "16px" }}>✗</span>
+    <span>{message}</span>
+  </div>
+);
+
 const Password = () => {
   const [formData, setFormData] = useState({
     oldPassword: "",
@@ -21,17 +63,14 @@ const Password = () => {
 
   const { token } = useSelector((state) => state.auth);
 
-  // Handle input change
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Toggle password visibility
   const togglePasswordVisibility = (field) => {
     setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -42,19 +81,44 @@ const Password = () => {
       !formData.newPassword ||
       !formData.confirmPassword
     ) {
-      toast.error("All fields are required.");
+      toast.error(<ErrorToast message="All fields are required." />, {
+        progressStyle: { background: "#ff3333" },
+        icon: false,
+      });
       setSubmitting(false);
       return;
     }
 
     if (formData.newPassword !== formData.confirmPassword) {
-      toast.error("New password and confirm password do not match.");
+      toast.error(
+        <ErrorToast message="New password and confirm password do not match." />,
+        {
+          progressStyle: { background: "#ff3333" },
+          icon: false,
+        }
+      );
+      setSubmitting(false);
+      return;
+    }
+
+    // Check if new password is the same as old password
+    if (formData.oldPassword === formData.newPassword) {
+      toast.error(
+        <ErrorToast message="New password must be different from the old password." />,
+        {
+          progressStyle: { background: "#ff3333" },
+          icon: false,
+        }
+      );
       setSubmitting(false);
       return;
     }
 
     if (!token) {
-      toast.error("No authentication token found!");
+      toast.error(<ErrorToast message="No authentication token found!" />, {
+        progressStyle: { background: "#ff3333" },
+        icon: false,
+      });
       setSubmitting(false);
       return;
     }
@@ -76,29 +140,45 @@ const Password = () => {
         }
       );
 
-      console.log("Password Change Response:", response.data); // For debugging
-
-      // Check for success based on message
-      if (response.data.message === "Password changed successfully") {
+      if (response.data.message === "Password updated successfully") {
         toast.success(
-          response.data.message || "Password changed successfully!",
+          <SuccessToast
+            message={response.data.message || "Password changed successfully!"}
+          />,
           {
-            style: { backgroundColor: "#07bc0c", color: "white" }, // Force green
+            progressStyle: { background: "#07bc0c" },
+            icon: false,
           }
         );
         setFormData({ oldPassword: "", newPassword: "", confirmPassword: "" });
       } else {
         toast.error(
-          response.data.error ||
-            response.data.message ||
-            "Failed to change password."
+          <ErrorToast
+            message={
+              response.data.error ||
+              response.data.message ||
+              "Failed to change password."
+            }
+          />,
+          {
+            progressStyle: { background: "#ff3333" },
+            icon: false,
+          }
         );
       }
     } catch (error) {
       console.error("❌ Error Changing Password:", error);
       toast.error(
-        error.response?.data?.message ||
-          "Failed to change password due to an error."
+        <ErrorToast
+          message={
+            error.response?.data?.message ||
+            "Failed to change password due to an error."
+          }
+        />,
+        {
+          progressStyle: { background: "#ff3333" },
+          icon: false,
+        }
       );
     } finally {
       setSubmitting(false);
@@ -127,6 +207,12 @@ const Password = () => {
         pauseOnFocusLoss
         draggable
         pauseOnHover
+        theme="light"
+        toastStyle={{
+          padding: "0",
+          background: "transparent",
+          boxShadow: "none",
+        }}
       />
       <div className="container px-[5vw] mx-auto">
         <form
@@ -218,14 +304,5 @@ const Password = () => {
     </div>
   );
 };
-
-// Animated Loader Component
-const Loader = () => (
-  <div className="flex space-x-2 items-center">
-    <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce"></div>
-    <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce delay-200"></div>
-    <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce delay-400"></div>
-  </div>
-);
 
 export default Password;

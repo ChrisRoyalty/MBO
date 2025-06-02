@@ -24,6 +24,7 @@ const BusinessProfile = () => {
   const [currentKeyword, setCurrentKeyword] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isKeywordInputFocused, setIsKeywordInputFocused] = useState(false); // New state for input focus
   const [validationErrors, setValidationErrors] = useState({
     businessName: false,
     category: false,
@@ -226,9 +227,9 @@ const BusinessProfile = () => {
             onSubmit={handleSubmit}
           >
             <div
-              className={`max-lg:w-full border-[1px] rounded-[27px] px-8 border-[${
-                validationErrors.businessName ? "#FF0000" : "#363636"
-              }] flex items-center gap-2 lg:h-[60px] h-[48px]`}
+              className={`max-lg:w-full border-[1px] rounded-[27px] px-8 border-${
+                validationErrors.businessName ? "[#FF0000]" : "[#363636]"
+              } flex items-center gap-2 lg:h-[60px] h-[48px]`}
             >
               <BsPerson className="text-[#6A7368]" />
               <input
@@ -249,14 +250,14 @@ const BusinessProfile = () => {
             </div>
 
             <div
-              className={`max-lg:w-full border-[1px] rounded-[27px] px-8 border-[${
-                validationErrors.category ? "#FF0000" : "#363636"
-              }] flex flex-col relative`}
+              className={`max-lg:w-full border-[1px] rounded-[27px] px-8 border-${
+                validationErrors.category ? "[#FF0000]" : "[#363636]"
+              } flex flex-col relative`}
               ref={dropdownRef}
             >
               <button
                 type="button"
-                className="flex items-center justify-between text-[#6A7368] w-full h-[48px] focus:outline-none"
+                className="flex items-center justify-between text-[#6A7368] w-full h-[48px] focus:outline-none cursor-pointer"
                 onClick={toggleDropdown}
               >
                 <div className="flex items-center gap-2">
@@ -318,15 +319,30 @@ const BusinessProfile = () => {
               </div>
               {keywords.length < 5 && (
                 <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    name="keyword"
-                    placeholder="Add keyword"
-                    value={currentKeyword}
-                    onChange={(e) => setCurrentKeyword(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    className="border-[1px] rounded-[20px] px-4 py-2 border-[#363636] text-[#6A7368] focus:outline-none w-40 h-10"
-                  />
+                  <div className="relative group">
+                    <input
+                      type="text"
+                      name="keyword"
+                      placeholder="Add keyword"
+                      value={currentKeyword}
+                      onChange={(e) => setCurrentKeyword(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      onFocus={() => setIsKeywordInputFocused(true)}
+                      onBlur={() => setIsKeywordInputFocused(false)}
+                      className="border-[1px] rounded-[20px] px-4 py-2 border-[#363636] text-[#6A7368] focus:outline-none w-40 h-10"
+                    />
+                    <div
+                      className={`absolute left-0 top-12 w-64 bg-[#043D12] text-[#FFFDF2] text-sm rounded-lg p-2 opacity-0 ${
+                        !isKeywordInputFocused && "group-hover:opacity-100"
+                      } transition-opacity duration-200 pointer-events-none shadow-lg z-10`}
+                    >
+                      Type up to 5 simple words or phrases that describe what
+                      your business offers. Focus on what makes it special, like
+                      what you sell, how it's made, or who it’s for. For
+                      example: "coffee shop", "locally made", or "custom
+                      clothes". Press Enter or click '+' to add each one.
+                    </div>
+                  </div>
                   <button
                     type="button"
                     onClick={addKeyword}
@@ -346,9 +362,9 @@ const BusinessProfile = () => {
             </div>
 
             <div
-              className={`max-lg:w-full border-[1px] rounded-[27px] px-8 py-4 border-[${
-                validationErrors.description ? "#FF0000" : "#363636"
-              }] flex items-start gap-2`}
+              className={`max-lg:w-full border-[1px] rounded-[27px] px-8 py-4 border-${
+                validationErrors.description ? "[#FF0000]" : "[#363636]"
+              } flex items-start gap-2`}
             >
               <TbFileDescription className="text-[#6A7368] mt-1" />
               <textarea

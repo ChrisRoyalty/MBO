@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { IoCallOutline, IoLocationOutline } from "react-icons/io5";
+import {
+  IoCallOutline,
+  IoLocationOutline,
+  IoLogoYoutube,
+} from "react-icons/io5";
 import { FaFacebook, FaWhatsapp } from "react-icons/fa6";
 import { IoLogoInstagram, IoLogoTwitter, IoLogoLinkedin } from "react-icons/io";
 import { IoLogoWhatsapp } from "react-icons/io5";
@@ -15,6 +19,8 @@ import BusinessImg from "../../assets/user-photo.svg";
 import NetworkError from "../NetworkError";
 import { Player } from "@lottiefiles/react-lottie-player";
 import { TfiEmail } from "react-icons/tfi";
+import { FaXTwitter } from "react-icons/fa6";
+import { useSelector } from "react-redux";
 
 // Utility function to generate WhatsApp URL with predefined message
 const getWhatsAppUrl = (profile, productName = null) => {
@@ -34,93 +40,84 @@ const getWhatsAppUrl = (profile, productName = null) => {
   }text=${encodeURIComponent(message)}`;
 };
 
-// Modal Component
-const Modal = ({ business, onClose }) => {
-  if (!business) return null;
+// Function to track WhatsApp link clicks
+const trackWhatsAppClick = async (profileId) => {
+  if (!profileId) {
+    console.error("❌ No profileId provided for WhatsApp tracking");
+    return;
+  }
 
-  const navigate = useNavigate();
-  const whatsappUrl = getWhatsAppUrl(business);
+  try {
+    await axios.post(
+      `${import.meta.env.VITE_BASE_URL}/member/track-click/${profileId}`,
+      { platform: "whatsapp" },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error) {
+    console.error(
+      "❌ Error tracking WhatsApp click:",
+      error.response?.data || error
+    );
+  }
+};
 
-  const handleViewProfile = () => {
-    navigate(`/community/profile/${business.id}`);
-    onClose();
-  };
+// Utility function to extract YouTube video ID from URL
+const getYouTubeVideoId = (url) => {
+  if (!url) return null;
+  const regex =
+    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+  const match = url.match(regex);
+  return match ? match[1] : null;
+};
+
+// Video Modal Component
+const VideoModal = ({ videoUrl, onClose }) => {
+  const videoId = getYouTubeVideoId(videoUrl);
+  if (!videoId) return null;
 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed container mx-auto px-[5vh] inset-0 bg-black/75 bg-opacity-50 flex justify-center items-center z-50"
+        className="fixed inset-0 bg-black/80 flex justify-center items-center z-[1000]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       >
         <motion.div
-          className="bg-white px-8 py-10 rounded-lg shadow-lg md:w-[60%] flex flex-col md:flex-row gap-6 items-center"
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          exit={{ scale: 0.8 }}
+          className="relative bg-white rounded-2xl shadow-2xl w-[90%] max-w-4xl p-4 overflow-hidden"
+          initial={{ scale: 0.9, y: 50 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.9, y: 50 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
           onClick={(e) => e.stopPropagation()}
         >
-          <motion.img
-            src={
-              business.productImages?.[0]?.imageUrl ||
-              business.businesImg ||
-              BusinessImg
-            }
-            alt={business.businessName}
-            className="w-full rounded-lg h-[350px] object-cover"
-            initial={{ x: -50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            onError={(e) => (e.target.src = BusinessImg)}
-          />
-          <motion.div
-            className="flex flex-col gap-4"
-            initial={{ x: 50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.5 }}
+          <motion.button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-white bg-[#043D12]/80 rounded-full p-2 hover:bg-[#043D12] transition-colors z-50"
+            whileHover={{ scale: 1.2, rotate: 90 }}
+            transition={{ duration: 0.3 }}
           >
-            <h2 className="text-xl font-bold text-[#043D12]">
-              {business.businessName}
-            </h2>
-            <p className="text-gray-700">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus
-              lacinia odio vitae vestibulum.
-            </p>
-            <div className="btns flex">
-              <div className="w-fit flex items-center gap-6">
-                <button
-                  onClick={handleViewProfile}
-                  className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-2 lg:px-8 py-2 shadow-lg hover:bg-[#043D12]"
-                >
-                  View Profile
-                </button>
-                {whatsappUrl ? (
-                  <a
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-2 lg:px-8 py-2 shadow-lg hover:bg-[#043D12]"
-                  >
-                    Contact Us
-                  </a>
-                ) : (
-                  <a
-                    href={`/community/contact/${business.id}`}
-                    className="border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] hover:text-white px-2 lg:px-8 py-2 shadow-lg hover:bg-[#043D12]"
-                  >
-                    Contact Us
-                  </a>
-                )}
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="mt-4 border-[1px] border-red-600 text-red-600 font-bold rounded-lg shadow-md py-2"
-            >
-              Close
-            </button>
+            ✕
+          </motion.button>
+          <motion.div
+            className="relative w-full h-0 pb-[56.25%] rounded-xl overflow-hidden"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <iframe
+              className="absolute top-0 left-0 w-full h-full"
+              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
           </motion.div>
         </motion.div>
       </motion.div>
@@ -128,7 +125,156 @@ const Modal = ({ business, onClose }) => {
   );
 };
 
-// Report Modal Component (unchanged)
+// Product Modal Component
+const ProductModal = ({ product, profile, onClose }) => {
+  if (!product || !profile) return null;
+
+  const whatsappUrl = getWhatsAppUrl(profile, product.name);
+
+  const socialIcons = [
+    {
+      key: "whatsapp",
+      icon: IoLogoWhatsapp,
+      url: whatsappUrl,
+      onClick: () => trackWhatsAppClick(profile.id),
+    },
+    { key: "facebook", icon: FaFacebook, url: profile.socialLinks?.facebook },
+    {
+      key: "instagram",
+      icon: IoLogoInstagram,
+      url: profile.socialLinks?.instagram,
+    },
+    { key: "twitter", icon: FaXTwitter, url: profile.socialLinks?.twitter },
+    {
+      key: "linkedin",
+      icon: IoLogoLinkedin,
+      url: profile.socialLinks?.linkedin,
+    },
+  ].filter((item) => item.url);
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 bg-black/80 flex justify-center items-center z-100"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      >
+        <motion.div
+          className="relative bg-gradient-to-br from-[#FFFDF2] to-white rounded-2xl shadow-2xl w-[90%] max-w-lg p-8 overflow-hidden"
+          initial={{ scale: 0.9, y: 50 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.9, y: 50 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <motion.button
+            onClick={onClose}
+            className="absolute top-2 right-6 text-[#6A7368] hover:text-[#043D12] text-xl z-10"
+            whileHover={{ scale: 1.2, rotate: 90 }}
+            transition={{ duration: 0.3 }}
+          >
+            ✕
+          </motion.button>
+          <motion.div
+            className="w-full h-64 rounded-xl overflow-hidden mb-4 bg-white flex items-center justify-center relative"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <img
+              src={product.imageUrl || BusinessImg}
+              alt={product.name}
+              className="max-w-full max-h-full object-contain p-2 z-10"
+              onError={(e) => (e.target.src = BusinessImg)}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-0" />
+          </motion.div>
+          <motion.h2
+            className="text-2xl font-bold text-[#043D12] mb-4"
+            title={product.name}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            {product.name || "Unnamed Product"}
+          </motion.h2>
+          <motion.p
+            className="flex items-center gap-2 text-[#6A7368] text-sm mb-4"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <MdOutlineCategory />{" "}
+            {profile.categories[0]?.name || "Unknown Category"}
+          </motion.p>
+          <motion.p
+            className="text-[#6A7368] text-sm mb-4"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            {product.description || "No product description available"}
+          </motion.p>
+          {socialIcons.length > 0 && (
+            <motion.div
+              className="flex gap-4 mb-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+            >
+              {socialIcons.map((social, index) => (
+                <motion.a
+                  key={social.key}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#043D12] hover:text-white p-2 rounded-full bg-[#F5F7F5] hover:bg-[#043D12] transition-all duration-300"
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 + index * 0.1 }}
+                  onClick={social.onClick}
+                >
+                  <social.icon className="text-xl" />
+                </motion.a>
+              ))}
+            </motion.div>
+          )}
+          {profile.member?.email && (
+            <motion.a
+              href={`mailto:${profile.member.email}`}
+              className="flex items-center gap-2 text-[#043D12] hover:text-[#032d0e] text-sm mb-4"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.7 }}
+            >
+              <TfiEmail /> {profile.member.email}
+            </motion.a>
+          )}
+          {whatsappUrl && (
+            <motion.a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block w-full text-center bg-[#043D12] text-white py-2 rounded-lg hover:bg-[#032d0e] transition-colors duration-300"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+              onClick={() => trackWhatsAppClick(profile.id)}
+            >
+              Contact {profile.businessName}
+            </motion.a>
+          )}
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+// Report Modal Component
 const ReportModal = ({ profile, onClose }) => {
   const [reportData, setReportData] = useState({
     fullName: "",
@@ -196,7 +342,7 @@ const ReportModal = ({ profile, onClose }) => {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black/75 bg-opacity-50 flex justify-center items-center z-50"
+        className="fixed inset-0 bg-black/75 bg-opacity-50 flex justify-center items-center z-100"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -314,57 +460,17 @@ const ReportModal = ({ profile, onClose }) => {
   );
 };
 
+// Main ProfileMain Component
 const ProfileMain = () => {
   const { identifier } = useParams();
-  const [profile, setProfile] = useState(null);
-  const [selectedBusiness, setSelectedBusiness] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-  useEffect(() => {
-    if (!identifier) {
-      setError("Invalid profile identifier.");
-      setLoading(false);
-      return;
-    }
 
-    const fetchProfile = async () => {
-      setLoading(true);
-      setError(null);
-      const validateUUID = (uuid) => {
-        const regex =
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        return regex.test(uuid);
-      };
-
-      try {
-        const isUUID = validateUUID(identifier);
-        const API_URL = isUUID
-          ? `${import.meta.env.VITE_BASE_URL}/member/get-profile/${identifier}`
-          : `${import.meta.env.VITE_BASE_URL}/member/get-slug/${identifier}`;
-
-        const response = await axios.get(API_URL);
-        if (response.data && response.data.profile) {
-          setProfile(response.data.profile);
-        } else {
-          throw new Error("Profile not found.");
-        }
-      } catch (error) {
-        console.error(" Error Fetching Profile:", error);
-        setError(
-          error.response?.data?.message ||
-            error.message ||
-            "Failed to fetch profile data."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, [identifier]);
+  // Get profile data from Redux store
+  const { profile, loading, error } = useSelector((state) => state.profile);
 
   const filterProducts = (products) => {
     if (!products || products.length === 0) return [];
@@ -375,6 +481,10 @@ const ProfileMain = () => {
         product.description?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
+  };
+
+  const handleProductClick = (product) => {
+    setSelectedProduct(product);
   };
 
   const filteredProducts = filterProducts(profile?.productImages || []);
@@ -392,24 +502,24 @@ const ProfileMain = () => {
   }
 
   if (error) {
-    return <NetworkError message={error} onRetry={fetchProfile} />;
+    return (
+      <NetworkError message={error} onRetry={() => window.location.reload()} />
+    );
   }
 
   if (!profile) {
     return <div>Profile not found.</div>;
   }
 
-  // Generate WhatsApp URL with predefined message
   const whatsappUrl = getWhatsAppUrl(profile);
 
   return (
     <div className="w-full min-h-screen bg-[#FFFDF2] flex flex-col items-center pt-[10vh]">
       <div className="container px-[5vw] mx-auto py-8">
         <div className="w-full text-[#043D12] flex flex-col md:flex-row gap-8">
-          {/* Aside Section */}
           <aside className="md:w-[25%] flex flex-col gap-8 text-[#6A7368]">
             <h3
-              className="lg:text-[20px] text-[#043D12] text-center md:text-left text-[18px] md:text-[28px] font-bold truncate hover:whitespace-normal hover:overflow-visible hover:z-10"
+              className="lg:text-[20px] text-[#043D12] text-center md:text-left text-[18px] md:text-[28px] font-bold hover:whitespace-normal hover:overflow-visible hover:z-10"
               title={profile.businessName}
             >
               {profile.businessName}
@@ -433,6 +543,7 @@ const ProfileMain = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 border-[1px] border-[#043D12] hover:bg-[#043D12] hover:text-white rounded-[28px] px-4 md:px-12 py-2 shadow text-[14px]"
+                  onClick={() => trackWhatsAppClick(profile.id)}
                 >
                   <FaWhatsapp />
                   Message
@@ -450,85 +561,99 @@ const ProfileMain = () => {
                 <p className="text-[12px] text-[#043D12] font-medium px-2 py-1 w-fit">
                   ON THE WEB
                 </p>
-                <div className="content border-[1px] border-[#6A7368] rounded-[11px]">
+                <div className="content border-[1px] border-[#6A7368] rounded-[11px] cursor-pointer">
                   {profile.socialLinks?.instagram && (
-                    <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
+                    <a
+                      href={profile.socialLinks.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]"
+                    >
                       <div className="flex items-center gap-4">
                         <IoLogoInstagram className="text-[25px]" />
                         Instagram
                       </div>
-                      <a
-                        href={profile.socialLinks.instagram}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="cursor-pointer text-[18px]"
-                      >
+                      <span className="cursor-pointer text-[18px]">
                         <CiShare1 />
-                      </a>
-                    </div>
+                      </span>
+                    </a>
                   )}
                   {profile.socialLinks?.twitter && (
-                    <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
+                    <a
+                      href={profile.socialLinks.twitter}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]"
+                    >
                       <div className="flex items-center gap-4">
-                        <IoLogoTwitter className="text-[25px]" />
+                        <FaXTwitter className="text-[25px]" />
                         Twitter
                       </div>
-                      <a
-                        href={profile.socialLinks.twitter}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="cursor-pointer text-[18px]"
-                      >
+                      <span className="cursor-pointer text-[18px]">
                         <CiShare1 />
-                      </a>
-                    </div>
+                      </span>
+                    </a>
                   )}
                   {profile.socialLinks?.facebook && (
-                    <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
+                    <a
+                      href={profile.socialLinks.facebook}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]"
+                    >
                       <div className="flex items-center gap-4">
                         <FaFacebook className="text-[18px]" />
                         Facebook
                       </div>
-                      <a
-                        href={profile.socialLinks.facebook}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="cursor-pointer text-[18px]"
-                      >
+                      <span className="cursor-pointer text-[18px]">
                         <CiShare1 />
-                      </a>
-                    </div>
+                      </span>
+                    </a>
                   )}
                   {profile.socialLinks?.linkedin && (
-                    <div className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]">
+                    <a
+                      href={profile.socialLinks.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]"
+                    >
                       <div className="flex items-center gap-4">
                         <IoLogoLinkedin className="text-[25px]" />
                         LinkedIn
                       </div>
-                      <a
-                        href={profile.socialLinks.linkedin}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="cursor-pointer text-[18px]"
-                      >
+                      <span className="cursor-pointer text-[18px]">
                         <CiShare1 />
-                      </a>
-                    </div>
+                      </span>
+                    </a>
                   )}
                   {profile.socialLinks?.tiktok && (
-                    <div className="flex justify-between items-center text-[14px] py-2 px-8">
+                    <a
+                      href={profile.socialLinks.tiktok}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]"
+                    >
                       <div className="flex items-center gap-4">
                         <BsTiktok className="text-[25px]" />
                         TikTok
                       </div>
-                      <a
-                        href={profile.socialLinks.tiktok}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="cursor-pointer text-[18px]"
-                      >
+                      <span className="cursor-pointer text-[18px]">
                         <CiShare1 />
-                      </a>
+                      </span>
+                    </a>
+                  )}
+                  {profile.socialLinks?.youtube && (
+                    <div
+                      className="flex justify-between items-center text-[14px] py-2 px-8 cursor-pointer"
+                      onClick={() => setIsVideoModalOpen(true)}
+                    >
+                      <div className="flex items-center gap-4">
+                        <IoLogoYoutube className="text-[25px]" />
+                        YouTube
+                      </div>
+                      <span className="cursor-pointer text-[18px]">
+                        <CiShare1 />
+                      </span>
                     </div>
                   )}
                 </div>
@@ -558,12 +683,9 @@ const ProfileMain = () => {
                       className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]"
                     >
                       <div className="flex items-center gap-4">Phone</div>
-                      <a
-                        href={`tel:${profile.contactNo[0]}`}
-                        className="cursor-pointer text-[18px]"
-                      >
+                      <span className="cursor-pointer text-[18px]">
                         <IoCallOutline />
-                      </a>
+                      </span>
                     </a>
                   )}
                   {profile.member?.email && (
@@ -572,12 +694,9 @@ const ProfileMain = () => {
                       className="flex justify-between items-center text-[14px] py-2 px-8 border-b-[1px] border-[#6A7368]"
                     >
                       <div className="flex items-center gap-4">Email</div>
-                      <a
-                        href={`mailto:${profile.member.email}`}
-                        className="cursor-pointer text-[18px]"
-                      >
+                      <span className="cursor-pointer text-[18px]">
                         <TfiEmail />
-                      </a>
+                      </span>
                     </a>
                   )}
                   {profile.socialLinks?.whatsapp && (
@@ -586,6 +705,7 @@ const ProfileMain = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex justify-between items-center text-[14px] py-2 px-8"
+                      onClick={() => trackWhatsAppClick(profile.id)}
                     >
                       <div className="flex items-center gap-4">WhatsApp</div>
                       <IoLogoWhatsapp className="text-[18px]" />
@@ -611,8 +731,6 @@ const ProfileMain = () => {
               </div>
             </div>
           </aside>
-
-          {/* Products/Services Section */}
           <div className="md:w-[75%] flex flex-col gap-8">
             <h1 className="border-b-[1px] border-[#6A7368] text-[20px] text-[#6A7368] pb-1 text-center md:text-left">
               Products/Services
@@ -622,11 +740,12 @@ const ProfileMain = () => {
                 {filteredProducts.map((product, index) => (
                   <motion.div
                     key={index}
-                    className="flex flex-col gap-1"
+                    className="flex flex-col gap-1 cursor-pointer"
                     initial={{ opacity: 0, y: 50 }}
-                    whileInView={{ opacity: 1, y: 0 }}
+                    animate={{ opacity: 1, y: 0 }}
                     viewport={{ once: false }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
+                    onClick={() => handleProductClick(product)}
                   >
                     <figure>
                       <img
@@ -638,7 +757,7 @@ const ProfileMain = () => {
                       <figcaption className="flex flex-col gap-4 text-[#043D12] py-2">
                         <div className="flex flex-col gap-1">
                           <b
-                            className="lg:text-[15px] text-[10px] md:text-[12px] truncate"
+                            className="lg:text-[15px] text-[10px] md:text-[12px]"
                             title={product.name || "Unnamed Product"}
                           >
                             {product.name || "Unnamed Product"}
@@ -673,9 +792,10 @@ const ProfileMain = () => {
                 </button>
               </div>
             )}
-            <Modal
-              business={selectedBusiness}
-              onClose={() => setSelectedBusiness(null)}
+            <ProductModal
+              product={selectedProduct}
+              profile={profile}
+              onClose={() => setSelectedProduct(null)}
             />
           </div>
         </div>
@@ -686,9 +806,15 @@ const ProfileMain = () => {
           onClose={() => setIsReportModalOpen(false)}
         />
       )}
+      {isVideoModalOpen && (
+        <VideoModal
+          videoUrl={profile.socialLinks?.youtube}
+          onClose={() => setIsVideoModalOpen(false)}
+        />
+      )}
       <ToastContainer />
     </div>
   );
 };
 
-export default ProfileMain;
+export default React.memo(ProfileMain);

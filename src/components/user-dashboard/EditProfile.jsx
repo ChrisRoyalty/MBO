@@ -27,6 +27,7 @@ const EditProfile = () => {
     category: "",
     categoryId: "",
     createdAt: "",
+    subscriptionStatus: "Unknown",
   });
   const [originalData, setOriginalData] = useState(null);
   const [editField, setEditField] = useState(null);
@@ -58,6 +59,8 @@ const EditProfile = () => {
   const [shareableLink, setShareableLink] = useState("");
   const [showShareOptions, setShowShareOptions] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showShareSubscriptionModal, setShowShareSubscriptionModal] =
+    useState(false);
 
   const inputRefs = {
     firstName: useRef(null),
@@ -104,6 +107,7 @@ const EditProfile = () => {
             category: categoryFromProfile.name || "",
             categoryId: categoryFromProfile.id || "",
             createdAt: profile.createdAt || "",
+            subscriptionStatus: member.subscriptionStatus || "Unknown",
           };
           setProfileData(initialData);
           setOriginalData(initialData);
@@ -204,7 +208,7 @@ const EditProfile = () => {
     setEditField(field);
     setButtonActive((prev) => ({ ...prev, [field]: true }));
     if (field === "category") {
-      setShowDropdown(true); // Open dropdown when editing category
+      setShowDropdown(true);
     }
     setTimeout(() => {
       setButtonActive((prev) => ({ ...prev, [field]: false }));
@@ -245,7 +249,6 @@ const EditProfile = () => {
     };
     reader.readAsDataURL(file);
 
-    // Immediate upload
     try {
       const formData = new FormData();
       formData.append(field, file);
@@ -363,6 +366,8 @@ const EditProfile = () => {
           createdAt: updatedProfile.createdAt || profileData.createdAt,
           firstName: profileData.firstName,
           lastName: profileData.lastName,
+          subscriptionStatus:
+            updatedProfile.subscriptionStatus || profileData.subscriptionStatus,
         };
         setProfileData(syncedData);
         setOriginalData(syncedData);
@@ -411,6 +416,7 @@ const EditProfile = () => {
             contactNo: originalData?.contactNo || [],
             businesImg: originalData?.businesImg || "",
             backgroundImg: originalData?.backgroundImg || "",
+            subscriptionStatus: originalData?.subscriptionStatus || "Unknown",
           };
 
     setProfileData((prevData) => ({ ...prevData, ...resetFields }));
@@ -434,9 +440,28 @@ const EditProfile = () => {
     );
   };
 
+  // Handle share action with subscription check
+  const handleShareAction = (action, platform = null) => {
+    if (profileData.subscriptionStatus !== "active") {
+      setShowShareSubscriptionModal(true);
+      setShowShareOptions(false);
+    } else {
+      if (action === "copy") {
+        copyToClipboard();
+      } else if (action === "social" && platform) {
+        shareToSocialMedia(platform);
+      }
+      setShowShareOptions(false);
+    }
+  };
+
   // Share functionality
   const handleShareClick = () => {
-    setShowShareOptions(!showShareOptions);
+    if (profileData.subscriptionStatus !== "active") {
+      setShowShareSubscriptionModal(true);
+    } else {
+      setShowShareOptions(!showShareOptions);
+    }
   };
 
   const shareToSocialMedia = (platform) => {
@@ -471,7 +496,6 @@ const EditProfile = () => {
     }
 
     window.open(url, "_blank");
-    setShowShareOptions(false);
   };
 
   // Copy link to clipboard
@@ -483,6 +507,7 @@ const EditProfile = () => {
 
     navigator.clipboard.writeText(shareableLink);
     setCopied(true);
+    toast.success("Profile link copied to clipboard!");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -707,7 +732,7 @@ const EditProfile = () => {
                   <button
                     type="button"
                     className="w-full h-[46px] px-4 rounded-[11px] border-[1px] border-[#6A7368] text-[#6A7368] text-[12px] sm:text-sm overflow-hidden text-ellipsis whitespace-nowrap"
-                    onClick={copyToClipboard}
+                    onClick={() => handleShareAction("copy")}
                     disabled={!shareableLink}
                     title={shareableLink || "Generating shareable link..."}
                   >
@@ -724,28 +749,28 @@ const EditProfile = () => {
                     <div className="absolute right-0 top-[50px] bg-white border border-[#6A7368] rounded-lg shadow-lg p-2 flex gap-2 z-10">
                       <button
                         type="button"
-                        onClick={() => shareToSocialMedia("whatsapp")}
+                        onClick={() => handleShareAction("social", "whatsapp")}
                         title="Share on WhatsApp"
                       >
                         <FaWhatsapp className="text-[20px] text-green-500 hover:text-green-600" />
                       </button>
                       <button
                         type="button"
-                        onClick={() => shareToSocialMedia("facebook")}
+                        onClick={() => handleShareAction("social", "facebook")}
                         title="Share on Facebook"
                       >
                         <FaFacebook className="text-[20px] text-blue-600 hover:text-blue-700" />
                       </button>
                       <button
                         type="button"
-                        onClick={() => shareToSocialMedia("twitter")}
+                        onClick={() => handleShareAction("social", "twitter")}
                         title="Share on Twitter"
                       >
                         <FaTwitter className="text-[20px] text-blue-400 hover:text-blue-500" />
                       </button>
                       <button
                         type="button"
-                        onClick={() => shareToSocialMedia("linkedin")}
+                        onClick={() => handleShareAction("social", "linkedin")}
                         title="Share on LinkedIn"
                       >
                         <FaLinkedin className="text-[20px] text-blue-700 hover:text-blue-800" />
@@ -786,6 +811,45 @@ const EditProfile = () => {
               </div>
             </div>
           </form>
+
+          {/* Subscription Modal for Non-Subscribed Users Sharing Profile */}
+          {showShareSubscriptionModal && (
+            <div
+              className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 animate-fade-in"
+              role="dialog"
+              aria-labelledby="subscription-modal-title"
+              aria-modal="true"
+            >
+              <div className="bg-white p-8 rounded-2xl w-[32rem] max-w-[90%] shadow-2xl transform transition-all duration-300 scale-100 hover:scale-105">
+                <h2
+                  id="subscription-modal-title"
+                  className="text-2xl font-semibold text-[#043D12] mb-4"
+                >
+                  Heads up!
+                </h2>
+                <p className="text-[#6A7368] mb-6">
+                  You cannot share your profile until you subscribe.
+                  <br />
+                  Want to share your profile with others? Unlock it with a
+                  subscription.
+                </p>
+                <div className="flex justify-end gap-3">
+                  <button
+                    className="px-6 py-2.5 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-200 text-[#6A7368] font-medium cursor-pointer"
+                    onClick={() => setShowShareSubscriptionModal(false)}
+                  >
+                    Close
+                  </button>
+                  <a
+                    href="/subscribe"
+                    className="px-6 py-2.5 bg-[#043D12] text-white rounded-lg hover:bg-[#03280E] transition-colors duration-200 font-medium cursor-pointer"
+                  >
+                    Subscribe Now
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={(e) => handleSubmit(e, "business")}>
             <h2 className="text-[12px] sm:text-sm border-b-[1px] border-[#6A7368] pb-1 w-fit px-2">
@@ -922,7 +986,7 @@ const EditProfile = () => {
                 </div>
               </div>
               <div className="text-[#6A7368] flex flex-col gap-2">
-                <label className="text-sm">Location</label>
+                <label className="text-sm">Location </label>
                 <div className="flex justify-between gap-4">
                   <input
                     type="text"

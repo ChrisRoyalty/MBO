@@ -16,12 +16,15 @@ const ProductAndServices = () => {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [editingProduct, setEditingProduct] = useState(null);
   const [newName, setNewName] = useState("");
-  const [isNewUpload, setIsNewUpload] = useState(false); // Track if it's a new upload
-  const [deleteConfirmProduct, setDeleteConfirmProduct] = useState(null); // Track product to delete
+  const [newDescription, setNewDescription] = useState("");
+  const [isNewUpload, setIsNewUpload] = useState(false);
+  const [deleteConfirmProduct, setDeleteConfirmProduct] = useState(null);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(true);
 
   const { token } = useSelector((state) => state.auth);
 
-  // Fetch profile data to get categoryId
+  // Fetch profile data to get categoryId and subscription status
   useEffect(() => {
     if (!token) {
       toast.error("No authentication token found!");
@@ -38,6 +41,7 @@ const ProductAndServices = () => {
         if (response.data?.success && response.data?.data) {
           const profile = response.data.data;
           setCategoryId(profile.categories?.[0]?.id || null);
+          setIsSubscribed(profile.member.subscriptionStatus === "active");
           if (!profile.categories?.[0]?.id) {
             toast.warn("No category ID found in profile. Upload may fail.");
           }
@@ -73,11 +77,11 @@ const ProductAndServices = () => {
             (img) => ({
               id: img.id,
               name: img.name || "Unnamed Product",
+              description: img.description || "",
               image: img.imageUrl,
             })
           );
           setProducts(fetchedProducts);
-          localStorage.setItem("products", JSON.stringify(fetchedProducts));
         } else {
           toast.error("No product images found in the response.");
         }
@@ -128,29 +132,25 @@ const ProductAndServices = () => {
         if (imageUrl) {
           const newProduct = {
             id: response.data.images[0].id,
-            name: "New Product", // Default name
+            name: "",
+            description: "",
             image: imageUrl,
           };
           setProducts((prev) => [...prev, newProduct]);
-          localStorage.setItem(
-            "products",
-            JSON.stringify([...products, newProduct])
-          );
-          // Trigger edit modal for new upload
           setEditingProduct(newProduct);
-          setNewName(""); // Empty input for naming
-          setIsNewUpload(true); // Mark as new upload
+          setNewName("");
+          setNewDescription("");
+          setIsNewUpload(true);
+          if (!isSubscribed) {
+            setShowSubscriptionModal(true);
+          }
         }
       } else {
         toast.error(response.data.error || "Failed to upload image.");
       }
     } catch (error) {
       console.error("❌ Error Uploading Image:", error);
-      toast.error(
-        error.response?.data?.error ||
-          error.response?.data?.message ||
-          "Failed to upload image."
-      );
+      toast.error(error.response?.data?.message || "Failed to upload image.");
     } finally {
       setUploading(false);
     }
@@ -162,14 +162,20 @@ const ProductAndServices = () => {
     if (product) {
       setEditingProduct(product);
       setNewName(product.name);
-      setIsNewUpload(false); // Not a new upload, so edit mode
+      setNewDescription(product.description || "");
+      setIsNewUpload(false);
     }
   };
 
   // Handle save edit
   const handleSaveEdit = async () => {
-    if (!editingProduct || !newName.trim()) {
-      toast.error("Please enter a valid name.");
+    if (!newName.trim() || !newDescription.trim()) {
+      toast.error("Please fill in both product name and description.");
+      return;
+    }
+
+    if (!editingProduct) {
+      toast.error("No product selected for editing.");
       return;
     }
 
@@ -178,7 +184,7 @@ const ProductAndServices = () => {
         `${import.meta.env.VITE_BASE_URL}/member/edit-image/${
           editingProduct.id
         }`,
-        { name: newName },
+        { name: newName, description: newDescription },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -188,33 +194,24 @@ const ProductAndServices = () => {
       );
 
       if (response.data.success) {
-        toast.success("Image name updated successfully!");
+        toast.success("Product updated successfully!");
         setProducts((prevProducts) =>
           prevProducts.map((p) =>
-            p.id === editingProduct.id ? { ...p, name: newName } : p
-          )
-        );
-        localStorage.setItem(
-          "products",
-          JSON.stringify(
-            products.map((p) =>
-              p.id === editingProduct.id ? { ...p, name: newName } : p
-            )
+            p.id === editingProduct.id
+              ? { ...p, name: newName, description: newDescription }
+              : p
           )
         );
         setEditingProduct(null);
         setNewName("");
+        setNewDescription("");
         setIsNewUpload(false);
       } else {
-        toast.error(response.data.error || "Failed to update image name.");
+        toast.error(response.data.error || "Failed to update product.");
       }
     } catch (error) {
-      console.error("❌ Error Updating Image Name:", error);
-      toast.error(
-        error.response?.data?.error ||
-          error.response?.data?.message ||
-          "Failed to update image name."
-      );
+      console.error("❌ Error Updating Product:", error);
+      toast.error(error.response?.data?.message || "Failed to update product.");
     }
   };
 
@@ -247,18 +244,13 @@ const ProductAndServices = () => {
           (p) => p.id !== deleteConfirmProduct.id
         );
         setProducts(updatedProducts);
-        localStorage.setItem("products", JSON.stringify(updatedProducts));
-        setDeleteConfirmProduct(null); // Close modal
+        setDeleteConfirmProduct(null);
       } else {
         toast.error(response.data.error || "Failed to delete product.");
       }
     } catch (error) {
       console.error("❌ Error Deleting Product:", error);
-      toast.error(
-        error.response?.data?.error ||
-          error.response?.data?.message ||
-          "Failed to delete product."
-      );
+      toast.error(error.response?.data?.message || "Failed to delete product.");
     }
   };
 
@@ -301,7 +293,7 @@ const ProductAndServices = () => {
             Product & Services
           </p>
           <button
-            className={`text-[14px] border-[1px] rounded-full shadow px-5 py-2.5 flex items-center gap-2 border-[#043D12] bg-[#043D12] text-white hover:bg-[#03280E] transition-all duration-300 ${
+            className={`text-[14px] border-[1px] rounded-full shadow px-5 py-2.5 flex items-center gap-2 border-[#043D12] bg-[#043D12] text-white hover:bg-[#03280E] transition-all duration-300 cursor-pointer ${
               uploading ? "cursor-not-allowed opacity-60" : ""
             }`}
             onClick={() => {
@@ -332,25 +324,30 @@ const ProductAndServices = () => {
                 <div className="h-48 overflow-hidden rounded-t-xl">
                   <img
                     src={product.image}
-                    alt={`Product_${product.id}`}
+                    alt={`Product_${product.name}`}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     onError={(e) => (e.target.src = NoProductsImg)}
                   />
                 </div>
-                <figcaption className="flex items-center justify-between px-4 py-2 bg-white">
-                  <h5 className="text-[14px] font-medium text-[#043D12]">
-                    {product.name}
-                  </h5>
-                  <div className="flex items-center gap-3 text-[20px]">
-                    <FiEdit3
-                      className="cursor-pointer text-[#6A7368] hover:text-[#043D12] transition-colors"
-                      onClick={() => handleEdit(product.id)}
-                    />
-                    <RiDeleteBinLine
-                      className="text-red-400 cursor-pointer hover:text-red-600 transition-colors"
-                      onClick={() => handleDeleteConfirm(product.id)}
-                    />
+                <figcaption className="flex flex-col px-4 py-3 bg-white">
+                  <div className="flex items-center justify-between mb-2">
+                    <h5 className="text-[14px] font-medium text-[#043D12]">
+                      {product.name}
+                    </h5>
+                    <div className="flex items-center gap-3 text-[20px]">
+                      <FiEdit3
+                        className="cursor-pointer text-[#6A7368] hover:text-[#043D12] transition-colors"
+                        onClick={() => handleEdit(product.id)}
+                      />
+                      <RiDeleteBinLine
+                        className="text-red-400 cursor-pointer hover:text-red-600 transition-colors"
+                        onClick={() => handleDeleteConfirm(product.id)}
+                      />
+                    </div>
                   </div>
+                  <p className="text-[12px] text-[#6A7368] line-clamp-2">
+                    {product.description || "No description provided"}
+                  </p>
                 </figcaption>
               </figure>
             ))}
@@ -395,13 +392,23 @@ const ProductAndServices = () => {
           </div>
         )}
 
-        {/* Edit Modal with dynamic title and buttons */}
+        {/* Edit Modal */}
         {editingProduct && (
           <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 animate-fade-in">
-            <div className="bg-white p-6 rounded-2xl w-96 max-w-[90%] shadow-2xl transform transition-all duration-300 scale-100 hover:scale-105">
-              <h2 className="text-xl font-semibold text-[#043D12] mb-4">
-                {isNewUpload ? "Name Your Product" : "Edit Product Name"}
+            <div className="bg-white p-8 rounded-2xl w-[28rem] max-w-[90%] shadow-2xl transform transition-all duration-300 scale-100 hover:scale-105">
+              <h2 className="text-2xl font-semibold text-[#043D12] mb-6">
+                {isNewUpload ? "Name & Describe Your Product" : "Edit Product"}
               </h2>
+              {/* Product Image Preview */}
+              <div className="mb-6 flex justify-center">
+                <img
+                  src={editingProduct.image}
+                  alt={editingProduct.name || "Product Preview"}
+                  className="w-48 h-48 object-cover rounded-lg shadow-md"
+                  onError={(e) => (e.target.src = NoProductsImg)}
+                />
+              </div>
+              {/* Name Input */}
               <input
                 type="text"
                 value={newName}
@@ -409,17 +416,40 @@ const ProductAndServices = () => {
                 className="w-full p-3 border border-[#6A7368]/30 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-[#043D12] transition-all"
                 placeholder="Enter product name"
                 autoFocus
+                required
+              />
+              {/* Description Textarea */}
+              <textarea
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                className="w-full p-3 border border-[#6A7368]/30 rounded-lg mb-6 focus:outline-none focus:ring-2 focus:ring-[#043D12] transition-all resize-none"
+                placeholder="Enter product description"
+                rows="4"
+                required
               />
               <div className="flex justify-end gap-3">
+                {/* Only show Cancel button during edit mode, not during new upload */}
+                {!isNewUpload && (
+                  <button
+                    className="px-6 py-2.5 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-200 text-[#6A7368] font-medium cursor-pointer"
+                    onClick={() => {
+                      setEditingProduct(null);
+                      setNewName("");
+                      setNewDescription("");
+                      setIsNewUpload(false);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                )}
                 <button
-                  className="px-5 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-200"
-                  onClick={() => setEditingProduct(null)}
-                >
-                  {isNewUpload ? "Skip" : "Cancel"}
-                </button>
-                <button
-                  className="px-5 py-2 bg-[#043D12] text-white rounded-lg hover:bg-[#03280E] transition-colors duration-200"
+                  className={`px-6 py-2.5 rounded-lg font-medium transition-colors duration-200 cursor-pointer ${
+                    newName.trim() && newDescription.trim()
+                      ? "bg-[#043D12] text-white hover:bg-[#03280E]"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
                   onClick={handleSaveEdit}
+                  disabled={!newName.trim() || !newDescription.trim()}
                 >
                   Save
                 </button>
@@ -441,17 +471,47 @@ const ProductAndServices = () => {
               </p>
               <div className="flex justify-end gap-3">
                 <button
-                  className="px-5 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+                  className="px-5 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
                   onClick={() => setDeleteConfirmProduct(null)}
                 >
                   Cancel
                 </button>
                 <button
-                  className="px-5 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200"
+                  className="px-5 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 cursor-pointer"
                   onClick={handleDelete}
                 >
                   Delete
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Subscription Modal for Non-Subscribed Users */}
+        {showSubscriptionModal && (
+          <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 animate-fade-in">
+            <div className="bg-white p-8 rounded-2xl w-[32rem] max-w-[90%] shadow-2xl transform transition-all duration-300 scale-100 hover:scale-105">
+              <h2 className="text-2xl font-semibold text-[#043D12] mb-4">
+                Heads up!{" "}
+              </h2>
+              <p className="text-[#6A7368] mb-6">
+                Products stay hidden until you subscribe.
+                <br />
+                Want buyers to find you? Unlock your profile
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  className="px-6 py-2.5 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-200 text-[#6A7368] font-medium cursor-pointer"
+                  onClick={() => setShowSubscriptionModal(false)}
+                >
+                  Close
+                </button>
+                <a
+                  href="/subscribe" // Adjust the URL to match your subscription page route
+                  className="px-6 py-2.5 bg-[#043D12] text-white rounded-lg hover:bg-[#03280E] transition-colors duration-200 font-medium cursor-pointer"
+                >
+                  Subscribe Now
+                </a>
               </div>
             </div>
           </div>

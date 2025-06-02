@@ -1,15 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { CiSearch } from "react-icons/ci";
 import { MdOutlineCategory } from "react-icons/md";
 import { IoLocationOutline } from "react-icons/io5";
-import {
-  RiEqualizerLine,
-  RiArrowDropDownLine,
-  RiArrowDropUpLine,
-} from "react-icons/ri";
-import { Link, useNavigate } from "react-router-dom";
+import { RiArrowDropDownLine, RiArrowDropUpLine } from "react-icons/ri";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import BusinessImg from "../assets/user-photo.svg";
 import {
   FaTimes,
@@ -17,68 +13,150 @@ import {
   FaTwitter,
   FaFacebook,
   FaInstagram,
+  FaLinkedin,
+  FaFilter,
 } from "react-icons/fa";
-import NetworkError from "../components/NetworkError";
 import { Player } from "@lottiefiles/react-lottie-player";
 import Start from "../components/home/Start";
 import Footer from "../components/Footer";
 
-// Contact Dropdown Component
-const ContactDropdown = ({ socialLinks, onClose }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  if (!socialLinks || Object.keys(socialLinks).length === 0) {
-    return <p className="text-gray-600 text-sm">No available contact yet</p>;
+// Function to track WhatsApp link clicks
+const trackWhatsAppClick = async (profileId) => {
+  if (!profileId) {
+    console.error("❌ No profileId provided for WhatsApp tracking");
+    return;
   }
 
+  try {
+    await axios.post(
+      `${import.meta.env.VITE_BASE_URL}/member/track-click/${profileId}`,
+      { platform: "whatsapp" },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error) {
+    console.error(
+      "❌ Error tracking WhatsApp click:",
+      error.response?.data || error
+    );
+  }
+};
+
+// Contact Dropdown Component
+const ContactDropdown = ({ socialLinks = {}, profileId, onClose }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [positionAbove, setPositionAbove] = useState(false);
+  const buttonRef = useRef(null);
+  const dropdownRef = useRef(null);
+
+  // Safely parse socialLinks
+  const parsedSocialLinks = useMemo(() => {
+    try {
+      if (!socialLinks) return {};
+      return typeof socialLinks === "string"
+        ? JSON.parse(socialLinks)
+        : socialLinks;
+    } catch (error) {
+      console.error("Error parsing socialLinks:", error);
+      return {};
+    }
+  }, [socialLinks]);
+
   const socialIcons = {
-    whatsapp: { icon: FaWhatsapp, label: "WhatsApp" },
-    twitter: { icon: FaTwitter, label: "Twitter" },
-    facebook: { icon: FaFacebook, label: "Facebook" },
-    instagram: { icon: FaInstagram, label: "Instagram" },
-    tiktok: { icon: FaInstagram, label: "TikTok" },
-    linkedin: { icon: FaInstagram, label: "LinkedIn" },
+    whatsapp: { icon: FaWhatsapp, label: "WhatsApp", color: "#25D366" },
+    twitter: { icon: FaTwitter, label: "Twitter", color: "#1DA1F2" },
+    facebook: { icon: FaFacebook, label: "Facebook", color: "#1877F2" },
+    instagram: { icon: FaInstagram, label: "Instagram", color: "#E1306C" },
+    linkedin: { icon: FaLinkedin, label: "LinkedIn", color: "#0077B5" },
+    youtube: { icon: FaLinkedin, label: "YouTube", color: "#FF0000" }, // Added YouTube support
   };
 
+  const validLinks = Object.entries(parsedSocialLinks)
+    .filter(([platform, url]) => url && socialIcons[platform.toLowerCase()])
+    .map(([platform, url]) => {
+      const platformKey = platform.toLowerCase();
+      return {
+        platform,
+        url,
+        ...(socialIcons[platformKey] || {
+          icon: FaLinkedin,
+          label: platform,
+          color: "#333",
+        }),
+      };
+    });
+
+  useEffect(() => {
+    if (isOpen && buttonRef.current && dropdownRef.current) {
+      const buttonRect = buttonRef.current.getBoundingClientRect();
+      const dropdownRect = dropdownRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - buttonRect.bottom;
+      const dropdownHeight = dropdownRect.height;
+
+      setPositionAbove(
+        spaceBelow < dropdownHeight && buttonRect.top > dropdownHeight
+      );
+    }
+  }, [isOpen]);
+
+  if (validLinks.length === 0) {
+    return (
+      <p className="text-gray-500 text-sm py-3">No contact info available</p>
+    );
+  }
+
   return (
-    <div className="relative">
-      <button
+    <div className="relative flex-1">
+      <motion.button
+        ref={buttonRef}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-fit border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-4 py-2 shadow-sm hover:bg-[#043D12] hover:text-white transition-all duration-300 flex items-center gap-2"
+        className="w-full flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#043D12] to-[#02530c] px-6 py-3 text-white text-sm font-semibold shadow-md hover:shadow-lg transition-shadow"
       >
-        Contact Us
-        <span>{isOpen ? "▲" : "▼"}</span>
-      </button>
+        Contact
+        <motion.span
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <RiArrowDropDownLine className="text-lg" />
+        </motion.span>
+      </motion.button>
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0, y: -10 }}
-            animate={{ opacity: 1, height: "auto", y: 0 }}
-            exit={{ opacity: 0, height: 0, y: -10 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="absolute min-w-max w-full bg-white border-[1px] border-[#6A7368] rounded-[11px] shadow-md mt-2 z-50"
+            ref={dropdownRef}
+            initial={{ opacity: 0, y: positionAbove ? 10 : -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: positionAbove ? 10 : -10 }}
+            transition={{ duration: 0.2 }}
+            className={`absolute w-full rounded-lg bg-white shadow-xl z-[60] border border-gray-100 ${
+              positionAbove ? "bottom-[calc(100%+8px)]" : "top-[calc(100%+8px)]"
+            }`}
           >
-            {Object.entries(socialLinks).map(([platform, url]) => {
-              const Icon = socialIcons[platform.toLowerCase()]?.icon;
-              if (!url || url.trim() === "") return null;
-              return Icon ? (
-                <a
-                  key={platform}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsOpen(false);
-                    onClose();
-                  }}
-                  className="flex items-center gap-2 w-full text-left px-4 py-2 text-[15px] text-[#043D12] hover:bg-[#F5F7F5] transition-colors duration-200"
-                >
-                  <Icon className="text-[#043D12]" />
-                  {socialIcons[platform.toLowerCase()].label}
-                </a>
-              ) : null;
-            })}
+            {validLinks.map(({ platform, url, icon: Icon, label, color }) => (
+              <a
+                key={platform}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  if (platform.toLowerCase() === "whatsapp") {
+                    trackWhatsAppClick(profileId);
+                  }
+                  setIsOpen(false);
+                  onClose();
+                }}
+                className="flex items-center gap-3 px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 transition-colors"
+              >
+                <Icon style={{ color }} className="text-lg" />
+                <span>{label}</span>
+              </a>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
@@ -87,417 +165,519 @@ const ContactDropdown = ({ socialLinks, onClose }) => {
 };
 
 // Modal Component
-const Modal = ({ profile, onClose }) => {
-  if (!profile) return null;
-
+const Modal = ({ product, onClose }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  if (!product || !product.profile) {
+    console.error("Modal rendered without required data", { product });
+    return null;
+  }
+
+  const { profile, name, description, imageUrl, category } = product;
 
   const handleViewProfile = () => {
+    if (!profile?.id) {
+      console.error("Cannot navigate: Profile ID is missing", { profile });
+      alert("Unable to view profile: Profile information not available");
+      return;
+    }
     navigate(`/community/profile/${profile.id}`);
     onClose();
   };
 
   return (
-    <AnimatePresence>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] p-4"
+      onClick={onClose}
+    >
       <motion.div
-        className="fixed inset-0 bg-black/75 bg-opacity-50 flex justify-center items-center z-50"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.8, opacity: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="relative bg-white rounded-2xl w-full max-w-4xl flex flex-col md:flex-row max-h-[85vh] shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
       >
-        <motion.div
-          className="bg-white px-6 py-8 rounded-lg shadow-lg w-[90%] max-w-3xl flex flex-col md:flex-row gap-6 items-start overflow-y-auto max-h-[90vh] relative"
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          exit={{ scale: 0.8 }}
-          onClick={(e) => e.stopPropagation()}
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={onClose}
+          className="absolute z-50 top-4 right-4 text-gray-600 hover:text-[#043D12] text-xl bg-white/80 rounded-full p-2 shadow-sm"
         >
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-[#6A7368] hover:text-[#043D12] text-xl"
-          >
-            <FaTimes />
-          </button>
+          <FaTimes />
+        </motion.button>
 
-          <motion.img
-            src={
-              profile.productImages?.[0]?.imageUrl ||
-              profile.businesImg ||
-              BusinessImg
-            }
-            alt={profile.businessName}
-            className="w-full md:w-1/2 h-[350px] object-cover rounded-lg"
-            initial={{ x: -50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.5 }}
+        <div className="md:w-1/2 p-6 md:p-8 bg-gradient-to-b from-[#FFFDF2] to-[#E8EFE5]">
+          <img
+            src={imageUrl || profile.businesImg || BusinessImg}
+            alt={name || profile.businessName || "Business"}
+            className="w-full h-[250px] md:h-[350px] object-cover rounded-xl shadow-md"
             onError={(e) => (e.target.src = BusinessImg)}
           />
-          <motion.div
-            className="flex flex-col gap-4 w-full md:w-1/2 p-2"
-            initial={{ x: 50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <h2 className="text-2xl font-bold text-[#043D12]">
-              {profile.businessName}
-            </h2>
-            <p className="text-sm text-gray-600">
-              {profile.categories[0]?.name || "Unknown Category"}
-            </p>
-            <p className="text-gray-700">
-              <strong>Location:</strong> {profile.location || "Not specified"}
-            </p>
-            <p className="text-gray-700">
-              <strong>Description:</strong>{" "}
-              {profile.description || "No description available"}
-            </p>
-            <div className="flex gap-4 items-center mt-4">
-              <button
+        </div>
+
+        <div className="md:w-1/2 p-6 md:p-8 flex flex-col gap-5 bg-white overflow-y-auto">
+          <h2 className="text-2xl md:text-3xl font-bold text-[#043D12] leading-tight">
+            {name || "Unnamed Product"}
+          </h2>
+          <div className="space-y-3 text-sm text-gray-700">
+            <p>
+              <strong className="text-[#043D12]">Business:</strong>
+              <span
+                className="cursor-pointer underline hover:text-[#02530c] transition-colors"
                 onClick={handleViewProfile}
-                className="w-fit border-[1px] border-[#6A7368] text-[#6A7368] rounded-[11px] text-[15px] px-4 py-2 shadow-sm hover:bg-[#043D12] hover:text-white transition-all duration-300"
               >
-                View Profile
-              </button>
-              <ContactDropdown
-                socialLinks={profile.socialLinks}
-                onClose={onClose}
-              />
-            </div>
-          </motion.div>
-        </motion.div>
+                {" "}
+                {profile.businessName || "Unknown Business"}
+              </span>
+            </p>
+            <p>
+              <strong className="text-[#043D12]">Category:</strong>{" "}
+              {category?.name || "No Category"}
+            </p>
+            <p>
+              <strong className="text-[#043D12]">Location:</strong>{" "}
+              {profile.location || "Not specified"}
+            </p>
+            <p className="leading-relaxed">
+              <strong className="text-[#043D12]">Description:</strong>{" "}
+              {description || "No product description available"}
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 mt-6 relative z-10">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleViewProfile}
+              className="flex-1 rounded-full bg-[#043D12] text-white px-6 py-3 text-sm font-semibold hover:bg-[#02530c] transition-colors shadow-md"
+            >
+              View Profile
+            </motion.button>
+            <ContactDropdown
+              socialLinks={profile.socialLinks}
+              profileId={profile.id}
+              onClose={onClose}
+            />
+          </div>
+        </div>
       </motion.div>
-    </AnimatePresence>
+    </motion.div>
   );
 };
 
 // SearchPage Component
 const SearchPage = () => {
-  const [selectedProfile, setSelectedProfile] = useState(null);
-  const [profiles, setProfiles] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
   const [filterLocation, setFilterLocation] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
+  const [showAllLocations, setShowAllLocations] = useState(false);
 
   useEffect(() => {
-    const fetchProfiles = async () => {
+    const fetchProducts = async () => {
       try {
-        const API_URL = `${
-          import.meta.env.VITE_BASE_URL
-        }/member/random-profiles`;
-        const response = await axios.get(API_URL);
-        if (response.data && response.data.success && response.data.profiles) {
-          setProfiles(response.data.profiles);
+        const API_URL = `${import.meta.env.VITE_BASE_URL}/member/all-products`;
+        const response = await axios.get(API_URL, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        if (response.data?.success && response.data.products) {
+          const parsedProducts = response.data.products
+            .map((product) => {
+              // Skip products with null profiles
+              if (!product.profile) {
+                console.warn("Skipping product with null profile:", product.id);
+                return null;
+              }
+
+              return {
+                ...product,
+                profile: {
+                  businessName: "Unknown Business",
+                  businesImg: BusinessImg,
+                  location: "Not specified",
+                  description: "No description available",
+                  socialLinks: {},
+                  ...product.profile,
+                  id: product.profileId,
+                  socialLinks: product.profile.socialLinks
+                    ? JSON.parse(product.profile.socialLinks)
+                    : {},
+                },
+                category: {
+                  name: "Uncategorized",
+                  ...product.category,
+                },
+              };
+            })
+            .filter(Boolean); // Remove null entries
+
+          if (parsedProducts.length === 0) {
+            throw new Error("No valid products found.");
+          }
+
+          const shuffledProducts = parsedProducts.sort(
+            () => Math.random() - 0.5
+          );
+          setProducts(shuffledProducts);
         } else {
-          throw new Error("No profiles found in the response.");
+          throw new Error("No products found.");
         }
       } catch (error) {
-        console.error("❌ Error Fetching Profiles:", error);
-        setError(
-          error.response?.data?.message || "Failed to fetch profiles data."
-        );
+        console.error("❌ Error Fetching Products:", {
+          message: error.message,
+          response: error.response?.data,
+        });
+        setError(error.response?.data?.message || "Failed to fetch products.");
       } finally {
         setLoading(false);
       }
     };
-    fetchProfiles();
+    fetchProducts();
   }, []);
 
-  const getUniqueCategories = () => {
-    const categories = profiles
-      .flatMap((profile) => profile.categories?.map((cat) => cat.name) || [])
-      .filter((value, index, self) => self.indexOf(value) === index)
+  const getUniqueCategories = useMemo(() => {
+    const categories = products
+      .map((product) => product.category?.name)
+      .filter((value, index, self) => value && self.indexOf(value) === index)
       .sort();
     return ["All Categories", ...categories];
-  };
+  }, [products]);
 
-  const getUniqueLocations = () => {
-    const locations = profiles
-      .map((profile) => profile.location)
+  const getUniqueLocations = useMemo(() => {
+    const locations = products
+      .map((product) => product.profile?.location)
       .filter(
         (value, index, self) =>
-          value &&
-          self.indexOf(value) === index &&
-          value !== "Not specified" &&
-          value !== ""
+          value && self.indexOf(value) === index && value !== "Not specified"
       )
       .sort();
     return ["All Locations", ...locations];
-  };
+  }, [products]);
 
-  const filterProfiles = (profiles) => {
-    return profiles.filter((profile) => {
+  const visibleCategories = showAllCategories
+    ? getUniqueCategories
+    : getUniqueCategories.slice(0, 5);
+  const visibleLocations = showAllLocations
+    ? getUniqueLocations
+    : getUniqueLocations.slice(0, 5);
+
+  const filterProducts = useMemo(() => {
+    return products.filter((product) => {
+      const query = searchQuery.toLowerCase().trim();
       const matchesCategory =
         !filterCategory ||
         filterCategory === "All Categories" ||
-        profile.categories?.some((cat) => cat.name === filterCategory);
+        product.category?.name === filterCategory;
       const matchesLocation =
         !filterLocation ||
         filterLocation === "All Locations" ||
-        profile.location === filterLocation;
+        product.profile?.location === filterLocation;
       const matchesSearch =
-        !searchQuery ||
-        profile.businessName
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        profile.description
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        profile.categories?.some((cat) =>
-          cat.name.toLowerCase().includes(searchQuery.toLowerCase())
-        ) ||
-        profile.keyword?.some((keyword) =>
-          keyword.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        !query ||
+        product.name?.toLowerCase().includes(query) ||
+        product.description?.toLowerCase().includes(query) ||
+        product.profile?.businessName?.toLowerCase().includes(query) ||
+        product.profile?.description?.toLowerCase().includes(query) ||
+        product.category?.name.toLowerCase().includes(query);
       return matchesCategory && matchesLocation && matchesSearch;
     });
+  }, [products, searchQuery, filterCategory, filterLocation]);
+
+  const handleCategoryFilter = (category) => {
+    setFilterCategory(category === "All Categories" ? "" : category);
+    setIsCategoryOpen(false);
   };
 
-  const filteredProfiles = filterProfiles(profiles);
+  const handleLocationFilter = (location) => {
+    setFilterLocation(location === "All Locations" ? "" : location);
+    setIsLocationOpen(false);
+  };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-[#FFFDF2]">
-        <div className="flex space-x-2">
-          <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce"></div>
-          <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce delay-200"></div>
-          <div className="w-3 h-3 bg-[#043D12] rounded-full animate-bounce delay-400"></div>
-        </div>
+      <div className="flex justify-center items-center h-screen bg-gradient-to-b from-[#FFFDF2] to-[#E8EFE5]">
+        <div className="w-10 h-10 border-4 border-[#043D12] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   if (error) {
-    return <NetworkError message={error} onRetry={fetchProfile} />;
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-[#FFFDF2]">
+        <h2 className="text-xl font-bold text-[#043D12]">{error}</h2>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 bg-[#043D12] text-white px-6 py-2 rounded-full"
+        >
+          Retry
+        </button>
+      </div>
+    );
   }
 
-  const toggleCategory = () => {
-    setIsCategoryOpen(!isCategoryOpen);
-    setIsLocationOpen(false);
-  };
-
-  const toggleLocation = () => {
-    setIsLocationOpen(!isLocationOpen);
-    setIsCategoryOpen(false);
-  };
-
   return (
-    <div className="w-full bg-[#FFFDF2] flex flex-col items-center">
-      <div className="container mx-auto px-[5vw]">
-        <header className="h-[20vh] flex max-md:flex-col max-md:my-8 justify-between items-center max-md:gap-8">
-          <div className="md:w-[50%] w-full bg-[#D6E2D98C] text-[16px] px-8 rounded-[39px] shadow-lg h-[70px] text-[#043D12] flex gap-2 items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-b from-[#FFFDF2] to-[#E8EFE5] font-sans">
+      <div className="container px-[5vw] mx-auto pb-8">
+        <header className="border-[1px] border-gray-200 flex flex-col gap-2 mb-6 sticky top-0 z-50 bg-white/80 backdrop-blur-md py-4 md:pb-3 rounded-lg shadow-sm md:shadow-md px-2 md:px-3 md:mt-0">
+          <div className="relative">
             <input
               type="text"
-              className="h-full outline-0 w-full bg-transparent"
-              placeholder="Search businesses or services"
+              className="w-full pl-10 pr-4 py-2 text-sm rounded-full bg-gray-100 text-[#043D12] placeholder-gray-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#043D12]/50 transition-all duration-300"
+              placeholder="Search products, businesses, or services..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <CiSearch className="text-[20px]" />
+            <CiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#043D12] text-lg" />
           </div>
-          <Link
-            to="/community/all-businesses"
-            className="w-fit h-[70px] px-8 rounded-[39px] shadow-lg bg-[#043D12] text-[#FFFDF2] flex items-center justify-center hover:bg-[#02530c] transition-all duration-300"
-          >
-            Explore All Businesses
-          </Link>
-        </header>
 
-        <div className="w-full h-[80vh] text-[#043D12] flex max-sm:flex-col overflow-y-scroll">
-          {/* Sidebar for Filters */}
-          <aside className="max-lg:hidden sm:w-[25%] h-full overflow-y-auto flex flex-col gap-8 p-4">
-            <div className="intro text-[#043D12] flex items-center gap-4">
-              <RiEqualizerLine className="text-[22px]" />
-              <h4 className="text-[#043D12] text-[20px] font-medium">Filter</h4>
-            </div>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setFilterCategory("");
+                setFilterLocation("");
+              }}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-[#043D12] bg-white border border-gray-300 rounded-full shadow-sm hover:bg-gray-100 transition-colors"
+            >
+              <FaFilter className="text-xs" />
+              Clear Filters
+            </button>
 
-            {/* Category Dropdown */}
-            <div className="w-full flex flex-col gap-2">
-              <div
-                className="flex items-center justify-between cursor-pointer p-2 hover:bg-[#E8EFE5] rounded-lg transition-all duration-200"
-                onClick={toggleCategory}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setIsCategoryOpen((prev) => {
+                    const newState = !prev;
+                    setIsLocationOpen(false);
+                    return newState;
+                  });
+                }}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-[#043D12] bg-white border border-gray-300 rounded-full shadow-sm hover:bg-gray-100 transition-colors active:bg-gray-200"
               >
-                <p className="flex items-center gap-2 text-[16px]">
-                  <MdOutlineCategory />
-                  Category
-                </p>
+                <MdOutlineCategory className="text-xs" />
+                {filterCategory || "Category"}
                 {isCategoryOpen ? (
-                  <RiArrowDropUpLine className="text-[20px]" />
+                  <RiArrowDropUpLine className="text-base" />
                 ) : (
-                  <RiArrowDropDownLine className="text-[20px]" />
+                  <RiArrowDropDownLine className="text-base" />
                 )}
-              </div>
+              </button>
               <AnimatePresence>
                 {isCategoryOpen && (
                   <motion.div
-                    initial={{ opacity: 0, height: 0, y: -10 }}
-                    animate={{ opacity: 1, height: "auto", y: 0 }}
-                    exit={{ opacity: 0, height: 0, y: -10 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className="w-full bg-transparent py-2"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute left-0 top-[calc(100%+4px)] w-40 bg-white rounded-lg shadow-xl z-[100] border border-gray-100 max-h-96 overflow-y-auto"
+                    style={{ backgroundColor: "#FFFDF2" }}
                   >
-                    <div className="flex flex-col lg:flex-wrap gap-2.5 p-3">
-                      {getUniqueCategories().map((category) => (
-                        <button
-                          key={category}
-                          onClick={() => {
-                            setFilterCategory(
-                              category === "All Categories" ? "" : category
-                            );
-                            setIsCategoryOpen(false);
-                          }}
-                          className="w-full lg:w-fit h-fit px-4 rounded-[11px] shadow-sm hover:bg-[#043D12] hover:text-[#E8EFE5] border-[1px] border-[#043D12] text-[#043D12] text-[14px] transition-all duration-200 py-1"
-                        >
-                          {category}
-                        </button>
-                      ))}
-                    </div>
+                    {visibleCategories.map((category) => (
+                      <button
+                        key={category}
+                        onClick={() => handleCategoryFilter(category)}
+                        className={`block w-full text-left px-4 py-2 text-sm ${
+                          filterCategory ===
+                          (category === "All Categories" ? "" : category)
+                            ? "bg-[#043D12] text-white"
+                            : "text-[#043D12] hover:bg-gray-100"
+                        } transition-colors`}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                    {getUniqueCategories.length > 5 && (
+                      <button
+                        onClick={() => setShowAllCategories(!showAllCategories)}
+                        className="w-full text-left px-4 py-2 text-sm text-[#043D12] hover:bg-gray-100 font-medium flex items-center gap-2"
+                      >
+                        {showAllCategories ? (
+                          <span>
+                            <RiArrowDropUpLine /> See Less
+                          </span>
+                        ) : (
+                          <span>
+                            <RiArrowDropDownLine /> See More
+                          </span>
+                        )}
+                      </button>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            {/* Location Dropdown */}
-            <div className="w-full flex flex-col gap-2">
-              <div
-                className="flex items-center justify-between cursor-pointer p-2 hover:bg-[#E8EFE5] rounded-lg transition-all duration-200"
-                onClick={toggleLocation}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setIsLocationOpen((prev) => {
+                    const newState = !prev;
+                    setIsCategoryOpen(false);
+                    return newState;
+                  });
+                }}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-[#043D12] bg-white border border-gray-300 rounded-full shadow-sm hover:bg-gray-100 transition-colors active:bg-gray-200"
               >
-                <p className="flex items-center gap-2 text-[16px]">
-                  <IoLocationOutline />
-                  Location
-                </p>
+                <IoLocationOutline className="text-xs" />
+                {filterLocation || "Location"}
                 {isLocationOpen ? (
-                  <RiArrowDropUpLine className="text-[20px]" />
+                  <RiArrowDropUpLine className="text-base" />
                 ) : (
-                  <RiArrowDropDownLine className="text-[20px]" />
+                  <RiArrowDropDownLine className="text-base" />
                 )}
-              </div>
+              </button>
               <AnimatePresence>
                 {isLocationOpen && (
                   <motion.div
-                    initial={{ opacity: 0, height: 0, y: -10 }}
-                    animate={{ opacity: 1, height: "auto", y: 0 }}
-                    exit={{ opacity: 0, height: 0, y: -10 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className="w-full bg-transparent py-2"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute left-0 top-[calc(100%+4px)] w-40 bg-white rounded-lg shadow-xl z-[100] border border-gray-100 max-h-96 overflow-y-auto"
+                    style={{ backgroundColor: "#FFFDF2" }}
                   >
-                    <div className="flex flex-col lg:flex-wrap gap-2 p-3">
-                      {getUniqueLocations().map((location) => (
-                        <button
-                          key={location}
-                          onClick={() => {
-                            setFilterLocation(
-                              location === "All Locations" ? "" : location
-                            );
-                            setIsLocationOpen(false);
-                          }}
-                          className="w-full lg:w-fit h-fit py-1 px-4 rounded-[11px] shadow-sm hover:bg-[#043D12] hover:text-[#E8EFE5] border-[1px] border-[#043D12] text-[#043D12] text-[14px] transition-all duration-200"
-                        >
-                          {location}
-                        </button>
-                      ))}
-                    </div>
+                    {visibleLocations.map((location) => (
+                      <button
+                        key={location}
+                        onClick={() => handleLocationFilter(location)}
+                        className={`block w-full text-left px-4 py-2 text-sm ${
+                          filterLocation ===
+                          (location === "All Locations" ? "" : location)
+                            ? "bg-[#043D12] text-white"
+                            : "text-[#043D12] hover:bg-gray-100"
+                        } transition-colors`}
+                      >
+                        {location}
+                      </button>
+                    ))}
+                    {getUniqueLocations.length > 5 && (
+                      <button
+                        onClick={() => setShowAllLocations(!showAllLocations)}
+                        className="w-full text-left px-4 py-2 text-sm text-[#043D12] hover:bg-gray-100 font-medium flex items-center gap-2"
+                      >
+                        {showAllLocations ? (
+                          <span>
+                            <RiArrowDropUpLine /> See Less
+                          </span>
+                        ) : (
+                          <span>
+                            <RiArrowDropDownLine /> See More
+                          </span>
+                        )}
+                      </button>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
-          </aside>
 
-          {/* Businesses Section */}
-          <div className="h-full overflow-y-auto flex-1">
-            <div className="w-full h-fit py-16 flex justify-center bg-[#FFFDF2]">
-              <div className="w-[85%] max-sm:w-full h-fit flex flex-col gap-8">
-                {filteredProfiles.length > 0 ? (
-                  <div className="w-full grid lg:grid-cols-3 grid-cols-2 max-[280px]:grid-cols-1 gap-4">
-                    {filteredProfiles.map((profile, index) => (
-                      <motion.div
-                        key={profile.id}
-                        className="flex flex-col gap-1 cursor-pointer"
-                        initial={{ opacity: 0, y: 50 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: false }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
-                        onClick={() => setSelectedProfile(profile)}
-                      >
-                        <div className="profile flex items-center gap-2">
-                          <img
-                            src={profile.businesImg || BusinessImg}
-                            alt={profile.businessName}
-                            className="w-8 h-8 rounded-full object-cover"
-                            onError={(e) => (e.target.src = BusinessImg)}
-                          />
-                          <p className="text-[12px] text-[#043D12]">
-                            {profile.businessName}
-                          </p>
-                        </div>
-                        <figure>
-                          <img
-                            src={
-                              profile.productImages?.[0]?.imageUrl ||
-                              profile.businesImg ||
-                              BusinessImg
-                            }
-                            alt={profile.businessName}
-                            className="rounded-lg w-full h-[250px] object-cover"
-                            onError={(e) => (e.target.src = BusinessImg)}
-                          />
-                          <figcaption className="flex flex-col gap-4 text-[#043D12] py-2">
-                            <div className="flex flex-col gap-1">
-                              <b className="lg:text-[15px] text-[10px]">
-                                {profile.businessName}
-                              </b>
-                              <p className="text-[8px]">
-                                {profile.categories[0]?.name ||
-                                  "Unknown Category"}
-                              </p>
-                            </div>
-                          </figcaption>
-                        </figure>
-                      </motion.div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="w-full flex flex-col items-center justify-center gap-8 py-8">
-                    <Player
-                      autoplay
-                      loop
-                      src="https://lottie.host/7fd33a4f-2e59-4f34-ba0c-4af37814586e/Cq1qkcf16G.lottie" // Replace with your Lottie JSON URL
-                      style={{ height: "300px", width: "300px" }}
-                    />
-                    <h2 className="text-md font-bold text-[#043D12]">
-                      No Results Found
-                    </h2>
-                    <p className="text-sm text-[#6A7368] text-center max-w-2xl">
-                      It looks like there are no businesses or services matching
-                      your search criteria. Try adjusting your filters or
-                      explore other businesses in the community!
-                    </p>
-                    <button
-                      className="mt-4 bg-[#043D12] text-white px-8 py-3 rounded-lg text-sm cursor-pointer font-semibold hover:bg-[#032d0e] transition-colors"
-                      onClick={() => {
-                        setSearchQuery("");
-                        setFilterCategory("");
-                        setFilterLocation("");
-                      }}
-                    >
-                      Clear Filters
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+            <Link
+              to="/community/all-businesses"
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-[#043D12] bg-white border border-gray-300 rounded-full shadow-sm hover:bg-gray-100 transition-colors"
+            >
+              All Businesses
+            </Link>
           </div>
+        </header>
+
+        <div className="flex-1">
+          <h1 className="text-2xl font-semibold text-[#043D12] mb-6">
+            All Products
+          </h1>
+          {filterProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {filterProducts.map((product, index) => (
+                <div
+                  key={`${product.id}-${index}`}
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-shadow"
+                  onClick={() => setSelectedItem(product)}
+                >
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <img
+                        src={product.profile.businesImg || BusinessImg}
+                        alt={product.profile.businessName || "Business"}
+                        className="w-10 h-10 rounded-full object-cover"
+                        onError={(e) => (e.target.src = BusinessImg)}
+                      />
+                      <h3 className="text-sm font-semibold text-[#043D12] truncate">
+                        {product.profile.businessName || "Unknown Business"}
+                      </h3>
+                    </div>
+                    <img
+                      src={
+                        product.imageUrl ||
+                        product.profile.businesImg ||
+                        BusinessImg
+                      }
+                      alt={
+                        product.name ||
+                        product.profile.businessName ||
+                        "Product"
+                      }
+                      className="w-full h-56 object-cover rounded-xl"
+                      onError={(e) => (e.target.src = BusinessImg)}
+                    />
+                    <div className="mt-3">
+                      <p className="text-base font-medium text-[#043D12] truncate">
+                        {product.name || "No Product Listed"}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {product.category?.name || "No Category"}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1 truncate">
+                        {product.description || "No product description"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Player
+                autoplay
+                loop
+                src="https://lottie.host/7fd33a4f-2e59-4f34-ba0c-4af37814586e/Cq1qkcf16G.lottie"
+                style={{ height: "200px", width: "200px" }}
+              />
+              <h2 className="text-xl font-bold text-[#043D12] mt-4">
+                No Results Found
+              </h2>
+              <p className="text-sm text-gray-600 text-center max-w-md mt-2">
+                Try adjusting your search or filters to find products and
+                businesses that match your needs.
+              </p>
+              <button
+                className="mt-6 bg-[#043D12] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#02530c] transition-colors"
+                onClick={() => {
+                  setSearchQuery("");
+                  setFilterCategory("");
+                  setFilterLocation("");
+                }}
+              >
+                Clear Filters
+              </button>
+            </div>
+          )}
         </div>
       </div>
-      <Modal
-        profile={selectedProfile}
-        onClose={() => setSelectedProfile(null)}
-      />
+      <Modal product={selectedItem} onClose={() => setSelectedItem(null)} />
       <Start />
       <Footer />
     </div>

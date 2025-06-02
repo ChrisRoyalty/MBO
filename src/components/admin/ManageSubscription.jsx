@@ -698,6 +698,7 @@ const ManageSubscription = () => {
                     "Last 3 Months",
                     "Last 6 Months",
                     "Custom Range",
+                    `\]?`,
                   ].map((option) => (
                     <button
                       key={option}

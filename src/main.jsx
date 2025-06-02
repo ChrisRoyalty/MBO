@@ -1,4 +1,4 @@
-import { StrictMode } from "react";
+// import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
@@ -11,19 +11,19 @@ import { PersistGate } from "redux-persist/integration/react";
 import { persistor } from "./redux/store.js";
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <Provider store={store}>
+  // <StrictMode>
+  <Provider store={store}>
+    {" "}
+    {/* Wrap the app with Redux Provider */}
+    <PersistGate loading={null} persistor={persistor}>
       {" "}
-      {/* Wrap the app with Redux Provider */}
-      <PersistGate loading={null} persistor={persistor}>
-        {" "}
-        {/* Add PersistGate */}
-        <BrowserRouter>
-          <SidebarProvider>
-            <App />
-          </SidebarProvider>
-        </BrowserRouter>
-      </PersistGate>
-    </Provider>
-  </StrictMode>
+      {/* Add PersistGate */}
+      <BrowserRouter>
+        <SidebarProvider>
+          <App />
+        </SidebarProvider>
+      </BrowserRouter>
+    </PersistGate>
+  </Provider>
+  // </StrictMode>
 );

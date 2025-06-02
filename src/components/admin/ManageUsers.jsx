@@ -76,7 +76,7 @@ const ManageUsers = () => {
   const suspendModalRef = useRef(null);
   const resetModalRef = useRef(null);
   const resetButtonRef = useRef(null);
-  const dropdownRefs = useRef([]);
+  const dropdownRefs = useRef({});
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
@@ -191,7 +191,13 @@ const ManageUsers = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        !Object.values(dropdownRefs.current).some(
+          (ref) => ref && ref.contains(event.target)
+        )
+      ) {
         setActiveMenuIndex(null);
       }
       if (modalRef.current && !modalRef.current.contains(event.target)) {
@@ -232,8 +238,12 @@ const ManageUsers = () => {
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, []);
 
   const formatDate = (dateString) => {
@@ -247,8 +257,14 @@ const ManageUsers = () => {
     });
   };
 
-  const toggleMenu = (index) => {
-    setActiveMenuIndex(activeMenuIndex === index ? null : index);
+  const toggleMenu = (id) => {
+    console.log(
+      "toggleMenu called with id:",
+      id,
+      "current activeMenuIndex:",
+      activeMenuIndex
+    );
+    setActiveMenuIndex(activeMenuIndex === id ? null : id);
   };
 
   const toggleResetButton = () => {
@@ -281,17 +297,21 @@ const ManageUsers = () => {
   };
 
   const handleRemoveUser = async () => {
+    console.log("handleRemoveUser called with deleteUser:", deleteUser);
     if (!deleteUser?.id) {
+      console.warn("No user selected for deletion");
       toast.error("No user selected for deletion.");
       return;
     }
 
     try {
+      console.log("Sending delete request for user ID:", deleteUser.id);
       const response = await axios.delete(
         `${import.meta.env.VITE_BASE_URL}/admin/delete-member/${deleteUser.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      console.log("Delete response:", response.data);
       toast.success(response.data.message);
       if (view === "active") {
         setUsers((prev) => prev.filter((u) => u.id !== deleteUser.id));
@@ -309,12 +329,15 @@ const ManageUsers = () => {
   };
 
   const handleSuspendUser = async () => {
+    console.log("handleSuspendUser called with suspendUser:", suspendUser);
     if (!suspendUser?.id) {
+      console.warn("No user selected for suspension");
       toast.error("No user selected for suspension.");
       return;
     }
 
     if (!suspendUser.profile || !suspendUser.profile.id) {
+      console.warn("User has no profile to suspend");
       toast.error("This user has no profile to suspend.");
       setIsSuspendModalOpen(false);
       setSuspendUser(null);
@@ -322,6 +345,10 @@ const ManageUsers = () => {
     }
 
     try {
+      console.log(
+        "Sending suspend request for profile ID:",
+        suspendUser.profile.id
+      );
       const response = await axios.delete(
         `${import.meta.env.VITE_BASE_URL}/member/delete-profile/${
           suspendUser.profile.id
@@ -329,6 +356,7 @@ const ManageUsers = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      console.log("Suspend response:", response.data);
       toast.success(response.data.message);
       const updatedUser = { ...suspendUser, profile: null };
       setUsers((prev) => prev.filter((u) => u.id !== suspendUser.id));
@@ -347,18 +375,30 @@ const ManageUsers = () => {
   };
 
   const handleRestoreUser = async (user) => {
+    console.log("handleRestoreUser called with user:", user); // Debug log
     if (!user) {
+      console.warn("No user selected for restoration");
       toast.error("No user selected for restoration.");
       return;
     }
 
+    if (!user.profile || !user.profile.id) {
+      console.warn("User has no profile to restore");
+      toast.error("This user has no profile to restore.");
+      return;
+    }
+
     try {
+      console.log("Sending restore request for profile ID:", user.profile.id); // Debug log
       const response = await axios.patch(
-        `${import.meta.env.VITE_BASE_URL}/admin/restore-profile/${user.id}`,
+        `${import.meta.env.VITE_BASE_URL}/admin/restore-profile/${
+          user.profile.id
+        }`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      console.log("Restore response:", response.data); // Debug log
       toast.success(
         response.data.message || "User profile restored successfully."
       );
@@ -489,15 +529,18 @@ const ManageUsers = () => {
     }
   };
 
-  const getDropdownPosition = (index) => {
-    const button = dropdownRefs.current[index];
-    if (!button) return { top: "100%", bottom: "auto" };
-
+  const getDropdownPosition = (id) => {
+    const button = dropdownRefs.current[id];
+    console.log("getDropdownPosition for id:", id, "button ref:", button);
+    if (!button) {
+      console.warn("No button ref found for id:", id);
+      return { top: "100%", bottom: "auto" };
+    }
     const rect = button.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
     const spaceBelow = viewportHeight - rect.bottom;
     const dropdownHeight = 100;
-
+    console.log("rect.bottom:", rect.bottom, "spaceBelow:", spaceBelow);
     if (spaceBelow < dropdownHeight) {
       return { top: "auto", bottom: "100%" };
     }
@@ -517,6 +560,19 @@ const ManageUsers = () => {
   );
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setFormData({
+      firstname: "",
+      lastname: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    });
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  };
 
   if (loading) {
     return (
@@ -658,11 +714,11 @@ const ManageUsers = () => {
             </thead>
             <tbody>
               {currentItems.length > 0 ? (
-                currentItems.map((user, index) => (
+                currentItems.map((user) => (
                   <tr
-                    key={index}
+                    key={user.id}
                     className={`border-b border-gray-200 ${
-                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      user.id % 2 === 0 ? "bg-white" : "bg-gray-50"
                     } hover:bg-gray-100 transition-colors`}
                   >
                     <td className="py-4 px-6">{`${user.firstname} ${user.lastname}`}</td>
@@ -674,34 +730,43 @@ const ManageUsers = () => {
                     <td className="py-4 px-6 flex justify-between items-center">
                       {formatDate(user.createdAt)}
                       <div
-                        ref={(el) => (dropdownRefs.current[index] = el)}
+                        ref={(el) => (dropdownRefs.current[user.id] = el)}
                         className="relative"
                       >
                         <BsThreeDots
                           className="text-[18px] cursor-pointer hover:text-[#043D12] transition-colors"
-                          onClick={() => toggleMenu(index)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleMenu(user.id);
+                          }}
                         />
-                        {activeMenuIndex === index && (
+                        {activeMenuIndex === user.id && (
                           <div
                             ref={dropdownRef}
-                            className="absolute right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-40 overflow-y-auto"
+                            className="absolute right-0 bg-white border border-gray-200 rounded-md shadow-lg z-[100] max-h-40 overflow-y-auto"
                             style={{
                               minWidth: "160px",
-                              top: getDropdownPosition(index).top,
-                              bottom: getDropdownPosition(index).bottom,
+                              top: getDropdownPosition(user.id).top,
+                              bottom: getDropdownPosition(user.id).bottom,
                             }}
                           >
                             {view === "active" && (
                               <button
                                 className="w-full text-left px-4 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100"
-                                onClick={() => handleViewProfile(user)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewProfile(user);
+                                }}
                               >
                                 <FiUser /> View Profile
                               </button>
                             )}
                             <button
                               className="w-full text-left px-4 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100"
-                              onClick={() => handleSendEmail(user)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSendEmail(user);
+                              }}
                             >
                               <FiMail /> Send Email
                             </button>
@@ -709,13 +774,19 @@ const ManageUsers = () => {
                               <>
                                 <button
                                   className="w-full text-left px-4 py-2 text-red-600 flex items-center gap-2 hover:bg-gray-100"
-                                  onClick={() => openSuspendModal(user)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openSuspendModal(user);
+                                  }}
                                 >
                                   <FiAlertCircle /> Suspend User
                                 </button>
                                 <button
                                   className="w-full text-left px-4 py-2 text-red-600 flex items-center gap-2 hover:bg-gray-100"
-                                  onClick={() => openDeleteModal(user)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openDeleteModal(user);
+                                  }}
                                 >
                                   <FiTrash2 /> Delete User
                                 </button>
@@ -724,7 +795,10 @@ const ManageUsers = () => {
                             {view === "suspended" && (
                               <button
                                 className="w-full text-left px-4 py-2 text-green-600 flex items-center gap-2 hover:bg-gray-100"
-                                onClick={() => handleRestoreUser(user)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRestoreUser(user);
+                                }}
                               >
                                 <FiRefreshCw /> Restore User
                               </button>
@@ -753,17 +827,85 @@ const ManageUsers = () => {
         {/* Card Layout for Mobile */}
         <div className="sm:hidden space-y-4">
           {currentItems.length > 0 ? (
-            currentItems.map((user, index) => (
+            currentItems.map((user) => (
               <div
-                key={index}
+                key={user.id}
                 className="border border-gray-200 rounded-[11px] p-4 bg-white shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-semibold">{`${user.firstname} ${user.lastname}`}</span>
-                  <BsThreeDots
-                    className="text-lg cursor-pointer hover:text-[#043D12]"
-                    onClick={() => toggleMenu(index)}
-                  />
+                  <div
+                    ref={(el) => (dropdownRefs.current[user.id] = el)}
+                    className="relative"
+                  >
+                    <BsThreeDots
+                      className="text-lg cursor-pointer hover:text-[#043D12]"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleMenu(user.id);
+                      }}
+                    />
+                    {activeMenuIndex === user.id && (
+                      <div
+                        ref={dropdownRef}
+                        className="mt-2 bg-white border border-gray-200 rounded-md shadow-lg z-[100]"
+                      >
+                        {view === "active" && (
+                          <button
+                            className="w-full text-left px-3 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100 text-sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewProfile(user);
+                            }}
+                          >
+                            <FiUser /> View Profile
+                          </button>
+                        )}
+                        <button
+                          className="w-full text-left px-3 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100 text-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSendEmail(user);
+                          }}
+                        >
+                          <FiMail /> Send Email
+                        </button>
+                        {view === "active" && (
+                          <>
+                            <button
+                              className="w-full text-left px-3 py-2 text-red-600 flex items-center gap-2 hover:bg-gray-100 text-sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openSuspendModal(user);
+                              }}
+                            >
+                              <FiAlertCircle /> Suspend User
+                            </button>
+                            <button
+                              className="w-full text-left px-3 py-2 text-red-600 flex items-center gap-2 hover:bg-gray-100 text-sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDeleteModal(user);
+                              }}
+                            >
+                              <FiTrash2 /> Delete User
+                            </button>
+                          </>
+                        )}
+                        {view === "suspended" && (
+                          <button
+                            className="w-full text-left px-3 py-2 text-green-600 flex items-center gap-2 hover:bg-gray-100 text-sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRestoreUser(user);
+                            }}
+                          >
+                            <FiRefreshCw /> Restore User
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="mt-2 text-sm space-y-1">
                   <p>
@@ -780,48 +922,6 @@ const ManageUsers = () => {
                     <strong>Joined:</strong> {formatDate(user.createdAt)}
                   </p>
                 </div>
-                {activeMenuIndex === index && (
-                  <div className="mt-2 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                    {view === "active" && (
-                      <button
-                        className="w-full text-left px-3 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100 text-sm"
-                        onClick={() => handleViewProfile(user)}
-                      >
-                        <FiUser /> View Profile
-                      </button>
-                    )}
-                    <button
-                      className="w-full text-left px-3 py-2 text-[#6A7368] flex items-center gap-2 hover:bg-gray-100 text-sm"
-                      onClick={() => handleSendEmail(user)}
-                    >
-                      <FiMail /> Send Email
-                    </button>
-                    {view === "active" && (
-                      <>
-                        <button
-                          className="w-full text-left px-3 py-2 text-red-600 flex items-center gap-2 hover:bg-gray-100 text-sm"
-                          onClick={() => openSuspendModal(user)}
-                        >
-                          <FiAlertCircle /> Suspend User
-                        </button>
-                        <button
-                          className="w-full text-left px-3 py-2 text-red-600 flex items-center gap-2 hover:bg-gray-100 text-sm"
-                          onClick={() => openDeleteModal(user)}
-                        >
-                          <FiTrash2 /> Delete User
-                        </button>
-                      </>
-                    )}
-                    {view === "suspended" && (
-                      <button
-                        className="w-full text-left px-3 py-2 text-green-600 flex items-center gap-2 hover:bg-gray-100 text-sm"
-                        onClick={() => handleRestoreUser(user)}
-                      >
-                        <FiRefreshCw /> Restore User
-                      </button>
-                    )}
-                  </div>
-                )}
               </div>
             ))
           ) : (
@@ -896,7 +996,8 @@ const ManageUsers = () => {
             <div className="flex justify-end mb-4">
               <AiOutlineClose
                 className="text-xl sm:text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setIsDeleteModalOpen(false);
                   setDeleteUser(null);
                 }}
@@ -919,7 +1020,8 @@ const ManageUsers = () => {
             <div className="flex justify-between gap-2">
               <button
                 className="w-full px-4 py-2 bg-gray-200 text-[#6A7368] rounded-[11px] hover:bg-gray-300 transition-colors text-sm sm:text-base"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setIsDeleteModalOpen(false);
                   setDeleteUser(null);
                 }}
@@ -928,7 +1030,14 @@ const ManageUsers = () => {
               </button>
               <button
                 className="w-full px-4 py-2 bg-red-600 text-[#FFFDF2] rounded-[11px] hover:bg-red-700 transition-colors text-sm sm:text-base"
-                onClick={handleRemoveUser}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveUser();
+                }}
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                  handleRemoveUser();
+                }}
               >
                 Delete
               </button>
@@ -947,7 +1056,8 @@ const ManageUsers = () => {
             <div className="flex justify-end mb-4">
               <AiOutlineClose
                 className="text-xl sm:text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setIsSuspendModalOpen(false);
                   setSuspendUser(null);
                 }}
@@ -970,7 +1080,8 @@ const ManageUsers = () => {
             <div className="flex justify-between gap-2">
               <button
                 className="w-full px-4 py-2 bg-gray-200 text-[#6A7368] rounded-[11px] hover:bg-gray-300 transition-colors text-sm sm:text-base"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setIsSuspendModalOpen(false);
                   setSuspendUser(null);
                 }}
@@ -979,7 +1090,14 @@ const ManageUsers = () => {
               </button>
               <button
                 className="w-full px-4 py-2 bg-red-600 text-[#FFFDF2] rounded-[11px] hover:bg-red-700 transition-colors text-sm sm:text-base"
-                onClick={handleSuspendUser}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSuspendUser();
+                }}
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                  handleSuspendUser();
+                }}
               >
                 Suspend
               </button>
@@ -1001,7 +1119,8 @@ const ManageUsers = () => {
               </h2>
               <AiOutlineClose
                 className="text-xl sm:text-[20px] text-[#6A7368] cursor-pointer hover:text-[#043D12] transition-colors"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setIsResetModalOpen(false);
                   setResetUser(null);
                   setResetFormData({

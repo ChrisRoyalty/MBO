@@ -94,23 +94,14 @@ const AddBusiness = () => {
           Stand out and connect with potential customers today. Create your
           profile and let the world discover you!
         </motion.p>
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: false }}
-          variants={animations.rotate}
-          className="w-fit h-fit mx-auto"
-        >
-          <motion.a
-            variants={animations.buttonHover}
-            whileHover="hover"
-            whileTap="tap"
+        <div className="w-fit h-fit mx-auto">
+          <a
             href="/create-account"
             className="bg-[#FFFDF2] text-[#043D12] rounded-[48px] shadow-lg lg:text-[18px] text-[14px] md:px-8 px-4 py-3 md:py-4 w-fit mx-auto font-medium"
           >
             Add Your Business
-          </motion.a>
-        </motion.div>
+          </a>
+        </div>
       </motion.div>
     </motion.div>
   );
