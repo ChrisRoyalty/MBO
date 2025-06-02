@@ -426,7 +426,7 @@ const SearchPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="min-h-screen bg-gradient-to-b from-[#FFFDF2] to-[#E8EFE5] flex flex-col items-center justify-center px-[5vw]"
+          className="min-h-[80vh] bg-gradient-to-b from-[#FFFDF2] to-[#E8EFE5] flex flex-col items-center justify-center px-[5vw]"
         >
           <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 max-w-lg w-full text-center">
             <Player
