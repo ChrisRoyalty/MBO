@@ -441,7 +441,7 @@ const SearchPage = () => {
             <p className="text-sm text-gray-600 mt-3 max-w-md mx-auto">
               It looks like there are no products on the platform yet. Check
               back soon for exciting new listings or explore our businesses to
-              connect with businesses!
+              connect with your favourite businesses!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mt-8">
               <motion.button
