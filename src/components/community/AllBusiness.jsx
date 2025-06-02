@@ -15,6 +15,7 @@ import {
   FaLinkedin,
   FaFilter,
 } from "react-icons/fa";
+import { Player } from "@lottiefiles/react-lottie-player";
 import BusinessImg from "../../assets/user-photo.svg";
 import NetworkError from "../NetworkError";
 import Start from "../home/Start";
@@ -263,7 +264,7 @@ const AllBusiness = () => {
       if (newResponse.data?.success && newResponse.data.profiles) {
         setNewProfiles(newResponse.data.profiles);
       } else {
-        throw new Error("No newly added profiles found.");
+        throw new Error("No businesses available on the platform yet.");
       }
 
       const trendingURL = `${
@@ -273,7 +274,7 @@ const AllBusiness = () => {
       if (trendingResponse.data?.success && trendingResponse.data.profiles) {
         setTrendingProfiles(trendingResponse.data.profiles);
       } else {
-        throw new Error("No trending profiles found.");
+        throw new Error("No businesses available on the platform yet.");
       }
 
       const allURL = `${import.meta.env.VITE_BASE_URL}/member/random-profiles`;
@@ -281,11 +282,14 @@ const AllBusiness = () => {
       if (allResponse.data?.success && allResponse.data.profiles) {
         setAllProfiles(allResponse.data.profiles);
       } else {
-        throw new Error("No profiles found.");
+        throw new Error("No businesses available on the platform yet.");
       }
     } catch (error) {
       console.error("❌ Error Fetching Profiles:", error);
-      setError(error.response?.data?.message || "Failed to fetch profiles.");
+      setError(
+        error.response?.data?.message ||
+          "No businesses available on the platform yet."
+      );
     } finally {
       setLoading(false);
     }
@@ -387,14 +391,48 @@ const AllBusiness = () => {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-[#FFFDF2]">
-        <h2 className="text-xl font-bold text-[#043D12]">{error}</h2>
-        <button
-          onClick={fetchProfiles}
-          className="mt-4 bg-[#043D12] text-white px-6 py-2 rounded-full"
+      <div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="min-h-screen bg-gradient-to-b from-[#FFFDF2] to-[#E8EFE5] flex flex-col items-center justify-center px-[5vw]"
         >
-          Retry
-        </button>
+          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 max-w-lg w-full text-center">
+            <Player
+              autoplay
+              loop
+              src="https://lottie.host/7fd33a4f-2e59-4f34-ba0c-4af37814586e/Cq1qkcf16G.lottie"
+              style={{ height: "150px", width: "150px", margin: "0 auto" }}
+            />
+            <h2 className="text-2xl font-bold text-[#043D12] mt-6">
+              No Businesses Available Yet
+            </h2>
+            <p className="text-sm text-gray-600 mt-3 max-w-md mx-auto">
+              It looks like there are no businesses on the platform yet. Check
+              back soon for exciting new listings or explore our products to
+              discover what's available!
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 mt-8">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={fetchProfiles}
+                className="flex-1 bg-[#043D12] text-white px-6 py-3 rounded-full text-sm font-semibold hover:bg-[#02530c] transition-colors shadow-md"
+              >
+                Check Again
+              </motion.button>
+              <Link
+                to="/community"
+                className="flex-1 bg-white text-[#043D12] px-6 py-3 rounded-full text-sm font-semibold border border-[#043D12] hover:bg-gray-100 transition-colors shadow-md"
+              >
+                Explore Products
+              </Link>
+            </div>
+          </div>
+        </motion.div>
+        <Start />
+        <Footer />
       </div>
     );
   }
@@ -671,7 +709,9 @@ const AllBusiness = () => {
                     >
                       <div className="profile flex items-center gap-2">
                         <img
-                          src={profile.businesImg || BusinessImg}
+                          src={
+                            profile.businesImg || BusinessImg.githubusercontent
+                          }
                           alt={profile.businessName}
                           className="w-8 h-8 rounded-full object-cover"
                           onError={(e) => (e.target.src = BusinessImg)}

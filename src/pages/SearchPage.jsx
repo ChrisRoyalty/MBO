@@ -71,7 +71,7 @@ const ContactDropdown = ({ socialLinks = {}, profileId, onClose }) => {
     facebook: { icon: FaFacebook, label: "Facebook", color: "#1877F2" },
     instagram: { icon: FaInstagram, label: "Instagram", color: "#E1306C" },
     linkedin: { icon: FaLinkedin, label: "LinkedIn", color: "#0077B5" },
-    youtube: { icon: FaLinkedin, label: "YouTube", color: "#FF0000" }, // Added YouTube support
+    youtube: { icon: FaLinkedin, label: "YouTube", color: "#FF0000" },
   };
 
   const validLinks = Object.entries(parsedSocialLinks)
@@ -327,7 +327,7 @@ const SearchPage = () => {
             .filter(Boolean); // Remove null entries
 
           if (parsedProducts.length === 0) {
-            throw new Error("No valid products found.");
+            throw new Error("No products available on the platform yet.");
           }
 
           const shuffledProducts = parsedProducts.sort(
@@ -335,14 +335,17 @@ const SearchPage = () => {
           );
           setProducts(shuffledProducts);
         } else {
-          throw new Error("No products found.");
+          throw new Error("No products available on the platform yet.");
         }
       } catch (error) {
         console.error("❌ Error Fetching Products:", {
           message: error.message,
           response: error.response?.data,
         });
-        setError(error.response?.data?.message || "Failed to fetch products.");
+        setError(
+          error.response?.data?.message ||
+            "No products available on the platform yet."
+        );
       } finally {
         setLoading(false);
       }
@@ -418,14 +421,48 @@ const SearchPage = () => {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-[#FFFDF2]">
-        <h2 className="text-xl font-bold text-[#043D12]">{error}</h2>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-4 bg-[#043D12] text-white px-6 py-2 rounded-full"
+      <div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="min-h-screen bg-gradient-to-b from-[#FFFDF2] to-[#E8EFE5] flex flex-col items-center justify-center px-[5vw]"
         >
-          Retry
-        </button>
+          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 max-w-lg w-full text-center">
+            <Player
+              autoplay
+              loop
+              src="https://lottie.host/7fd33a4f-2e59-4f34-ba0c-4af37814586e/Cq1qkcf16G.lottie"
+              style={{ height: "150px", width: "150px", margin: "0 auto" }}
+            />
+            <h2 className="text-2xl font-bold text-[#043D12] mt-6">
+              No Products Available Yet
+            </h2>
+            <p className="text-sm text-gray-600 mt-3 max-w-md mx-auto">
+              It looks like there are no products on the platform yet. Check
+              back soon for exciting new listings or explore our businesses to
+              connect with businesses!
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 mt-8">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => window.location.reload()}
+                className="flex-1 bg-[#043D12] text-white px-6 py-3 rounded-full text-sm font-semibold hover:bg-[#02530c] transition-colors shadow-md"
+              >
+                Check Again
+              </motion.button>
+              <Link
+                to="/community/all-businesses"
+                className="flex-1 bg-white text-[#043D12] px-6 py-3 rounded-full text-sm font-semibold border border-[#043D12] hover:bg-gray-100 transition-colors shadow-md"
+              >
+                Explore Businesses
+              </Link>
+            </div>
+          </div>
+        </motion.div>
+        <Start />
+        <Footer />
       </div>
     );
   }
@@ -438,7 +475,8 @@ const SearchPage = () => {
             <input
               type="text"
               className="w-full pl-10 pr-4 py-2 text-sm rounded-full bg-gray-100 text-[#043D12] placeholder-gray-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#043D12]/50 transition-all duration-300"
-              placeholder="Search products, businesses, or services..."
+              placeholder="Search products, businesses, or services聭
+services..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
